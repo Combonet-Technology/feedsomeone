@@ -1,0 +1,389 @@
+{% load static %}
+
+<!doctype html>
+<html class="no-js" lang="zxx">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title> FEEDSOMEONE | eradicating hunger and poverty</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="manifest" href="site.webmanifest crossorigin=use-credentials">
+    <link rel="shortcut icon" type="image/x-icon" href="{% static 'img/favicon.ico' %}">
+
+	<!-- CSS here -->
+	<link rel="stylesheet" href="{% static 'css/owl.carousel.min.css' %}">
+	<link rel="stylesheet" href="{% static 'css/slicknav.css' %}">
+    <link rel="stylesheet" href="{% static 'css/flaticon.css' %}">
+    <link rel="stylesheet" href="{% static 'css/progressbar_barfiller.css' %}">
+    <link rel="stylesheet" href="{% static 'css/gijgo.css' %}">
+    <link rel="stylesheet" href="{% static 'css/animate.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/animated-headline.css' %}">
+	<link rel="stylesheet" href="{% static 'css/magnific-popup.css' %}">
+	<link rel="stylesheet" href="{% static 'css/fontawesome-all.min.css' %}">
+		<link rel="stylesheet" href="{% static 'css/font-awesome.min.css' %}">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/fontawesome.min.css">
+	<link rel="stylesheet" href="{% static 'css/themify-icons.css' %}">
+	<link rel="stylesheet" href="{% static 'css/slick.css' %}">
+	<link rel="stylesheet" href="{% static 'css/nice-select.css' %}">
+	<link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+<!--	<link rel="stylesheet" href="{% static 'css/main.css' %}">-->
+<!--	<link rel="stylesheet" href="{% static 'css/donatestyle.css' %}">-->
+	<link rel="stylesheet" href="{% static 'css/style.css' %}">
+    {% if p_form %}
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.9/summernote-lite.css" rel="stylesheet">
+    <style>
+    .form-control {
+    height: calc(2.25rem + 10px);
+    font-size: 2rem;
+}
+.nice-select .option {
+    width: 745px !important;
+}
+.col-lg-5 {
+    width: 48.666667% !important;
+}
+
+
+form#contentform {
+    align-content: center !important;
+    padding: 0px 25%;
+}
+
+div.nice-select {
+    max-width:100% !important
+}</style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.9/summernote-lite.js"></script>
+    {% endif %}
+{% if forms %}
+    <style>
+     .form-control {
+    height: calc(2.25rem + 10px);
+    font-size: 1.5rem;
+}
+    </style>
+{% endif %}
+    {% if profile_update_form %}
+    <style>
+     .form-control {
+    height: calc(2.25rem + 10px);
+    font-size: 1.5rem;
+}
+    </style>
+{% endif %}
+    {% if volunteers %}
+  <style>
+ div#yes:hover {
+    transform: scale(1.2) !important;
+}
+    </style>
+{% endif %}
+
+    <style>
+    #contentform .form-control{
+    height: calc(2.25rem + 15px) !important;
+    font-size: 2rem !important;
+}
+    </style>
+
+
+</head>
+<body>
+    <!-- ? Preloader Start -->
+    <div id="preloader-active">
+        <div class="preloader d-flex align-items-center justify-content-center">
+            <div class="preloader-inner position-relative">
+                <div class="preloader-circle"></div>
+                <div class="preloader-img pere-text">
+                    <img src="{% static 'img/logo/logo.png' %}" alt="">
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Preloader Start -->
+    <header>
+ {% if messages %}
+        <div class="row text-center">
+        {% for message in messages %}
+                <div class="alert alert-{{message.tag}} alert-dismissible fade show" role="alert" style="width: 100%;">
+  <strong>{{message}}</strong>
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        <!-- Header Start -->
+        <div class="header-area">
+            <div class="main-header ">
+                <div class="header-top d-none d-lg-block">
+                    <div class="container-fluid">
+                        <div class="col-xl-12">
+                            <div class="row d-flex justify-content-between align-items-center">
+                                <div class="header-info-left d-flex">
+                                    <ul>
+                                        <li><a style="color: #687693; border-right:0; padding-right: 0;" href="tel:+2348170838856">Phone: +(234) 811 1333 971</a></li>
+                                        <li><a style="color: #687693; border-right:0; padding-right: 0;" href="mailto:femolak@outlook.com">Email: femolak@outlook.com</a></li>
+                                    </ul>
+                                    <div class="header-social">
+                                        <ul>
+                                            <li style="margin-right: 0px; padding-right: 0px"><a href="#"><i class="fab fa-twitter"></i></a></li>
+                                            <li style="margin-right: 0px; padding-right: 0px"><a  href="https://www.facebook.com/sai4ull"><i class="fab fa-facebook-f"></i></a></li>
+                                            <li style="margin-right: 0px; padding-right: 0px"><a href="#"><i class="fab fa-linkedin-in"></i></a></li>
+                                            <li style="margin-right: 0px; padding-right: 0px"> <a href="#"><i class="fab fa-google-plus-g"></i></a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="header-info-right d-flex align-items-center">
+                                    <div class="select-this">
+                                        <form action="#">
+                                            <div class="select-itms">
+                                                <select name="select" id="select1">
+                                                    <option value="">English</option>
+                                                    <option value="">Bangla</option>
+                                                    <option value="">Arabic</option>
+                                                    <option value="">Hindi</option>
+                                                </select>
+                                            </div>
+                                        </form>
+                                    </div>
+<!--                                    <ul class="contact-now">-->
+<!--                                        <li><a href="#subscribenow">Subscribe Now</a></li>-->
+<!--                                    </ul>-->
+                                    {% if user.is_authenticated %}
+                                    <ul class="contact-now">
+                                        <li><a href="{% url 'profile' %}"> Edit Profile</a> <a href="{% url 'logout' %}">Logout</a></li>
+                                    </ul>
+                                    {% else %}
+                                    <ul class="contact-now">
+                                        <li><a href="{% url 'register' %}">Register</a> <a href="{% url 'login' %}">Login</a></li>
+                                    </ul>
+                                    {% endif %}
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="header-bottom  header-sticky">
+                    <div class="container-fluid">
+                        <div class="row align-items-center">
+                            <!-- Logo -->
+                            <div class="col-xl-2 col-lg-2">
+                                <div class="logo">
+                                    <a href="{% url 'homepage' %}"><img src="{% static 'img/logo/logo.png' %}" alt=""></a>
+                                </div>
+                            </div>
+                            <div class="col-xl-10 col-lg-10">
+                                <div class="menu-wrapper  d-flex align-items-center justify-content-end">
+                                    <!-- Main-menu -->
+                                    <div class="main-menu d-none d-lg-block">
+                                        <nav>
+                                            <ul id="navigation">
+                                                <li><a href="{% url 'homepage' %}">Home</a></li>
+                                                <li><a href="{% url 'about-page' %}">About</a></li>
+                                                <li><a href="#">Events</a>
+                                                    <ul style="width: 220px;" class="submenu">
+                                                            <li><a href="{% url 'past_events' %}">Past Events</a></li>
+                                                            <li><a href="{% url 'future_events' %}">Future Events</a></li>
+                                                    </ul>
+                                                </li>
+                                                <li><a href="#">Volunteers</a>
+                                                <ul style="width: 220px;" class="submenu">
+                                                        <li><a href="{% url 'register' %}">Become a volunteer</a></li>
+                                                        <li><a href="#">Become a Group Leader</a></li>
+                                                        <li><a href="{% url 'volunteer-list' %}">View our Volunteers</a></li>
+                                                    </ul>
+                                                </li>
+                                                <li><a href=" '' %}">News</a>
+                                                    <ul class="submenu">
+                                                        <li><a href="{% url 'all-articles' %}">Articles</a></li>
+                                                        <li><a href="#">News Briefing</a></li>
+                                                        <li><a href="#">Testimonials</a></li>
+                                                    </ul>
+                                                </li>
+                                                <li><a href="{% url 'contact' %}">Contact us</a></li>
+                                                <li><a href="{% url 'gallery' %}">Gallery</a></li>
+<!--                                                <li><a href="blog.html">Blog</a>-->
+<!--                                                    <ul class="submenu">-->
+<!--                                                        <li><a href="blog.html">Blog</a></li>-->
+<!--                                                        <li><a href="blog_details.html">Blog Details</a></li>-->
+<!--                                                        <li><a href="elements.html">Element</a></li>-->
+<!--                                                    </ul>-->
+<!--                                                </li>-->
+                                            </ul>
+                                        </nav>
+                                    </div>
+                                    <!-- Header-btn -->
+                                    <div class="header-right-btn d-none d-lg-block ml-20">
+                                        <a href="{% url 'donate' %}" class="btn header-btn">Donate</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Mobile Menu -->
+                            <div class="col-12">
+                                <div class="mobile_menu d-block d-lg-none"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <!-- Header End -->
+    </header>
+    <!-- header end -->
+
+{% block content %}
+{% endblock %}
+
+ <footer id="footer" class="section">
+		<!-- container -->
+		<div class="container">
+			<!-- row -->
+			<div class="row" id="footer-footer">
+				<!-- footer contact -->
+				<div class="col-md-4">
+					<div class="footer">
+						<div class="footer-logo">
+							<a class="logo" href="#"><img src="{% static 'img/logo/logo.png' %}" alt=""></a>
+						</div>
+						<p>Everybody deserves good meal, a comfortable shelter and opportunities to exploit their potentials. Together we move !!!</p>
+						<ul class="footer-contact">
+							<li><i class="fa fa-map-marker"></i> Alagbaka Akure, Ondo State</li>
+							<li><i class="fa fa-phone"></i> <a href="tel:+2348170838856">(+234) 811 1333 971</a></li>
+							<li><i class="fa fa-envelope"></i> <a href="mailto:femolak@outlook.com">Email: femolak@outlook.com</a></li>
+						</ul>
+					</div>
+				</div>
+				<!-- /footer contact -->
+
+				<!-- footer galery -->
+				<div class="col-md-4">
+					<div class="footer">
+						<h3 class="footer-title">Gallery</h3>
+						<ul class="footer-galery">
+							<li><a href="{% url 'gallery' %}"><img src="{% static 'img/fs-seven.jpg' %}" alt=""></a></li>
+							<li><a href="{% url 'gallery' %}"><img src="{% static 'img/fs-three.jpg' %}" alt=""></a></li>
+							<li><a href="{% url 'gallery' %}"><img src="{% static 'img/fs-five.jpg' %}" alt=""></a></li>
+							<li><a href="{% url 'gallery' %}"><img src="{% static 'img/fs-four.jpg' %}" alt=""></a></li>
+							<li><a href="{% url 'gallery' %}"><img src="{% static 'img/fs-six.jpg' %}" alt=""></a></li>
+							<li><a href="{% url 'gallery' %}"><img src="{% static 'img/fs-two.jpg' %}" alt=""></a></li>
+							<li><a href="{% url 'gallery' %}"><img src="{% static 'img/fs-nine.jpg' %}" alt=""></a></li>
+							<li><a href="{% url 'gallery' %}"><img src="{% static 'img/fs-one.jpg' %}" alt=""></a></li>
+							<li><a href="{% url 'gallery' %}"><img src="{% static 'img/fs-eight.jpg' %}" alt=""></a></li>
+						</ul>
+					</div>
+				</div>
+				<!-- /footer galery -->
+
+				<!-- footer newsletter -->
+				<div class="col-md-4">
+					<div class="footer">
+						<h3 class="footer-title">Newsletter</h3>
+						<p>Subscribe to our newsletter and you will always be updated on our upcoming charity events</p>
+						<form id="subscribenow" class="footer-newsletter" action="https://gmail.us2.list-manage.com/subscribe/post?u=49004ed56b35f3315d8022f98&amp;id=a324975d09" method="post" target="_blank" novalidate>
+							<input class="input" id = "footer-input" type="email" name="EMAIL" placeholder="Enter your email">
+							<button class="primary-button">Subscribe</button>
+						</form>
+						<ul class="footer-social" id = "footer-social">
+							<li><a><i class="fa fa-arrow-right"></i></a></li>
+							<li><a href="#"><i class="fab fa-twitter"></i></a></li>
+							<li><a href="#"><i class="fab fa-facebook"></i></a></li>
+							<li><a href="#"><i class="fab fa-instagram"></i></a></li>
+							<li><a href="#"><i class="fab fa-youtube"></i></a></li>
+						</ul>
+					</div>
+				</div>
+				<!-- /footer newsletter -->
+			</div>
+			<!-- /row -->
+
+			<!-- footer copyright & nav -->
+			<div id="footer-bottom" class="row">
+				<div class="col-md-6 col-md-push-6">
+					<ul class="footer-nav">
+						<li><a href="/">Home</a></li>
+						<li><a href="{% url 'about-page' %}">About</a></li>
+						<li><a href="{% url 'future_events' %}">Programs</a></li>
+						<li><a href="{% url 'volunteer-list' %}">Volunteers</a></li>
+						<li><a href="{% url 'all-articles' %}">Blog</a></li>
+						<li><a href="{% url 'contact' %}">Contact</a></li>
+						{% if user.is_authenticated %}
+                        			<li><a href="{% url 'profile' %}"> Edit Profile</a></li><li><a href="{% url 'logout' %}">Logout</a></li>
+			                        {% else %}
+                        			<li><a href="{% url 'register' %}">Register</a></li> <li><a href="{% url 'login' %}">Login</a></li>
+			                        {% endif %}
+					</ul>
+				</div>
+
+				<div class="col-md-6 col-md-pull-6">
+					<div class="footer-copyright">
+						<span><!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->Copyright &copy;<script>document.write(new Date().getFullYear());</script> All rights reserved | Template with <i class="far fa-heart" aria-hidden="true"></i> by <a style="color: #232323" href="https://colorlib.com" target="_blank">Colorlib</a> | Site by <a style="color: #232323" href="http://combonettechnology.com.ng" target="_blank">CBT</a>
+							<!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. --></span>
+					</div>
+				</div>
+			</div>
+			<!-- /footer copyright & nav -->
+		</div>
+		<!-- /container -->
+	</footer>
+
+    <!-- Scroll Up -->
+    <div id="back-top" >
+        <a title="Go to Top" href="#"> <i class="fas fa-level-up-alt"></i></a>
+    </div>
+
+    <!-- JS here -->
+
+    <script src="{% static 'js/vendor/modernizr-3.5.0.min.js' %}"></script>
+    <!-- Jquery, Popper, Bootstrap -->
+    <script src="{% static 'js/vendor/jquery-1.12.4.min.js' %}"></script>
+    <script src="{% static 'js/popper.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+    <!-- Jquery Mobile Menu -->
+    <script src="{% static 'js/jquery.slicknav.min.js' %}"></script>
+
+    <!-- Jquery Slick , Owl-Carousel Plugins -->
+    <script src="{% static 'js/owl.carousel.min.js' %}"></script>
+    <script src="{% static 'js/slick.min.js' %}"></script>
+    <!-- One Page, Animated-HeadLin -->
+    <script src="{% static 'js/wow.min.js' %}"></script>
+    <script src="{% static 'js/animated.headline.js' %}"></script>
+    <script src="{% static 'js/jquery.magnific-popup.js' %}"></script>
+
+    <!-- Date Picker -->
+    <script src="{% static 'js/gijgo.min.js' %}"></script>
+    <!-- Nice-select, sticky -->
+    <script src="{% static 'js/jquery.nice-select.min.js' %}"></script>
+    <script src="{% static 'js/jquery.sticky.js' %}"></script>
+    <!-- Progress -->
+    <script src="{% static 'js/jquery.barfiller.js' %}"></script>
+
+    <!-- counter , waypoint,Hover Direction -->
+    <script src="{% static 'js/jquery.counterup.min.js' %}"></script>
+    <script src="{% static 'js/waypoints.min.js' %}"></script>
+    <script src="{% static 'js/jquery.countdown.min.js' %}"></script>
+    <script src="{% static 'js/hover-direction-snake.min.js' %}"></script>
+
+    <!-- contact js -->
+    <script src="{% static 'js/contact.js'%}"></script>
+    <script src="{% static 'js/jquery.form.js' %}"></script>
+    <script src="{% static 'js/jquery.validate.min.js' %}"></script>
+    <script src="{% static 'js/mail-script.js' %}"></script>
+    <script src="{% static 'js/jquery.ajaxchimp.min.js' %}"></script>
+
+    <!-- Jquery Plugins, main Jquery -->
+    <script src="{% static 'js/plugins.js' %}"></script>
+
+    <script src="{% static 'js/main-footer.js' %}"></script>
+    <script src="/static/js/main.js"></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js'></script>
+    <script src="{% static 'menususcribe/js/function.js' %}"></script>
+    <script src='https://kit.fontawesome.com/a076d05399.js'></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    </body>
+</html>

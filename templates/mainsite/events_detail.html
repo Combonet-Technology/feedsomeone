@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+{% block content %}
+
+
+   <main>
+      <!--? Hero Start -->
+      <div class="slider-area2">
+         <div class="slider-height2 d-flex align-items-center">
+               <div class="container">
+                  <div class="row">
+                     <div class="col-xl-12">
+                           <div class="hero-cap hero-cap2 pt-20 text-center">
+                              <h2>Event Details</h2>
+                           </div>
+                     </div>
+                  </div>
+               </div>
+         </div>
+      </div>
+      <!-- Hero End -->
+      <!--? Blog Area Start -->
+      <section class="blog_area single-post-area section-padding">
+         <div class="container">
+            <div class="row">
+               <div class="col-lg-8 posts-list">
+                  <div class="single-post">
+                     <div class="feature-img">
+                        <img class="img-fluid" src="{{event.feature_img.url}}" alt="">
+                     </div>
+                     <div class="blog_details">
+                        <h1 style="color: #2d2d2d; font-size:2em">{{event.title}}
+                        </h1>
+                        <ul class="blog-info-link mt-3 mb-4">
+                           <li><a href="#"><i class="fa fa-location"></i>{{event.location}}</a></li>
+                           <li><a href="#"><i class="fa fa-calendar"></i> {{event.event_date | date:"F d, Y"}}</a></li>
+                        </ul>
+                        <p class="excert" style="font-size: 20px; line-height: 1.5em">
+                            {{event.content}}
+                        </p>
+                        <div class="quote-wrapper">
+                           <div class="quotes">
+                               <div class=" row">
+                                   <h2>You can also become a part of this wonderful act of kindness through your donations and volunteering</h2>
+                                   <div class="button-group-area mt-10">
+                                   <a href="{% url 'register'%}" class="genric-btn primary e-large">Become a Volunteer</a>
+                                   <a href="{% url 'donate'%}" class="genric-btn primary-border e-large ml-3">Donate</a>
+                                   </div>
+                                </div>
+                           </div>
+                        </div>
+<!--                         <div class="event-details">-->
+<!--                             <span>Location: {{event.location}}</span> | <span>Event Date: {{event.event_date}}</span> | <span>Budget: <span>&#8358;</span>{{event.budget}}</span>-->
+<!--                         </div>-->
+                     </div>
+                  </div>
+
+               </div>
+               <div class="col-lg-4">
+                  <div class="blog_right_sidebar">
+                     <aside class="single_sidebar_widget search_widget">
+                        <form action="#">
+                           <div class="form-group">
+                              <div class="input-group mb-3">
+                                 <input type="text" class="form-control" placeholder='Search Keyword'
+                                    onfocus="this.placeholder = ''" onblur="this.placeholder = 'Search Keyword'">
+                                 <div class="input-group-append">
+                                    <button class="btns" type="button"><i class="ti-search"></i></button>
+                                 </div>
+                              </div>
+                           </div>
+                           <button class="button rounded-0 primary-bg text-white w-100 btn_1 boxed-btn"
+                              type="submit">Search</button>
+                        </form>
+                     </aside>
+                      <aside class="single_sidebar_widget newsletter_widget">
+                        <h4 class="widget_title" style="color: #2d2d2d;">Newsletter</h4>
+                        <form action="#">
+                           <div class="form-group">
+                              <input type="email" class="form-control" onfocus="this.placeholder = ''"
+                                 onblur="this.placeholder = 'Enter email'" placeholder='Enter email' required>
+                           </div>
+                           <button class="button rounded-0 primary-bg text-white w-100 btn_1 boxed-btn" type="submit">Subscribe</button>
+                        </form>
+                     </aside>
+                      <aside class="single_sidebar_widget instagram_feeds">
+                        <h4 class="widget_title" style="color: #2d2d2d;">Volunteers</h4>
+                        <ul class="instagram_row flex-wrap">
+			{% if volunteers %}
+			{% for volunteer in volunteers %}
+                           <li>
+                              <a href="{% url 'volunteer-list' %}">
+                                 <img class="img-fluid" src="{{volunteer.image.url}}" alt="">
+                              </a>
+                           </li>
+			{% endfor %}
+			{% endif %}
+                        </ul>
+                     </aside>
+                     <aside class="single_sidebar_widget tag_cloud_widget">
+                        <h4 class="widget_title" style="color: #2d2d2d;">Tag Clouds</h4>
+                        <ul class="list">
+                           <li>
+                              <a href="#">Orphanages</a>
+                           </li>
+                           <li>
+                              <a href="#">Food</a>
+                           </li>
+                           <li>
+                              <a href="#">Clean water</a>
+                           </li>
+                           <li>
+                              <a href="#">Shelter</a>
+                           </li>
+                           <li>
+                              <a href="#">Education</a>
+                           </li>
+                        </ul>
+                     </aside>
+
+
+                  </div>
+               </div>
+            </div>
+         </div>
+      </section>
+      <!-- Blog Area End -->
+   </main>
+
+
+{% endblock %}
