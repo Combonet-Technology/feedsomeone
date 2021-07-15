@@ -1,0 +1,227 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load static %}
+{% block content %}
+    <main>
+    <!--? Hero Start -->
+    <div class="slider-area2">
+        <div class="slider-height2 d-flex align-items-center">
+            <div class="container">
+                <div class="row">
+                    <div class="col-xl-12">
+                        <div class="hero-cap hero-cap2 pt-20 text-center">
+                            <h2>About US</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Hero End -->
+    <!--? Services Area Start -->
+    <div class="service-area section-padding30">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-xl-8 col-lg-7 col-md-10 col-sm-10">
+                    <!-- Section Tittle -->
+                    <div class="section-tittle text-center mb-80">
+                        <span>What we are doing</span>
+                        <h2>We Are On A Mission To Provide The Following To The Helpless</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-3 col-md-6 col-sm-6">
+                    <div class="single-cat active text-center mb-50">
+                        <div class="cat-icon">
+                            <span class="fas fa-hamburger"></span>
+                        </div>
+                        <div class="cat-cap">
+                            <h5><a href="services.html">Feeding</a></h5>
+                            <p>We are here to help the less-privileged have access to good food and clean water.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 col-sm-6">
+                    <div class="single-cat text-center mb-50">
+                        <div class="cat-icon">
+                            <span class="fas fa-hospital"></span>
+                        </div>
+                        <div class="cat-cap">
+                            <h5><a href="services.html">Health</a></h5>
+                            <p>We provide health-care assistance to the less-privilege, both young and old</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 col-sm-6">
+                    <div class="single-cat text-center mb-50">
+                        <div class="cat-icon">
+                            <span class="fas fa-home"></span>
+                        </div>
+                        <div class="cat-cap">
+                            <h5><a href="services.html">Shelter</a></h5>
+                            <p>We provide a place of shelter to the displaced until they are able to get their own places</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 col-sm-6">
+                    <div class="single-cat text-center mb-50">
+                        <div class="cat-icon">
+                            <span class="flaticon-think"></span>
+                        </div>
+                        <div class="cat-cap">
+                            <h5><a href="services.html">Empowerment</a></h5>
+                            <p>We provide education, human development and capital to the less privilege.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Services Area End -->
+    <!--? About Law Start-->
+    <section class="about-low-area section-padding2">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-6 col-md-10">
+                    <div class="about-caption mb-50">
+                        <!-- Section Tittle -->
+                        <div class="section-tittle mb-35">
+                            <span>About our foundation</span>
+                            <h2>We are on a mission to eradicate hunger and poverty</h2>
+                        </div>
+                        <p><strong>Mission Statement: </strong>To ensure that the marginalized, socially and economically unstable are being kept in a state of hapiness and vitality by a steady source of meal and shelter</p>
+                        <p><strong>Vision Statement: </strong>Transforming the percentage of disadvantaged and mentally unstable people into valuable members of the society with the aid of rehabilitating actions such as free feeding, shelter, counselling and empowerment.</p>
+                    </div>
+                    <a href="about.html" class="btn">About US</a>
+                </div>
+                <div class="col-lg-6 col-md-12">
+                    <!-- about-img -->
+                    <div class="about-img ">
+                        <div class="about-font-img d-none d-lg-block">
+                            <img src="{% static 'img/gallery/icecream.png' %}" alt="">
+                        </div>
+                        <div class="about-back-img ">
+                            <img src="{% static 'img/gallery/about2.png' %}" alt="">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- About Law End-->
+    <!-- Want To work -->
+    <section class="wantToWork-area ">
+        <div class="container">
+            <div class="wants-wrapper w-padding2  section-bg" data-background="{% static 'img/gallery/section_bg01.png' %}">
+                <div class="row align-items-center justify-content-between">
+                    <div class="col-xl-7 col-lg-8 col-md-7">
+                        <div class="wantToWork-caption wantToWork-caption2">
+                            <h2>Together We can Change The world with Humanity</h2>
+                        </div>
+                    </div>
+                    <div class="col-xl-2 col-lg-2 col-md-3">
+                        <a href="{% url 'register'%}" class="btn white-btn f-right sm-left">Become A Volunteer</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Want To work End -->
+    <!--? Testimonial Start -->
+    <div class="testimonial-area testimonial-padding">
+        <div class="container">
+            <!-- Testimonial contents -->
+            <div class="row d-flex justify-content-center">
+                <div class="col-xl-8 col-lg-8 col-md-10">
+                    <div class="h1-testimonial-active dot-style">
+                        <!-- Single Testimonial -->
+                        <div class="single-testimonial text-center">
+                            <div class="testimonial-caption ">
+                                <!-- founder -->
+                                <div class="testimonial-founder">
+                                    <div class="founder-img mb-40">
+                                        <img src="{% static 'img/gallery/bcx.png' %}" alt="">
+                                        <span>Oluwafemi Olanrewaju</span>
+                                        <p>Innovator</p>
+                                    </div>
+                                </div>
+                                <div class="testimonial-top-cap">
+                                    <p style="line-height: 1.5; margin-bottom: 50px; font-size: 20px;">Feedsomeone 1.0 was an humbling experience personally for me but am glad it was possible. I dove my hat to all the wonderful souls who came out to show their human side, God bless us all, amen.
+You also can become a part of this, we all have our part to play. The fact is that people are hungry and starving, and like John Wesley once said: do all the good you can, by all the means you can, in all the ways you can, in all the places you can, at all the times you can, to all the people you can, as long as ever you can.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Single Testimonial -->
+                        <div class="single-testimonial text-center">
+                            <div class="testimonial-caption ">
+                                <!-- founder -->
+                                <div class="testimonial-founder">
+                                    <div class="founder-img mb-40">
+                                        <img src="{% static 'img/gallery/abolarin.png' %}" alt="">
+                                        <span>Olabisi Abolarin</span>
+                                        <p>Volunteer</p>
+                                    </div>
+                                </div>
+                                <div class="testimonial-top-cap">
+                                    <p style="line-height: 1.5; margin-bottom: 50px; font-size: 20px;">Sometimes we are fooled by appearances. In my opinion, we should never be sorry if we later discover that we were mistaken while doing a good deed. The need to help should be our first reaction and offering help should be the genuine manifestation of being a good human as our parents taught us to be. Sometimes, we may discover we helped the wrong person, but that should not be a reason to stop helping other people in need, even though we were fooled previously. If you want to do good there are opportunities everywhere. Dont let the fools spoil your good heart.
+We all have the power to influence others. It is up to us, whether we are going to abuse that power to manipulate people or use it to help them.
+Join the movement </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Testimonial End -->
+
+    <!--? Count Down Start -->
+    <div class="count-down-area pt-25 section-bg" data-background="{% static 'img/gallery/section_bg02.png' %}">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-12 col-md-12">
+                    <div class="count-down-wrapper" >
+                        <div class="row justify-content-between">
+                            <div class="col-lg-3 col-md-6 col-sm-6">
+                                <!-- Counter Up -->
+                                <div class="single-counter text-center">
+                                   <span class="counter color-green">{{total_amount|floatformat:0|intcomma}}</span>
+                                    <span class="plus">+</span>
+                                    <p class="color-green">Donations</p>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 col-sm-6">
+                                <!-- Counter Up -->
+                                <div class="single-counter text-center">
+                                    <span class="counter color-green">3</span>
+                                    <span class="plus">+</span>
+                                    <p class="color-green">Events Done</p>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 col-sm-6">
+                                <!-- Counter Up -->
+                                <div class="single-counter text-center">
+                                   <span class="counter color-green">{{total_transaction}}</span>
+                                    <span class="plus">+</span>
+                                    <p class="color-green">People Donated</p>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 col-sm-6">
+                                <!-- Counter Up -->
+                                <div class="single-counter text-center">
+                                    <span class="counter color-green">256</span>
+                                    <span class="plus">+</span>
+                                    <p class="color-green">Donation</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Count Down End -->
+    </main>
+{% endblock %}

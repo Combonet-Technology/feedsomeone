@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+
+<main>
+    <div class="container">
+        <div class="row">
+	          <div class="col-md-12" style="font-size: 5rem;padding: 15% 10% !important">
+                  <h1 class="mt-4">YOU HAVE BEEN LOGGED OUT</h1>
+                  <div class="border-top pt-4">
+                          <a href="{% url 'login' %}" style="color: green;">Login</a> into your account again
+                  </div>
+            </div>
+        </div>
+    </div>
+    </main>
+{% endblock %}

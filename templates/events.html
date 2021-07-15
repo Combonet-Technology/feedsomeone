@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<main>
+    <!--? Hero Start -->
+    <div class="slider-area2">
+        <div class="slider-height2 d-flex align-items-center">
+            <div class="container">
+                <div class="row">
+                    <div class="col-xl-12">
+                        <div class="hero-cap hero-cap2 pt-20 text-center">
+                            <h2>{{page_title_head}}</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Hero End -->
+    <!--? Count Down Start -->
+    <div class="count-down-area pt-25 section-bg" data-background="{% static 'img/gallery/section_bg02.png' %}">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-12 col-md-12">
+                    <div class="count-down-wrapper" >
+                        <div class="row justify-content-between">
+                            <div class="col-lg-3 col-md-6 col-sm-6">
+                                <!-- Counter Up -->
+                                <div class="single-counter text-center">
+                                    <span class="counter color-green">70000</span>
+                                    <span class="plus">+</span>
+                                    <p class="color-green">Donations</p>
+                                </div>
+                            </div>
+                            <div class="col-lg-4 col-md-6 col-sm-6">
+                                <!-- Counter Up -->
+                                <div class="single-counter text-center">
+                                    <span class="counter color-green">1</span>
+                                    <span class="plus">+</span>
+                                    <p class="color-green">Event Done</p>
+                                </div>
+                            </div>
+                            <div class="col-lg-4 col-md-6 col-sm-6">
+                                <!-- Counter Up -->
+                                <div class="single-counter text-center">
+                                    <span class="counter color-green">3</span>
+                                    <span class="plus">+</span>
+                                    <p class="color-green">People Donated</p>
+                                </div>
+                            </div>
+                            <div class="col-lg-4 col-md-6 col-sm-6">
+                                <!-- Counter Up -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Count Down End -->
+    <!-- Featured_job_start -->
+   <section class="featured-job-area section-padding30 section-bg2" data-background="{% static 'img/gallery/section_bg03.png' %}">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-xl-7 col-lg-9 col-md-10 col-sm-12">
+                    <!-- Section Tittle -->
+                    <div class="section-tittle text-center mb-80">
+                        <span>{{page_title_sub}}</span>
+                        <h2>{{page_title_content}}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="row justify-content-center">
+                <div class="col-lg-9 col-md-12">
+                    <!-- single-job-content -->
+                    <div class="single-job-items">
+                        {% for event in events %}
+                        <div class="job-items" style="margin-bottom: 50px; padding-bottom: 50px;">
+                            <div class="company-img">
+                                <a href="{% url 'event-details' event.id %}"><img width="360" height="240" src="{{event.feature_img.url}}" alt=""></a>
+                            </div>
+                            <div class="job-tittle">
+                                <a href="{% url 'event-details' event.id %}"><h4>{{event.title}}</h4></a>
+                                <ul>
+                                    <li><i class="far fa-clock"></i>{{event.time}}</li>
+                                    <li><i class="fas fa-sort-amount-down"></i>{{event.event_date}}</li>
+                                    <li><i class="fas fa-map-marker-alt"></i>{{event.location}}</li>
+                                </ul>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+<!--                <div class="col-lg-9 col-md-12">-->
+<!--                    &lt;!&ndash; single-job-content &ndash;&gt;-->
+<!--                    <div class="single-job-items mb-30">-->
+<!--                        <div class="job-items">-->
+<!--                            <div class="company-img">-->
+<!--                                <a href="#"><img src="{% static 'img/gallery/orphanage.png' %}" alt=""></a>-->
+<!--                            </div>-->
+<!--                            <div class="job-tittle">-->
+<!--                                <a href="#"><h4>A visit to the orphanages</h4></a>-->
+<!--                                <ul>-->
+<!--                                    <li><i class="far fa-clock"></i>10:30 - 2:30pm</li>-->
+<!--                                    <li><i class="fas fa-sort-amount-down"></i>25.12.2020</li>-->
+<!--                                    <li><i class="fas fa-map-marker-alt"></i>Akure, Nigeria</li>-->
+<!--                                </ul>-->
+<!--                            </div>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                </div>-->
+            </div>
+        </div>
+    </section>
+    <!-- Featured_job_end -->
+    </main>
+{% endblock %}

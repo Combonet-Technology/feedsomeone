@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+{% block content %}
+
+    <div id = "container">
+        <div class="row d-flex mb-5 h-100">
+	          <div class="col-md-12 mb-4 align-self-center">
+                  <form method="POST" name="Post" enctype="multipart/form-data" id="contentform" class="mt-5 ml-5 mr-5">
+                      {% csrf_token %}
+                      <fieldset>
+                          <legend class="border-bottom mb-4">Create New Post</legend>
+                          <div class="form-group">
+                          {{a_form | crispy}}
+                          </div>
+                          <div class="form-group col-lg-5 ml-5">
+                          {{ p_form | safe}}
+                          </div>
+                          <div id="div_id_title" class="form-group"> <label for="id_title" class=" requiredField">
+                              Select Category<span class="asteriskField">*</span> </label>
+                          <div class=""> <select name="title"
+                          value="UNCATEGORIZED" class="textinput textInput col-lg-6 col-sm-6" required id="id_title">
+                          <option value="0"  style="padding-left: 50px;padding-right: 142px; !important" >Choose one</option>
+                          {% for item in c_form %}
+                          <option value={{item.id}}>{{item}}</option>
+                          {% endfor %}
+                          </select>
+                          </div>
+                          </div>
+                      </fieldset>
+                      <div class="form-group">
+                          <input type="submit" class="btn btn-primary ml-2 mt-5" value="Create">
+                      </div>
+                  </form>
+            </div>
+        </div>
+    </div>
+<!-- include summernote css/js-->
+
+<script src="http://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.3/summernote.js"></script>
+<script>
+$('.summernote').summernote({
+  airMode: true
+});
+</script>
+{% endblock %}
+
