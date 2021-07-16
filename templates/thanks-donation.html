@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+</head>
+<body>
+{% load static %}
+<div class="jumbotron text-center" style="background-color: white">
+  <h1 class="display-3">Thank You for your donations!</h1>
+  <p class="lead"><strong>Just because of your generosity a lot of smiles will erupt on people's faces</strong> ..</p>
+  <hr>
+  <p>
+    Got any request? <a href="tel:08170838856">call us</a>
+  </p>
+  <p class="lead">
+    <a class="btn btn-primary btn-sm ml-4" href="{%url 'homepage'%}" role="button">Homepage</a>
+    <a class="btn btn-primary btn-sm" href="{%url 'gallery'%}" role="button">Check our gallery</a>
+  </p>
+</div>
+</body>
+</html>
