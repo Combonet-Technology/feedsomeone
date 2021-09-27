@@ -47,7 +47,8 @@ class Rave:
         """
 
         classes = (
-            Account, Bills, Card, Ebills, Francophone, GhMobile, Mpesa, PaymentPlan, Preauth, Recipient, RWMobile, Settlement, SubAccount, Subscriptions, Transfer, UGMobile, Ussd, Verify, VirtualAccount, VirtualCard, ZBMobile
+            Account, Bills, Card, Ebills, Francophone, GhMobile, Mpesa, PaymentPlan, Preauth, Recipient, RWMobile, Settlement,
+            SubAccount, Subscriptions, Transfer, UGMobile, Ussd, Verify, VirtualAccount, VirtualCard, ZBMobile
         )
 
         for _class in classes:

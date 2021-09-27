@@ -1,0 +1,44 @@
+# YAML A'int Markup Language - data serialization language
+# used to store key-valued pair similar to json, but yaml focuses more on readability and user-friendliness
+# .yml, .yaml are the extensions
+# ISO 8601 standard to declare datetime in yaml
+# boolean yes, no, true, false, on, off
+person:
+  name: "Ben Cipher X"
+  occupation: "Programmer"
+  age: &age 28
+  num: !!float 28 # renders 28.0
+  male: true
+  female: false
+  gpa: 4.1
+  cgpa: !!str 4.1 # renders "4.1"
+  fav_num: 1e+10
+  birthday: 1993-08-09 00:00:00
+  flaws: null
+  hobbies:
+    - hiking
+    - reading
+    - sleeping
+  movies: [ "Harry Porter", "John Wick", "Matrix" ]
+  companies:
+    - name: "codegarage"
+      owner: "EVO"
+    - { name: "Bitmask", owner: "codemask" }
+    -
+      name: "Feedsomeone"
+      owner: "Ebenezer"
+   # this will render preceeding text as a single line
+  description: >
+    ehkjejl mihgnkr ionrklme io3nlmebbniel.
+    enklrevn ionvklerrvn vionlkee ioevnlk v
+    ufejkn ievnkl  i3nveklv ienvklq ein vlk.
+  # this will preserve all teh formattings
+  signature: |
+    Ebenezer Oluwafemi
+    Technical Lead
+    Codegarage, Africa.
+  id: *age # anchoring a variable
+  base: &base_obj_var
+    var1: "value1"
+  bar:
+    <<: *base_obj_var # will render - var1: "value1"

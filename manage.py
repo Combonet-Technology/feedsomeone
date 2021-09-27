@@ -2,11 +2,16 @@
 """Django's command-line utility for administrative tasks."""
 import os
 import sys
+from pathlib import Path
+from decouple import config
+
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 def main():
     """Run administrative tasks."""
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'feedsomeone.settings')
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', config('SETTINGS', 'feedsomeone.settings'))
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
