@@ -13,25 +13,22 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 from pathlib import Path
 import os
 import json
+
 with open('/etc/django_config.json') as config_file:
     config = json.load(config_file)
-#from dotenv import load_dotenv
-#load_dotenv()
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config['SECRET_KEY']
-#SECRET_KEY = os.getenv('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['www.feedsomeone.org','feedsomeone.org','88.80.191.154']
-
+ALLOWED_HOSTS = ['www.feedsomeone.org', 'feedsomeone.org', '88.80.191.154']
 
 # Application definition
 
@@ -84,23 +81,21 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'feedsomeone.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
 DATABASES = {
     'default': {
-       #'ENGINE': 'django.db.backends.sqlite3',
-       #'NAME': BASE_DIR / 'db.sqlite3',
-       'ENGINE': 'django.db.backends.postgresql',
-       'NAME': config.get('NAME'),
-       'USER': config.get('USER'),
-       'PASSWORD': config.get('PASSWORD'),
-       'HOST': 'localhost',
-	# 'PORT': ''
+        # 'ENGINE': 'django.db.backends.sqlite3',
+        # 'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': config.get('NAME'),
+        'USER': config.get('USER'),
+        'PASSWORD': config.get('PASSWORD'),
+        'HOST': 'localhost',
+        # 'PORT': ''
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators
@@ -120,7 +115,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/3.1/topics/i18n/
 
@@ -133,7 +127,6 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
@@ -150,8 +143,6 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp-mail.outlook.com'
 EMAIL_HOST_USER = config.get('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config.get('EMAIL_HOST_PASS')
-#EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
-#EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASS')
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
@@ -167,9 +158,6 @@ IMAGEFIT_ROOT = BASE_DIR
 AWS_ACCESS_KEY_ID = config.get('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = config.get('AWS_SECRET_ACCESS_KEY')
 AWS_STORAGE_BUCKET_NAME = config.get('AWS_STORAGE_BUCKET_NAME')
-#AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
-#AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
-#AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
 AWS_S3_FILE_OVERWRITE = False
 AWS_DEFAULT_ACL = None
 
@@ -179,4 +167,3 @@ DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 X_FRAME_OPTIONS = 'SAMEORIGIN'
 SUMMERNOTE_THEME = 'bs4'
 # SUMMERNOTE_CONFIG['disable_attachment'] = True
-
