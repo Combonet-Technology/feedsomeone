@@ -177,3 +177,5 @@ venv
 **.ini
 .idea/*
 .idea
+feedsomeone/.env
+settings.ini
