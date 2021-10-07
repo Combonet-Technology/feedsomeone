@@ -5,7 +5,7 @@
 <head>
     <meta charset="utf-8">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
-    <title> FEEDSOMEONE | eradicating hunger and poverty</title>
+    <title> FEEDSOMEONE | {% block page_title %} {% endblock %}</title>
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="manifest" href="site.webmanifest crossorigin=use-credentials">
@@ -31,6 +31,7 @@
 <!--	<link rel="stylesheet" href="{% static 'css/main.css' %}">-->
 <!--	<link rel="stylesheet" href="{% static 'css/donatestyle.css' %}">-->
 	<link rel="stylesheet" href="{% static 'css/style.css' %}">
+
     {% if p_form %}
     <link href="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.9/summernote-lite.css" rel="stylesheet">
     <style>
@@ -53,7 +54,9 @@ form#contentform {
 
 div.nice-select {
     max-width:100% !important
-}</style>
+}
+
+</style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.9/summernote-lite.js"></script>
     {% endif %}
 {% if forms %}
@@ -84,6 +87,15 @@ div.nice-select {
     #contentform .form-control{
     height: calc(2.25rem + 15px) !important;
     font-size: 2rem !important;
+}
+a.blog_item_date  {
+-webkit-text-fill-color: #eee;
+}
+a.blog_item_date:hover {
+    background: -webkit-linear-gradient(131deg, #007bff 0%, #09cc7f 99%);
+    -webkit-text-fill-color: #eee;
+    text-decoration: none;
+    transition: .4s;
 }
     </style>
 

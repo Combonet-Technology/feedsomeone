@@ -68,7 +68,7 @@ class UpcomingEventsList(ListView):
         # Add in a QuerySet of all the books
         context['page_title_head'] = "Upcoming Charity Events"
         context['page_title_sub'] = "Events Coming Soon"
-        context['page_title_content'] = "Where We Will Be Impacting In The Coming Weeks"
+        context['page_title_content'] = "Where we will be impacting soon, join us!"
         return context
 
 
@@ -87,9 +87,9 @@ class PastEventsList(ListView):
         # Call the base implementation first to get a context
         context = super().get_context_data(**kwargs)
         # Add in a QuerySet of all the books
-        context['page_title_head'] = "Organized Charity Events"
+        context['page_title_head'] = "Past Charity Events"
         context['page_title_sub'] = "Events we did in the past"
-        context['page_title_content'] = "Events we have organized in the Past"
+        context['page_title_content'] = "Review the events we organized in the past"
         return context
 
 
@@ -97,21 +97,25 @@ class EventDetailView(DetailView):
     model = Events
     # template_name = 'post_detail.html'
     context_object_name = 'event'
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         volunteers = Profile.objects.exclude(active=False).order_by('date_joined')[:6]
         context['volunteers'] = volunteers
         return context
 
+
 class CreateEventView(LoginRequiredMixin, CreateView):
     model = Events
-    fields = ['title', 'event_date', 'time', 'location','feature_img','content','budget']
+    fields = ['title', 'event_date', 'time', 'location', 'feature_img', 'content', 'budget']
     success_url = '/events/upcoming'
+
     # success_url = reverse_lazy('future-events')
 
     def form_valid(self, form):
         form.instance.event_author = self.request.user
         return super(CreateEventView, self).form_valid(form)
+
 
 # def contact(request):
 #     return render(request, 'contact.html')
@@ -122,7 +126,7 @@ class AllGalleryImagesListView(ListView):
     model = GalleryImage
     template_name = 'gallery.html'
     context_object_name = 'event_imgs'
-    ordering = ['?','-date_posted']
+    ordering = ['?', '-date_posted']
     paginate_by = 12
 
 
@@ -131,7 +135,7 @@ class FooterGalleryImages(ListView):
     model = GalleryImage
     template_name = 'gallery.html'
     context_object_name = 'event_imgs'
-    ordering = ['?','-date_posted']
+    ordering = ['?', '-date_posted']
     paginate_by = 6
 
 
@@ -143,7 +147,7 @@ class FooterGalleryImages(ListView):
 
 def donate(request):
     total_transaction = TransactionHistory.objects.aggregate(amount=Sum('amount'))
-    transacters = len(list(TransactionHistory.objects.all()))-2
+    transacters = len(list(TransactionHistory.objects.all())) - 2
     total_volunteers = len(list(Profile.objects.all()))
     context = {
         'total_amount': total_transaction.get('amount'),
@@ -180,7 +184,7 @@ def upload_images(request):
         return HttpResponse(json.dumps(response), content_type='application/json')
     else:
         event = Events.objects.all()
-        return render(request, 'file_upload.html', {'event':event})
+        return render(request, 'file_upload.html', {'event': event})
 
 
 def donate_thanks(request):
