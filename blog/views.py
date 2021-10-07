@@ -1,3 +1,4 @@
+import logging
 from django.contrib import messages
 from django.db.models import Count
 from django.shortcuts import render, get_object_or_404, redirect
@@ -7,7 +8,7 @@ from django_summernote.fields import SummernoteTextFormField
 
 from blog.forms import ArticleForm
 # from blog.forms import CategoryForm, ArticleForm
-from blog.models import Post, Comments, Categories
+from blog.models import Article, Comments, Categories
 from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
@@ -16,37 +17,42 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import User
 
 
+# Get an instance of a logger
+logger = logging.getLogger(__name__)
+
+
 # Post Page Fxn recreated into a class
 class ArticleListView(LoginRequiredMixin, ListView):
-    model = Post
-    # context_object_name = 'posts'
-    ordering = ['-date_posted']
+    model = Article
+    context_object_name = 'posts'
+    ordering = ['-date_created']
     paginate_by = 3
+    template_name = 'blog/post_list.html'
 
-    def get_context_data(self, **kwargs):
-        category_set = []
-        context = super(ArticleListView, self).get_context_data(**kwargs)
-        context['posts'] = Post.objects.all()
-        context['recent_posts'] = Post.objects.order_by("-date_posted")[:8]
-        categories = Post.objects.values('category').annotate(ct=Count('category')).order_by('-ct')[:10]
-        dist_cat = (list(categories))
-        for item in dist_cat:
-            category = Categories.objects.filter(id=item['category']).values().first()
-            category['ct'] = item['ct']
-            category_set.append(category)
-        context['category_set'] = category_set
-        return context
+    # def get_context_data(self, **kwargs):
+    #     category_set = []
+    #     context = super(ArticleListView, self).get_context_data(**kwargs)
+    #     context['posts'] = Article.objects.all()
+    #     context['recent_posts'] = Article.objects.order_by("-date_posted")[:8]
+    #     categories = Article.objects.values('category').annotate(ct=Count('category')).order_by('-ct')[:10]
+    #     dist_cat = (list(categories))
+    #     for item in dist_cat:
+    #         category = Categories.objects.filter(id=item['category']).values().first()
+    #         category['ct'] = item['ct']
+    #         category_set.append(category)
+    #     context['category_set'] = category_set
+    #     return context
 
 
 class UserArticleListView(LoginRequiredMixin, ListView):
-    model = Post
+    model = Article
     template_name = 'blog/posts-by-user.html'
     context_object_name = 'post'
     paginate_by = 2
 
     def get_queryset(self):
         user = get_object_or_404(User, username=self.kwargs.get('username'))
-        return Post.objects.filter(post_author=user).order_by('-date_posted')
+        return Article.objects.filter(post_author=user).order_by('-date_created')
 
 
 # class ArticleDetailView(LoginRequiredMixin, DetailView):
@@ -76,10 +82,10 @@ class UserArticleListView(LoginRequiredMixin, ListView):
 #         new_comment = None
 
 
-def post_detail(request, pk):
+def article_detail(request, pk, slug):
     template_name = 'blog/post_detail.html'
-    post = get_object_or_404(Post, pk=pk)
-    # post = get_object_or_404(Article, slug=slug)
+    # post = get_object_or_404(Post, pk=pk)
+    post = get_object_or_404(Article, pk=pk, article_slug=slug)
     comments = post.comments.filter(active=True)
     posted_comment = None
     # Comment posted
@@ -121,82 +127,70 @@ def post_detail(request, pk):
 #     context_object_name = 'post'
 
 
-class CreateArticleView(LoginRequiredMixin, CreateView):
-    model = ['Post', 'Category']
-    fields = ['post_title', 'post_excerpt', 'post_content', 'feature_img']
-    # success_url = ''
-
-    def form_valid(self, form):
-        form.instance.post_author = self.request.user
-        return super(CreateArticleView, self).form_valid(form)
+# class CreateArticleView(LoginRequiredMixin, CreateView):
+#     model = ['Post', 'Category']
+#     fields = ['post_title', 'post_excerpt', 'post_content', 'feature_img']
+#     # success_url = ''
+#
+#     def form_valid(self, form):
+#         form.instance.article_author = self.request.user
+#         return super(CreateArticleView, self).form_valid(form)
 
 
 @login_required
 def create_article(request):
     template_name = 'blog/post_form.html'
+    form = None
     if request.method == 'POST':
-        post_form = request.POST
-        post_title = post_form.get('post_title')
-        post_excerpt = post_form.get('post_excerpt')
-        post_content = post_form.get('post_content')
-        feature_img = request.FILES.get('feature_img')
-        category = post_form.get('title')
-        while post_title != '' and post_excerpt != '' and post_content != '' and feature_img != '' and category != '':
-            new_post = Post.objects.create(post_title=post_title,
-                                           post_excerpt=post_excerpt,
-                                           post_content=post_content,
-                                           feature_img=feature_img,
-                                           category_id=category,
-                                           post_author=request.user,
-                                           )
-            new_post.save()
-            if new_post.pk:
-                return redirect('all-articles')
-            else:
-                messages.error(request, 'Your post was not created, try again later')
-            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-        messages.error(request, 'Form not fully filled, please retry.')
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-    else:
-        article_form = ArticleForm()
-        categories = Categories.objects.all()
-        post_content = SummernoteTextFormField()
-        # category_form = CategoryForm()
-        context = {
-            'a_form': article_form,
-            # 'c_form': category_form,
-            'c_form': categories,
-            'p_form': post_content,
+        pass
+        form = ArticleForm(request.POST, request.FILES)
+        if form.is_valid():
+            data = form.save(commit=False)
+            data.article_author = request.user
+            data.save()
+            return redirect('all-articles')
+        # return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        errors = form.errors
+        print(errors)
+        logger.error(errors)
+    article_form = form if form else ArticleForm()
+    categories = Categories.objects.all()
+    post_content = SummernoteTextFormField()
+    # category_form = CategoryForm()
+    context = {
+        'a_form': article_form,
+        'c_form': categories,
+        'p_form': post_content,
 
-        }
-        return render(request, template_name, context)
+    }
+    return render(request, template_name, context)
 
 
 class UpdateArticleView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
-    model = Post
+    model = Article
     fields = ['post_title', 'post_excerpt', 'post_content', 'feature_img']
     # success_url = ''
 
     def form_valid(self, form):
-        form.instance.post_author = self.request.user
+        form.instance.article_author = self.request.user
         return super().form_valid(form)
 
     def test_func(self):
         post = self.get_object()
-        if self.request.user == post.post_author:
+        if self.request.user == post.article_author:
             return True
         return False
 
 
 class ArticleDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
-    model = Post
+    model = Article
     # template_name = 'post_detail.html'
     context_object_name = 'post'
     success_url = '/'
 
     def test_func(self):
         post = self.get_object()
-        if self.request.user == post.post_author:
+        if self.request.user == post.article_author:
             return True
         return False
 
@@ -205,7 +199,7 @@ class ArticleDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
 @login_required()
 def all_post(request):
     # return HttpResponse('WELCOME TO POST PAGE')
-    post = Post.objects.all()
+    post = Article.objects.all()
     return render(request, 'all-post.html', {'post': post})
 
 

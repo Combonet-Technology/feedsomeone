@@ -30,14 +30,14 @@
                         <img class="img-fluid" src="{% if post.feature_img %}{{ post.feature_img.url}}{%endif%}" alt="">
                      </div>
                      <div class="blog_details">
-                        <h2 style="color: #2d2d2d;">{{post.post_title}}
+                        <h2 style="color: #2d2d2d;">{{post.article_title}}
                         </h2>
                         <ul class="blog-info-link mt-3 mb-4">
-                           <li>Post by <a href="#"><i class="fa fa-user"></i>{{post.post_author}}</a></li>
+                           <li>Post by <a href="#"><i class="fa fa-user"></i>{{post.id}}</a></li>
 <!--                           <li><a href="#"><i class="fa fa-comments"></i> 03 Comments</a></li>-->
                         </ul>
                         <p class="excert">
-                           {{post.post_excerpt}}
+                           {{post.article_excerpt}}
                         </p>
                         <p>
                            {{post.post_content | safe}}
@@ -117,12 +117,12 @@
                   </div>
                   <div class="blog-author">
                      <div class="media align-items-center">
-                        <img src="{{post.post_author.profile.image.url}}" alt="Image of {{post.post_author|resize:'thumbnail'}}">
+                        <img src="{{post.id.profile.image.url}}" alt="Image of {{post.id|resize:'thumbnail'}}">
                         <div class="media-body">
-                           <a href="{% url 'article-by-user' post.post_author %}">
-                              <h4>{{post.post_author}}</h4>
+                           <a href="{% url 'article-by-user' post.id %}">
+                              <h4>{{post.id}}</h4>
                            </a>
-                           <p>{{post.post_author.profile.short_bio}}</p>
+                           <p>{{post.id.profile.short_bio}}</p>
                         </div>
                      </div>
                   </div>
@@ -158,7 +158,9 @@
 
                   <div class="comment-form">
                      <h4>Leave a Reply</h4>
-                     <form name="comment_form" class="form-contact comment_form" action="{% url 'post_detail' post.id %}" id="commentForm" method="post">
+                     <form name="comment_form" class="form-contact comment_form"
+                           action="{% url 'article-detail' post.id post.article_slug %}"
+                           id="commentForm" method="post">
                         {% csrf_token %}
                         <div class="row">
                            <div class="col-12">

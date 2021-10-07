@@ -1,5 +1,5 @@
 from django.contrib import admin
-from blog.models import Post, Comments, Categories
+from blog.models import Article, Comments, Categories
 from django_summernote.admin import SummernoteModelAdmin
 from import_export.admin import ImportExportActionModelAdmin, ExportActionModelAdmin
 
@@ -13,7 +13,7 @@ from import_export.admin import ImportExportActionModelAdmin, ExportActionModelA
 #     pass
 
 
-@admin.register(Post)
+@admin.register(Article)
 class PostAdmin(ImportExportActionModelAdmin):
     # summernote_fields = '__all__'
     summernote_fields = ('post_content',)

@@ -27,23 +27,24 @@
                             {% for post in posts %}
                             <article class="blog_item">
                                 <div class="blog_item_img">
-                                    <a href="{% url 'full-article' post.id %}"><div id="yes"
+                                    <a href="{% url 'article-detail' post.id post.article_slug %}"><div id="yes"
                             style="background:transparent no-repeat center;background-size: cover;
                             background-image: url('{% if post.feature_img %}{{ post.feature_img.url}}{%endif%}');
                             transition: all .5s;"></div></a><img class="card-img rounded-0" src="
                                     {% if post.feature_img %}{{ post.feature_img.url}}{%endif%}" alt="">
-                                    <a href="{% url 'full-article' post.id %}" class="blog_item_date">
-                                        <h3>{{ post.date_posted | date:"d" }}</h3>
-                                        <p>{{ post.date_posted | date:"M" }}, {{ post.date_posted | date:"Y" }}</p>
+                                    <a href="{% url 'article-detail' post.id post.article_slug %}" class="blog_item_date">
+                                        <h3>{{ post.date_created | date:"d" }}</h3>
+                                        <p>{{ post.date_created | date:"M" }}, {{ post.date_created | date:"Y" }}</p>
                                     </a>
                                 </div>
                                 <div class="blog_details">
-                                    <a class="d-inline-block" href="{% url 'full-article' post.id %}">
+                                    <a class="d-inline-block" href="{% url 'article-detail' post.id post.article_slug %}">
                                         <h2 class="blog-head" style="color: #2d2d2d;">{{post.post_title}}</h2>
                                     </a>
-                                    <p>{{post.post_excerpt}}</p>
+                                    <p>{{post.article_excerpt}}</p>
                                     <ul class="blog-info-link">
-                                        <li><a href="{% url 'article-by-user' post.post_author %}">Posted by <i class="fa fa-user"></i> {{post.post_author}}</a></li>
+                                        <li><a href="{% url 'article-by-user' post.id %}">Posted by <i
+                                                class="fa fa-user"></i> {{post.id}}</a></li>
 <!--                                        <li><a href="#"><i class="fa fa-comments"></i> 03 Comments</a></li>-->
                                     </ul>
                                 </div>
@@ -124,9 +125,9 @@
                                         transition: all .5s;"></div>
                                     <div class="media-body">
                                         <a href="blog_details.html">
-                                            <h3 style="color: #2d2d2d;">{{post.post_title}}</h3>
+                                            <h3 style="color: #2d2d2d;">{{post.article_title}}</h3>
                                         </a>
-                                        <p>{{ post.date_posted | date:"d M" }}, {{ post.date_posted | date:"Y" }}</p>
+                                        <p>{{ post.date_created | date:"d M" }}, {{ post.date_created | date:"Y" }}</p>
                                     </div>
                                 </div>
                                 {% endfor %}

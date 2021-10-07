@@ -1,4 +1,4 @@
-#!/home/bencipherx/feedsomeone/venv/bin/python3
+#!/home/bencipherx/config/venv/bin/python3
 
 import sys
 import json

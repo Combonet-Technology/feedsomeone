@@ -15,6 +15,7 @@ psycopg2 = "*"
 django-imagefit = "*"
 boto3 = "*"
 django-summernote = "*"
+django-debug-toolbar = "*"
 
 [requires]
 python_version = "3.8"
