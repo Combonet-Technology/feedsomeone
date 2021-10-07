@@ -9,6 +9,8 @@ from django.utils import timezone
 # TODO add user ipaddress information for security
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
+    first_name = models.CharField(max_length=255, null=True)
+    last_name = models.CharField(max_length=255, null=True)
     image = models.ImageField(default='default.png', upload_to='profile_pics')
     phone_number = models.CharField(max_length=15, null=True)
     facebook = models.CharField(max_length=100, null=True, default="#")
@@ -24,9 +26,13 @@ class Profile(models.Model):
     innovator = models.BooleanField(default=False)
     active = models.BooleanField(default=False)
 
-
     def __str__(self):
         return f'{self.user.username} Profile'
+
+    def get_full_name(self):
+
+        full_name = '%s %s' % (self.first_name, self.last_name)
+        return full_name.strip()
 
     # def save(self, *args, **kwargs):
     #     super(Profile, self).save(*args, **kwargs)

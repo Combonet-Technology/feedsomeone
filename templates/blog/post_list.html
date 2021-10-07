@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% block page_title %}our articles{% endblock %}
 {% load static %}
 {% load imagefit %}
 {% block content %}
@@ -39,11 +40,11 @@
                                 </div>
                                 <div class="blog_details">
                                     <a class="d-inline-block" href="{% url 'article-detail' post.id post.article_slug %}">
-                                        <h2 class="blog-head" style="color: #2d2d2d;">{{post.post_title}}</h2>
+                                        <h2 class="blog-head" style="color: #2d2d2d;">{{post.article_title}}</h2>
                                     </a>
                                     <p>{{post.article_excerpt}}</p>
                                     <ul class="blog-info-link">
-                                        <li><a href="{% url 'article-by-user' post.id %}">Posted by <i
+                                        <li><a href="{% url 'article-by-user' post.id %}">Written by <i
                                                 class="fa fa-user"></i> {{post.article_author}}</a></li>
 <!--                                        <li><a href="#"><i class="fa fa-comments"></i> 03 Comments</a></li>-->
                                     </ul>
@@ -107,7 +108,7 @@
                                     {% for category in category_set %}
                                     <li>
                                         <a href="#" class="d-flex">
-                                            <p>{{category.title}}</p>
+                                            <p>{{category.title}}</p> 
                                             <p>({{category.ct}})</p>
                                         </a>
                                     </li>

@@ -29,19 +29,21 @@ class ArticleListView(LoginRequiredMixin, ListView):
     paginate_by = 3
     template_name = 'blog/post_list.html'
 
-    # def get_context_data(self, **kwargs):
-    #     category_set = []
-    #     context = super(ArticleListView, self).get_context_data(**kwargs)
-    #     context['posts'] = Article.objects.all()
-    #     context['recent_posts'] = Article.objects.order_by("-date_posted")[:8]
-    #     categories = Article.objects.values('category').annotate(ct=Count('category')).order_by('-ct')[:10]
-    #     dist_cat = (list(categories))
-    #     for item in dist_cat:
-    #         category = Categories.objects.filter(id=item['category']).values().first()
-    #         category['ct'] = item['ct']
-    #         category_set.append(category)
-    #     context['category_set'] = category_set
-    #     return context
+    def get_context_data(self, **kwargs):
+        category_set = []
+        context = super(ArticleListView, self).get_context_data(**kwargs)
+        context['posts'] = Article.objects.all()
+        context['recent_posts'] = Article.objects.order_by("-date_created")[:8]
+        categories = Article.objects.filter(category__isnull=False).values('category').annotate(ct=Count('category')).order_by(
+            '-ct')[:10]
+        if categories is not None:
+            dist_cat = (list(categories))
+            for item in dist_cat:
+                category = Categories.objects.filter(id=item['category']).values().first()
+                category['ct'] = item['ct']
+                category_set.append(category)
+            context['category_set'] = category_set
+        return context
 
 
 class UserArticleListView(LoginRequiredMixin, ListView):

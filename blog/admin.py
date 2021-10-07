@@ -14,7 +14,7 @@ from import_export.admin import ImportExportActionModelAdmin, ExportActionModelA
 
 
 @admin.register(Article)
-class PostAdmin(ImportExportActionModelAdmin):
+class ArticleAdmin(ImportExportActionModelAdmin):
     # summernote_fields = '__all__'
     summernote_fields = ('post_content',)
 

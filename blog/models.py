@@ -36,7 +36,8 @@ class Article(models.Model):
     article_content = models.TextField()
     feature_img = models.ImageField(upload_to='article_feature_img', default='feature_default.jpg')
     article_author = models.ForeignKey(User, on_delete=models.CASCADE)
-    category = models.ForeignKey(Categories, null=True, blank=True, verbose_name="Category", on_delete=models.DO_NOTHING)
+    category = models.ForeignKey(Categories, null=True, blank=True, verbose_name="Category", related_name="article",
+                                 on_delete=models.DO_NOTHING)
     date_created = models.DateTimeField(auto_now_add=True, verbose_name="Created_at")
     date_updated = models.DateTimeField(auto_now=True, verbose_name="Updated_at")
 
@@ -48,6 +49,7 @@ class Article(models.Model):
 
     def get_absolute_url(self):
         return reverse('article-detail', kwargs={'slug': self.article_slug})
+
 
 # class Taggs(models.Model):
 #     tag_title = models.CharField(max_length=30, default='UNCATEGORIZED')
@@ -82,7 +84,3 @@ class InnerComments(models.Model):
 
     def __str__(self):
         return 'reply {} to {}'.format(self.body, self.post)
-
-
-
-

@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% block page_title %}{{post.article_title}}{% endblock %}
 {% load static %}
 {% load imagefit %}
 {% load crispy_forms_tags %}
@@ -33,19 +34,19 @@
                         <h2 style="color: #2d2d2d;">{{post.article_title}}
                         </h2>
                         <ul class="blog-info-link mt-3 mb-4">
-                           <li>Post by <a href="#"><i class="fa fa-user"></i>{{post.id}}</a></li>
+                           <li>Post by <a href="#"><i class="fa fa-user"></i>{{post.article_author.profile.get_full_name}}</a></li>
 <!--                           <li><a href="#"><i class="fa fa-comments"></i> 03 Comments</a></li>-->
                         </ul>
                         <p class="excert">
                            {{post.article_excerpt}}
                         </p>
                         <p>
-                           {{post.post_content | safe}}
+                           {{post.article_content | safe}}
                         </p>
-                        <div class="quote-wrapper">
-                           <div class="quotes">
-                           </div>
-                        </div>
+<!--                        <div class="quote-wrapper">-->
+<!--                           <div class="quotes">-->
+<!--                           </div>-->
+<!--                        </div>-->
 <!--                        <p>-->
 <!--                           MCSE boot camps have its supporters and its detractors. Some people do not understand why you-->
 <!--                           should have to spend money on boot camp when you can get the MCSE study materials yourself at a-->
@@ -66,7 +67,7 @@
                            <!-- <p class="comment-count"><span class="align-middle"><i class="fa fa-comment"></i></span> 06 Comments</p> -->
                         </div>
                         <ul class="social-icons">
-                           <li><a href="https://www.facebook.com/sai4ull"><i class="fab fa-facebook-f"></i></a></li>
+                           <li><a href="#"><i class="fab fa-facebook-f"></i></a></li>
                            <li><a href="#"><i class="fab fa-twitter"></i></a></li>
                            <li><a href="#"><i class="fab fa-dribbble"></i></a></li>
                            <li><a href="#"><i class="fab fa-behance"></i></a></li>
@@ -117,17 +118,18 @@
                   </div>
                   <div class="blog-author">
                      <div class="media align-items-center">
-                        <img src="{{post.id.profile.image.url}}" alt="Image of {{post.id|resize:'thumbnail'}}">
+                        <img src="{{post.article_author.profile.image.url}}"
+                             alt="Image of {{post.article_author.profile.get_full_name}}">
                         <div class="media-body">
-                           <a href="{% url 'article-by-user' post.id %}">
-                              <h4>{{post.id}}</h4>
+                           <a href="{% url 'article-by-user' post.article_author %}">
+                              <h4>View more post from {{post.article_author.profile.get_full_name}}</h4>
                            </a>
-                           <p>{{post.id.profile.short_bio}}</p>
+                           <p>{{post.article_author.profile.short_bio}}</p>
                         </div>
                      </div>
                   </div>
                   <div class="comments-area">
-                     <h4>{{comments|length}} Comments</h4>
+                     <h4>{{comments|length}}{% if comments|length > 1 %} comments {% else %} comment {% endif %}</h4>
                      {% for comment in comments %}
                      <div class="comment-list">
                         <div class="single-comment justify-content-between d-flex">
