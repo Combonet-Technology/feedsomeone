@@ -29,7 +29,7 @@ class Categories(models.Model):
 
 
 class Article(models.Model):
-    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     article_title = models.CharField(max_length=100)
     article_excerpt = models.CharField(max_length=100, null=True, blank=True)
     article_slug = models.SlugField(null=False, unique=True, max_length=150)
