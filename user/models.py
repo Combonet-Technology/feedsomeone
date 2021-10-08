@@ -8,7 +8,6 @@ from django.utils import timezone
 
 # TODO add user ipaddress information for security
 class Profile(models.Model):
-    id = models.AutoField(primary_key=True, editable=False, unique=True)
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     first_name = models.CharField(max_length=255, null=True)
     last_name = models.CharField(max_length=255, null=True)
