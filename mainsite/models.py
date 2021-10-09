@@ -7,7 +7,7 @@ from django.contrib.auth.models import User
 # Create your models here.
 class Events(models.Model):
     event_date = models.DateField(null=True)
-    event_slug = models.SlugField(null=False, unique=True, max_length=150)
+    event_slug = models.SlugField(null=True, unique=True, max_length=150)
     title = models.CharField(max_length=100)
     location = models.CharField(max_length=35)
     time = models.CharField(max_length=35)
