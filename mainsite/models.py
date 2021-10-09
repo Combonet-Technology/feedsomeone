@@ -1,3 +1,4 @@
+from django.urls import reverse
 from django.utils import timezone
 from django.db import models
 from django.contrib.auth.models import User
@@ -6,6 +7,7 @@ from django.contrib.auth.models import User
 # Create your models here.
 class Events(models.Model):
     event_date = models.DateField(null=True)
+    event_slug = models.SlugField(null=False, unique=True, max_length=150)
     title = models.CharField(max_length=100)
     location = models.CharField(max_length=35)
     time = models.CharField(max_length=35)
@@ -17,6 +19,9 @@ class Events(models.Model):
 
     def __str__(self):
         return self.title
+
+    def get_absolute_url(self):
+        return reverse('event', kwargs={'slug': self.event_slug})
 
     class Meta:
         verbose_name_plural = 'Events'

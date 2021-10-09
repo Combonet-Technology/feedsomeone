@@ -79,10 +79,11 @@
                         {% for event in events %}
                         <div class="job-items" style="margin-bottom: 50px; padding-bottom: 50px;">
                             <div class="company-img">
-                                <a href="{% url 'event-details' event.id %}"><img width="360" height="240" src="{{event.feature_img.url}}" alt=""></a>
+                                <a href="{% url 'event-details' event.id event.event_slug %}"><img width="360" height="240"
+                                                                                         src="{{event.feature_img.url}}" alt=""></a>
                             </div>
                             <div class="job-tittle">
-                                <a href="{% url 'event-details' event.id %}"><h4>{{event.title}}</h4></a>
+                                <a href="{% url 'event-details' event.id event.event_slug %}"><h4>{{event.title}}</h4></a>
                                 <ul>
                                     <li><i class="far fa-clock"></i>{{event.time}}</li>
                                     <li><i class="fas fa-sort-amount-down"></i>{{event.event_date}}</li>
