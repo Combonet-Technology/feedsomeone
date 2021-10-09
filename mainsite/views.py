@@ -26,7 +26,6 @@ def home(request):
         'total_transaction': transacters,
         'volunteers': volunteers
     }
-    # return HttpResponse('welcome to feed someone')
     return render(request, 'home.html', context)
 
 
@@ -39,7 +38,6 @@ def about(request):
         'total_volunteers': total_volunteers,
         'total_transaction': transacters,
     }
-    # return HttpResponse('welcome to feed someone')
     return render(request, 'about.html', context)
 
 

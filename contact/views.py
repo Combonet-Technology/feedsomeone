@@ -6,11 +6,8 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 
 from .models import Contact
-from django.contrib.auth.decorators import login_required
-# Create your views here.
 
 
-# @login_required()
 def contact(request):
     message = Contact()
 
@@ -32,6 +29,11 @@ def contact(request):
             plain_message = strip_tags(html_message)
             from_email = email
             to = 'femolak@outlook.com'
+            new_message = Contact.objects.create(firstname=firstname,
+                                                 lastname=lastname,
+                                                 email=email,
+                                                 subject=subject,
+                                                 message=message)
             try:
                 if send_mail('FEEDSOMEONE CONTACT FORM',
                              plain_message,
@@ -39,18 +41,15 @@ def contact(request):
                              [to],
                              html_message=html_message,
                              fail_silently=False, ):
-                    messages.info(request, 'Mail sent Successfully')
-            except BadHeaderError:
-                return HttpResponse('Invalid header found.')
-            return HttpResponseRedirect('contact/thanks')
-
-            new_message = Contact.objects.create(firstname=firstname,
-                                                 lastname=lastname,
-                                                 email=email,
-                                                 subject=subject,
-                                                 message=message)
-            new_message.save()
-            return redirect('/')
+                    new_message.received = True
+                new_message.save()
+            except BadHeaderError as e:
+                return HttpResponse("Message sending failed because of this error: ", str(e), "\n\nMessage scheduled to be "
+                                                                                              "resent later")
+            except Exception as e:
+                return HttpResponse("Message sending failed because of this error: ", str(e), "\n\nMessage scheduled to be "
+                                                                                              "resent later")
+            return HttpResponseRedirect('thanks')
         else:
             messages.info(request, 'please fill make sure all fields are filled appropriately')
             return redirect('contact')
