@@ -5,26 +5,24 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
-from django.utils.text import slugify
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import ListView, DetailView, CreateView
 from mainsite.models import GalleryImage, Events, TransactionHistory
 from rave_python import Rave
-from django.urls import reverse_lazy
-from user.models import Profile
+from user.models import UserProfile
 from django.db.models import Sum
 
 
 # Create your views here.
 def home(request):
-    volunteers = Profile.objects.exclude(active=False).order_by("?")[:4]
+    volunteers = UserProfile.objects.exclude(is_active=False).order_by("?")[:4]
     total_transaction = TransactionHistory.objects.aggregate(amount=Sum('amount'))
-    transacters = len(list(TransactionHistory.objects.all())) - 2
-    total_volunteers = len(list(Profile.objects.all()))
+    number_of_donations = len(list(TransactionHistory.objects.all())) - 2
+    total_volunteers = len(list(UserProfile.objects.all()))
     context = {
         'total_amount': total_transaction.get('amount'),
         'total_volunteers': total_volunteers,
-        'total_transaction': transacters,
+        'total_transaction': number_of_donations,
         'volunteers': volunteers
     }
     # return HttpResponse('welcome to feed someone')
@@ -34,7 +32,7 @@ def home(request):
 def about(request):
     total_transaction = TransactionHistory.objects.aggregate(amount=Sum('amount'))
     transacters = len(list(TransactionHistory.objects.all())) - 2
-    total_volunteers = len(list(Profile.objects.all()))
+    total_volunteers = len(list(UserProfile.objects.all()))
     context = {
         'total_amount': total_transaction.get('amount'),
         'total_volunteers': total_volunteers,
@@ -105,7 +103,7 @@ class EventDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        volunteers = Profile.objects.exclude(active=False).order_by('date_joined')[:6]
+        volunteers = UserProfile.objects.exclude(active=False).order_by('date_joined')[:6]
         context['volunteers'] = volunteers
         return context
 
@@ -118,7 +116,6 @@ class CreateEventView(LoginRequiredMixin, CreateView):
     # success_url = reverse_lazy('future-events')
 
     def form_valid(self, form):
-        form.instance.event_slug = slugify(form.instance.title)
         form.instance.event_author = self.request.user
         return super(CreateEventView, self).form_valid(form)
 
@@ -154,7 +151,7 @@ class FooterGalleryImages(ListView):
 def donate(request):
     total_transaction = TransactionHistory.objects.aggregate(amount=Sum('amount'))
     transacters = len(list(TransactionHistory.objects.all())) - 2
-    total_volunteers = len(list(Profile.objects.all()))
+    total_volunteers = len(list(UserProfile.objects.all()))
     context = {
         'total_amount': total_transaction.get('amount'),
         'total_volunteers': total_volunteers,

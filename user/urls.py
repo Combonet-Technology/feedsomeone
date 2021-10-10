@@ -1,9 +1,6 @@
 from django.urls import path
 from . import views
 from django.contrib.auth import views as auth_views
-from django.conf import settings
-from django.conf.urls.static import static
-
 from .views import VolunteerListView, VolunteerDetailView
 
 urlpatterns = [
@@ -25,5 +22,4 @@ urlpatterns = [
     path('password-reset/complete/',
          auth_views.PasswordResetCompleteView.as_view(template_name='password_reset_complete.html'),
          name="password_reset_complete"),
-    # path('', views.entry, name="entry"),
 ]

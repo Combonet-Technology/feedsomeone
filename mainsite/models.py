@@ -1,13 +1,12 @@
 from django.urls import reverse
 from django.utils import timezone
 from django.db import models
-from django.contrib.auth.models import User
+from user.models import UserProfile
 
 
-# Create your models here.
 class Events(models.Model):
     event_date = models.DateField(null=True)
-    event_slug = models.SlugField(null=True, unique=True, max_length=150)
+    event_slug = models.SlugField(null=True, unique=False, max_length=150)
     title = models.CharField(max_length=100)
     location = models.CharField(max_length=35)
     time = models.CharField(max_length=35)
@@ -15,7 +14,7 @@ class Events(models.Model):
     content = models.TextField()
     budget = models.FloatField(default=20000000)
     date_posted = models.DateTimeField(default=timezone.now)
-    event_author = models.ForeignKey(User, related_name='event_author', on_delete=models.SET_NULL, null=True)
+    event_author = models.ForeignKey(UserProfile, related_name='event_author', on_delete=models.SET_NULL, null=True)
 
     def __str__(self):
         return self.title

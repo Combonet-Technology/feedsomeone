@@ -1,10 +1,7 @@
 import uuid
-
-from django.contrib import admin
 from django.db import models
-from django.contrib.auth.models import User
-from django.utils import timezone
 from django.urls import reverse
+from user.models import UserProfile
 
 
 # Create your models here.
@@ -35,7 +32,8 @@ class Article(models.Model):
     article_slug = models.SlugField(null=False, unique=True, max_length=150)
     article_content = models.TextField()
     feature_img = models.ImageField(upload_to='article_feature_img', default='feature_default.jpg')
-    article_author = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="user_article")
+    article_author = models.ForeignKey(UserProfile, on_delete=models.CASCADE, null=True, blank=True,
+                                       related_name="user_article")
     category = models.ForeignKey(Categories, null=True, blank=True, verbose_name="Category", related_name="article",
                                  on_delete=models.DO_NOTHING)
     date_created = models.DateTimeField(auto_now_add=True, verbose_name="Created_at")

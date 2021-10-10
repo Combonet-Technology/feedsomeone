@@ -1,14 +1,9 @@
 from django.db import models
-from django.contrib.auth.models import User
-from PIL import Image
-
-# Create your models here.
-from django.utils import timezone
+from django.contrib.auth.models import AbstractUser
 
 
 # TODO add user ipaddress information for security
-class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+class UserProfile(AbstractUser):
     first_name = models.CharField(max_length=255, null=True)
     last_name = models.CharField(max_length=255, null=True)
     image = models.ImageField(default='default.png', upload_to='profile_pics')
@@ -22,26 +17,14 @@ class Profile(models.Model):
     reason_joined = models.TextField(null=False, default='The burden to help the needy has never been more than now')
     volunteer = models.BooleanField(default=True)
     coordinator = models.BooleanField(default=False)
-    date_joined = models.DateTimeField(default=timezone.now)
+    date_joined = models.DateTimeField(auto_now_add=True, verbose_name="date_joined", null=True)
+    date_updated = models.DateTimeField(auto_now=True, verbose_name="date_updated", null=True)
     innovator = models.BooleanField(default=False)
-    active = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=False)
 
     def __str__(self):
-        return f'{self.user.username} Profile'
+        return self.username
 
     def get_full_name(self):
-
         full_name = '%s %s' % (self.first_name, self.last_name)
         return full_name.strip()
-
-    # def save(self, *args, **kwargs):
-    #     super(Profile, self).save(*args, **kwargs)
-    #     img = Image.open(self.image.path)
-    #
-    #     if img.height > 300 or img.width > 300:
-    #         output_size = (262, 330)
-    #         img.thumbnail(output_size)
-    #         img.save(self.image.path)
-
-
-
