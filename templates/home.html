@@ -313,7 +313,7 @@
                             </ul>
                         </div>
                         <div class="team-caption">
-                            <h3><a href="instructor.html" style="font-size: 20px !important;">{{ volunteer.user.get_full_name}}</a></h3>
+                            <h3><a href="instructor.html" style="font-size: 20px !important;">{{ volunteer.get_full_name}}</a></h3>
                             {%if volunteer.innovator%}<p>Innovator</p>
                             {% elif volunteer.coordinator %}<p>Coordinator</p>
                             {%elif volunteer.volunteer %}<p>Volunteer</p>

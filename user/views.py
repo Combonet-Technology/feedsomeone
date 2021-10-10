@@ -47,13 +47,14 @@ def register(request):
 
 
 class VolunteerListView(ListView):
+    template_name = 'user/profile_list.html'
     model = UserProfile
     context_object_name = 'volunteers'
     #    ordering = ['?']
     paginate_by = 8
 
     def get_queryset(self):
-        return UserProfile.objects.exclude(active=False).order_by('date_joined')
+        return UserProfile.objects.exclude(is_active=False).order_by('date_joined')
 
 
 class VolunteerDetailView(DetailView):
