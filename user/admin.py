@@ -11,8 +11,8 @@ class ProfileAdmin(ImportExportActionModelAdmin):
     search_fields = ('state', 'phone_number')
     actions = ['approve_profile', 'disapprove_profile']
 
-    def approve_profile(self, queryset):
+    def approve_profile(self, request, queryset):
         queryset.update(is_active=True)
 
-    def disapprove_profile(self, queryset):
+    def disapprove_profile(self, request, queryset):
         queryset.update(is_active=False)
