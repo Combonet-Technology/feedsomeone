@@ -123,3 +123,4 @@ X_FRAME_OPTIONS = 'SAMEORIGIN'
 SUMMERNOTE_THEME = 'bs4'
 # SUMMERNOTE_CONFIG['disable_attachment'] = True
 
+AUTH_USER_MODEL = 'user.UserProfile'
