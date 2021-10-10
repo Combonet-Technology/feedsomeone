@@ -10,7 +10,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
-    path('create-article', views.create_article, name="create-article"),
+    path('create', views.create_article, name="create-article"),
     # path('create-article', CreateArticleView.as_view(), name="create-article"),
     path('articles/', ArticleListView.as_view(), name="all-articles"),
     # path('article/<int:pk>', ArticleDetailView.as_view(), name="full-article"),
