@@ -73,7 +73,6 @@ def register(request):
 
 class VolunteerListView(ListView):
     model = UserProfile
-    template_name = 'user/profile_list.html'
     context_object_name = 'volunteers'
     #    ordering = ['?']
     paginate_by = 8
