@@ -1,7 +1,6 @@
 from django import forms
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm
-from user.models import UserProfile
 
 
 class UserProfileRegistration(UserCreationForm):
@@ -10,7 +9,7 @@ class UserProfileRegistration(UserCreationForm):
     last_name = forms.CharField(max_length=30)
 
     class Meta:
-        model = UserProfile
+        model = get_user_model()
         fields = ['first_name', 'last_name', 'username', 'email', 'password1', 'password2']
 
 
@@ -18,7 +17,7 @@ class UserProfileUpdateForm(forms.ModelForm):
     email = forms.EmailField()
 
     class Meta:
-        model = UserProfile
+        model = get_user_model()
         fields = ['first_name',
                   'last_name',
                   'username',
@@ -32,5 +31,3 @@ class UserProfileUpdateForm(forms.ModelForm):
                   'reason_joined',
                   'state',
                   'country']
-
-
