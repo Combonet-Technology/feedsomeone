@@ -16,13 +16,12 @@ class ArticleForm(forms.ModelForm):
 
     class Meta:
         model = Article
-        fields = ('article_title', 'article_excerpt', 'article_slug', 'article_content', 'feature_img')
-        # exclude = ['article_slug']
+        fields = ('article_title', 'article_excerpt', 'article_slug', 'article_content', 'category', 'feature_img')
         widgets = {
             'article_content': SummernoteWidget(attrs={'width': '100%',
                                                     'height': '480px',
                                                     'required': True,
-                                                    'placeholder': 'Your name'}),
+                                                    'placeholder': 'Type in your content here, you can format like Ms word'}),
         }
 
     def __init__(self, *args, **kwargs):

@@ -1,11 +1,13 @@
 from django.urls import path
 from .views import (ArticleListView,
-    # ArticleDetailView,
-    # CreateArticleView,
+                    # ArticleDetailView,
+                    # CreateArticleView,
                     UpdateArticleView,
                     ArticleDeleteView,
-                    UserArticleListView, )
+                    UserArticleListView)
 from . import views
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('create/', views.create_article, name="create-article"),

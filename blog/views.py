@@ -4,6 +4,7 @@ from django.db.models import Count
 from django.shortcuts import render, get_object_or_404, redirect
 
 # from blog.forms import CommentForm
+from django.urls import reverse
 from django_summernote.fields import SummernoteTextFormField
 
 from blog.forms import ArticleForm
@@ -15,7 +16,6 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView, D
 
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import User
-
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
@@ -111,16 +111,17 @@ def article_detail(request, pk, slug):
             if new_comment.pk:
                 messages.info(request, 'Your comment has been posted and is awaiting moderation')
             else:
-                messages.error(request,'Your comment was not posted, try again later')
+                messages.error(request, 'Your comment was not posted, try again later')
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
         messages.error(request, 'Form not fully filled, please retry.')
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
     else:
         # comment_form = CommentForm()
-        return render(request, template_name, {'post': post,
-                                               'comments': comments,
-                                               'new_comment': posted_comment,
-                                               })
+        return render(request, template_name, {
+            'post': post,
+            'comments': comments,
+            'new_comment': posted_comment,
+        })
 
 
 # class ArticleDetailView(LoginRequiredMixin, DetailView):
@@ -156,27 +157,16 @@ def create_article(request):
         print(errors)
         logger.error(errors)
     article_form = form if form else ArticleForm()
-    categories = Categories.objects.all()
-    post_content = SummernoteTextFormField()
-    # category_form = CategoryForm()
     context = {
-        'a_form': article_form,
-        'c_form': categories,
-        'p_form': post_content,
-
+        'form': article_form,
     }
     return render(request, template_name, context)
 
 
 class UpdateArticleView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
-
-    # def __init__(self):
-    #     pass
-    #
-
     model = Article
-    fields = ['article_title', 'article_excerpt', 'article_content', 'feature_img']
-    # success_url = ''
+    form_class = ArticleForm
+    template_name = 'blog/article_form.html'
 
     def form_valid(self, form):
         form.instance.article_author = self.request.user
@@ -188,12 +178,14 @@ class UpdateArticleView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
             return True
         return False
 
+    def get_success_url(self):
+        slug = self.get_object().article_slug
+        return reverse('article-detail', kwargs={'pk': self.kwargs["pk"], 'slug': slug})
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context[''] = ArticleForm()
-        context[''] = Categories.objects.all()
-        context[''] = SummernoteTextFormField()
         return context
+
 
 class ArticleDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Article

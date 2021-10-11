@@ -1,7 +1,6 @@
 import uuid
 from django.db import models
 from django.urls import reverse
-from user.models import UserProfile
 
 
 # Create your models here.
@@ -9,6 +8,7 @@ from user.models import UserProfile
 #     category_title = models.CharField(max_length=30, default='UNCATEGORIZED')
 #     category_posts = models.ForeignKey(Post, on_delete=models.CASCADE)
 #     date_created = models.DateTimeField(default=timezone.now)
+from user.models import UserProfile
 
 
 class Categories(models.Model):
