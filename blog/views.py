@@ -27,7 +27,7 @@ class ArticleListView(LoginRequiredMixin, ListView):
     context_object_name = 'posts'
     ordering = ['-date_created']
     paginate_by = 3
-    template_name = 'blog/post_list.html'
+    template_name = 'blog/article_list.html'
 
     def get_context_data(self, **kwargs):
         category_set = []
@@ -59,7 +59,7 @@ class UserArticleListView(LoginRequiredMixin, ListView):
 
 # class ArticleDetailView(LoginRequiredMixin, DetailView):
 #     model = Article, Comment
-#     # template_name = 'post_detail.html'
+#     # template_name = 'article_detail.html'
 #     # context_object_name = 'post'
 #     paginate_by = 1
 #
@@ -85,7 +85,7 @@ class UserArticleListView(LoginRequiredMixin, ListView):
 
 
 def article_detail(request, pk, slug):
-    template_name = 'blog/post_detail.html'
+    template_name = 'blog/article_detail.html'
     # post = get_object_or_404(Post, pk=pk)
     post = get_object_or_404(Article, pk=pk, article_slug=slug)
     comments = post.comments.filter(active=True)
@@ -125,7 +125,7 @@ def article_detail(request, pk, slug):
 
 # class ArticleDetailView(LoginRequiredMixin, DetailView):
 #     model = Article
-#     # template_name = 'post_detail.html'
+#     # template_name = 'article_detail.html'
 #     context_object_name = 'post'
 
 
@@ -141,7 +141,6 @@ def article_detail(request, pk, slug):
 
 @login_required
 def create_article(request):
-    template_name = 'blog/post_form.html'
     form = None
     if request.method == 'POST':
         pass
@@ -186,7 +185,7 @@ class UpdateArticleView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 
 class ArticleDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Article
-    # template_name = 'post_detail.html'
+    # template_name = 'article_detail.html'
     context_object_name = 'post'
     success_url = '/'
 
@@ -209,7 +208,7 @@ def all_post(request):
 @login_required()
 def single_post(request):
     # return HttpResponse('WELCOME TO SINGLE POST')
-    return render(request, 'post_detail.html')
+    return render(request, 'article_detail.html')
 
 
 # Create your views here.

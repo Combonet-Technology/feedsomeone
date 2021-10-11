@@ -144,7 +144,7 @@ class FooterGalleryImages(ListView):
 
 # class SinglePostDetailView(DetailView):
 #     model = GalleryImage
-#     # template_name = 'post_detail.html'
+#     # template_name = 'article_detail.html'
 #     context_object_name = 'event_imgs'
 
 

@@ -26,5 +26,5 @@ urlpatterns = [
     # path('enquiry', views.enquiry, name="contact"),
 ]
 
-# blog/post_list.html
+# blog/article_list.html
 # <app>/<model>_<viewtype>.html
