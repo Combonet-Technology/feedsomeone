@@ -34,7 +34,7 @@
                         <h2 style="color: #2d2d2d;">{{post.article_title}}
                         </h2>
                         <ul class="blog-info-link mt-3 mb-4">
-                           <li>Post by <a href="#"><i class="fa fa-user"></i>{{post.article_author.profile.get_full_name}}</a></li>
+                           <li>Post by <a href="#"><i class="fa fa-user"></i>{{post.article_author.get_full_name}}</a></li>
 <!--                           <li><a href="#"><i class="fa fa-comments"></i> 03 Comments</a></li>-->
                         </ul>
                         <p class="excert">
@@ -118,11 +118,11 @@
                   </div>
                   <div class="blog-author">
                      <div class="media align-items-center">
-                        <img src="{{post.article_author.profile.image.url}}"
-                             alt="Image of {{post.article_author.profile.get_full_name}}">
+                        <img src="{{post.article_author.image.url}}"
+                             alt="Image of {{post.article_author.get_full_name}}">
                         <div class="media-body">
                            <a href="{% url 'article-by-user' post.article_author %}">
-                              <h4>View more post from {{post.article_author.profile.get_full_name}}</h4>
+                              <h4>View more post from {{post.article_author.get_full_name}}</h4>
                            </a>
                            <p>{{post.article_author.profile.short_bio}}</p>
                         </div>

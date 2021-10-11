@@ -34,16 +34,3 @@ class UserProfileUpdateForm(forms.ModelForm):
                   'country']
 
 
-# class ProfileUpdateForm(forms.ModelForm):
-#
-#     class Meta:
-#         model = UserProfile
-#         fields = ['image',
-#                   'phone_number',
-#                   'facebook',
-#                   'instagram',
-#                   'twitter',
-#                   'short_bio',
-#                   'reason_joined',
-#                   'state',
-#                   'country']

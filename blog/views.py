@@ -141,6 +141,7 @@ def article_detail(request, pk, slug):
 
 @login_required
 def create_article(request):
+    template_name = 'blog/article_form.html'
     form = None
     if request.method == 'POST':
         pass
@@ -168,8 +169,13 @@ def create_article(request):
 
 
 class UpdateArticleView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+
+    # def __init__(self):
+    #     pass
+    #
+
     model = Article
-    fields = ['post_title', 'post_excerpt', 'post_content', 'feature_img']
+    fields = ['article_title', 'article_excerpt', 'article_content', 'feature_img']
     # success_url = ''
 
     def form_valid(self, form):
@@ -182,6 +188,12 @@ class UpdateArticleView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
             return True
         return False
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context[''] = ArticleForm()
+        context[''] = Categories.objects.all()
+        context[''] = SummernoteTextFormField()
+        return context
 
 class ArticleDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Article
