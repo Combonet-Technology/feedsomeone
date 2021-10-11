@@ -103,7 +103,7 @@ class EventDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        volunteers = UserProfile.objects.exclude(active=False).order_by('date_joined')[:6]
+        volunteers = UserProfile.objects.exclude(is_active=False).order_by('date_joined')[:6]
         context['volunteers'] = volunteers
         return context
 
