@@ -31,7 +31,8 @@
 <!--	<link rel="stylesheet" href="{% static 'css/main.css' %}">-->
 <!--	<link rel="stylesheet" href="{% static 'css/donatestyle.css' %}">-->
 	<link rel="stylesheet" href="{% static 'css/style.css' %}">
-
+    {% block error_styles %}
+    {% endblock %}
     {% if p_form %}
     <link href="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.9/summernote-lite.css" rel="stylesheet">
     <style>

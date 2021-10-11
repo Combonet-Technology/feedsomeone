@@ -30,7 +30,8 @@ DEBUG_TOOLBAR_CONFIG = {
 }
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
+
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp-mail.outlook.com'
@@ -60,6 +61,9 @@ AWS_S3_FILE_OVERWRITE = False
 AWS_DEFAULT_ACL = None
 # AWS_QUERYSTRING_AUTH = False
 
+
+# for custom error handler
+TEMPLATE_DEBUG = DEBUG
 
 # for debug toolbar
 INTERNAL_IPS = (
