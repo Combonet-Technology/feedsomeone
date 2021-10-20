@@ -10,7 +10,8 @@ class UserProfileAdmin(ImportExportActionModelAdmin):
                     'state', 'date_joined', 'is_active', 'is_verified',)
     list_filter = ('is_active', 'date_joined')
     search_fields = ('state', 'phone_number')
-    actions = ['approve_profile', 'disapprove_profile']
+    actions = ['verify_profile', 'suspend_profile',
+               'enable_user', 'disable_user']
 
     def verify_profile(self, request, queryset):
         queryset.update(is_verified=True)
