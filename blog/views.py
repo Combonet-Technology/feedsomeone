@@ -39,7 +39,8 @@ class ArticleListView(LoginRequiredMixin, ListView):
         if categories is not None:
             dist_cat = (list(categories))
             for item in dist_cat:
-                category = Categories.objects.filter(id=item['category']).values().first()
+                category = Categories.objects.filter(
+                    id=item['category']).values().first()
                 category['ct'] = item['ct']
                 category_set.append(category)
             context['category_set'] = category_set
@@ -100,7 +101,8 @@ def article_detail(request, pk, slug):
         comment = comment_form.get('comment')
         while name != '' and email != '' and website != '' and comment != '':
             # Create Comment object but don't save to database yet
-            new_comment = Comments.objects.create(name=name, email=email, website=website, body=comment, post_id=post.id)
+            new_comment = Comments.objects.create(
+                name=name, email=email, website=website, body=comment, post_id=post.id)
             new_comment.save()
             # posted_comment = new_comment.save(commit=False)
             # Assign the current post to the comment
@@ -109,9 +111,11 @@ def article_detail(request, pk, slug):
             # posted_comment.save()
             # return redirect(f'/{post.id}')
             if new_comment.pk:
-                messages.info(request, 'Your comment has been posted and is awaiting moderation')
+                messages.info(
+                    request, 'Your comment has been posted and is awaiting moderation')
             else:
-                messages.error(request, 'Your comment was not posted, try again later')
+                messages.error(
+                    request, 'Your comment was not posted, try again later')
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
         messages.error(request, 'Form not fully filled, please retry.')
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
@@ -159,6 +163,7 @@ def create_article(request):
     article_form = form if form else ArticleForm()
     context = {
         'form': article_form,
+        'action_to_perform': "create new"
     }
     return render(request, template_name, context)
 
@@ -184,6 +189,7 @@ class UpdateArticleView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context['action_to_perform'] = "update"
         return context
 
 
