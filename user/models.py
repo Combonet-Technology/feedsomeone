@@ -13,14 +13,19 @@ class UserProfile(AbstractUser):
     twitter = models.CharField(max_length=100, null=True, default="#")
     state = models.CharField(max_length=30, null=True)
     country = models.CharField(max_length=30, null=True)
-    short_bio = models.CharField(max_length=100, null=False, default='replace with a short introduction about yourself')
-    reason_joined = models.TextField(null=False, default='The burden to help the needy has never been more than now')
+    short_bio = models.CharField(
+        max_length=100, null=False, default='replace with a short introduction about yourself')
+    reason_joined = models.TextField(
+        null=False, default='The burden to help the needy has never been more than now')
     volunteer = models.BooleanField(default=True)
     coordinator = models.BooleanField(default=False)
-    date_joined = models.DateTimeField(auto_now_add=True, verbose_name="date_joined", null=True)
-    date_updated = models.DateTimeField(auto_now=True, verbose_name="date_updated", null=True)
+    date_joined = models.DateTimeField(
+        auto_now_add=True, verbose_name="date_joined", null=True)
+    date_updated = models.DateTimeField(
+        auto_now=True, verbose_name="date_updated", null=True)
     innovator = models.BooleanField(default=False)
-    is_active = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
+    is_verified = models.BooleanField(default=False)
 
     def __str__(self):
         return self.username
