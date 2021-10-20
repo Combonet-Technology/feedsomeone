@@ -5,7 +5,7 @@ from user.models import UserProfile
 
 # Register your models here.
 @admin.register(UserProfile)
-class ProfileAdmin(ImportExportActionModelAdmin):
+class UserProfileAdmin(ImportExportActionModelAdmin):
     list_display = ('first_name', 'last_name', 'phone_number',
                     'state', 'date_joined', 'is_active', 'is_verified',)
     list_filter = ('is_active', 'date_joined')
