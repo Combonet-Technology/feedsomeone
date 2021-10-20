@@ -14,7 +14,7 @@ class UserProfileAdmin(ImportExportActionModelAdmin):
                'enable_user', 'disable_user']
 
     def verify_profile(self, request, queryset):
-        queryset.update(is_verified=True)
+        queryset.update(is_active=True, is_verified=True)
 
     def suspend_profile(self, request, queryset):
         queryset.update(is_verified=False)
