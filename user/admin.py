@@ -7,7 +7,7 @@ from user.models import UserProfile
 @admin.register(UserProfile)
 class ProfileAdmin(ImportExportActionModelAdmin):
     list_display = ('first_name', 'last_name', 'phone_number',
-                    'state', 'date_joined', 'is_active')
+                    'state', 'date_joined', 'is_active', 'is_verified',)
     list_filter = ('is_active', 'date_joined')
     search_fields = ('state', 'phone_number')
     actions = ['approve_profile', 'disapprove_profile']
