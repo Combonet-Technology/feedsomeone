@@ -15,10 +15,10 @@ from django.db.models import Sum
 
 # Create your views here.
 def home(request):
-    volunteers = UserProfile.objects.exclude(is_active=False).order_by("?")[:4]
+    volunteers = UserProfile.objects.exclude(is_verified=False).order_by("?")[:4]
     total_transaction = TransactionHistory.objects.aggregate(amount=Sum('amount'))
     number_of_donations = len(list(TransactionHistory.objects.all())) - 2
-    total_volunteers = len(list(UserProfile.objects.all()))
+    total_volunteers = len(list(UserProfile.objects.filter(is_verified=True)))
     context = {
         'total_amount': total_transaction.get('amount'),
         'total_volunteers': total_volunteers,

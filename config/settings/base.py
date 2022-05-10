@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     'mainsite.apps.MainsiteConfig',
     'blog.apps.BlogConfig',
     'user.apps.UserConfig',
+    'events.apps.EventsConfig',
     'contact.apps.ContactConfig',
     'crispy_forms',
     'imagefit',
