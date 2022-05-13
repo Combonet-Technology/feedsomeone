@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 
 from .base import *
 import os
+from decouple import config
 
 SECRET_KEY = "5f*ovu$9jd%2io#8yy0t5o6_&dt)co-_z$#=d%^#*)3)y0uu(y"
 
@@ -30,7 +31,7 @@ DEBUG_TOOLBAR_CONFIG = {
 }
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -50,13 +51,14 @@ DATABASES = {
         # 'ENGINE': 'django.db.backends.sqlite3',
         # 'NAME': BASE_DIR / 'db.sqlite3',
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('POSTGRES_DB_NAME'),
-        'USER': os.environ.get('POSTGRES_DB_USER'),
-        'PASSWORD': os.environ.get('POSTGRES_DB_PASS'),
+        'NAME': config('POSTGRES_DB_NAME'),
+        'USER': config('POSTGRES_DB_USER'),
+        'PASSWORD': config('POSTGRES_DB_PASS'),
         'HOST': 'localhost',
         # 'PORT': ''
     }
 }
+print(DATABASES)
 AWS_S3_FILE_OVERWRITE = False
 AWS_DEFAULT_ACL = None
 # AWS_QUERYSTRING_AUTH = False

@@ -1,10 +1,10 @@
 from django.contrib import admin
 from import_export.admin import ImportExportActionModelAdmin
 
-from .models import Events, GalleryImage, TransactionHistory
+from .models import GalleryImage, TransactionHistory
 
 # Register your models here.
-admin.site.register([Events, GalleryImage], ImportExportActionModelAdmin)
+admin.site.register([GalleryImage], ImportExportActionModelAdmin)
 
 @admin.register(TransactionHistory)
 class TransactionHistoryAdmin(ImportExportActionModelAdmin):
