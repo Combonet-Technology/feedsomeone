@@ -14,18 +14,20 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 import debug_toolbar
+from imagefit.urls import urlpatterns
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
 
 urlpatterns = [
     path('bcx/', admin.site.urls),
     path('', include('mainsite.urls')),
+    path('', include('events.urls')),
     path('contact/', include('contact.urls')),
     path('volunteers/', include('user.urls')),
     path('article/', include('blog.urls')),
-    path('imagefit/', include('imagefit.urls')),
+    re_path('imagefit/', include('imagefit.urls')),
     path('summernote/', include('django_summernote.urls')),
 ]
 if settings.DEBUG:

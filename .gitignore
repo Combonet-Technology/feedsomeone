@@ -177,6 +177,6 @@ venv
 **.ini
 .idea/*
 .idea
-config/.env
+.env
 settings.ini
  .idea/
