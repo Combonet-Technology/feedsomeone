@@ -25,7 +25,6 @@ SECRET_KEY = config['SECRET_KEY']
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-
 ALLOWED_HOSTS = ['www.feedsomone.org', 'feedsomeone.org', '88.80.191.154']
 
 DATABASES = {
@@ -38,7 +37,6 @@ DATABASES = {
         # 'PORT': ''
     }
 }
-print(DATABASES)
 
 EMAIL_USE_TLS = True
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -46,7 +44,6 @@ EMAIL_HOST = 'smtp-mail.outlook.com'
 EMAIL_HOST_USER = config.get('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config.get('EMAIL_HOST_PASS')
 EMAIL_PORT = 587
-EMAIL_USE_TLS = True
 
 IMAGEFIT_ROOT = BASE_DIR
 AWS_ACCESS_KEY_ID = config.get('AWS_ACCESS_KEY_ID')
@@ -55,4 +52,11 @@ AWS_STORAGE_BUCKET_NAME = config.get('AWS_STORAGE_BUCKET_NAME')
 AWS_S3_FILE_OVERWRITE = False
 AWS_DEFAULT_ACL = None
 
-DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+# DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': config.get('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': config.get('CLOUDINARY_API_KEY'),
+    'API_SECRET': config.get('CLOUDINARY_API_SECRET'),
+}
+
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'

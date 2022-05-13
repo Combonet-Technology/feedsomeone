@@ -12,6 +12,10 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 
 from pathlib import Path
 import os
+# import cloudinary
+# import cloudinary.uploader
+# import cloudinary.api
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -35,7 +39,8 @@ INSTALLED_APPS = [
     'django_summernote',
     'import_export',
     'django.contrib.humanize',
-    'errors.apps.ErrorsConfig'
+    'errors.apps.ErrorsConfig',
+    'cloudinary'
 ]
 
 MIDDLEWARE = [
@@ -125,3 +130,12 @@ SUMMERNOTE_THEME = 'bs4'
 # SUMMERNOTE_CONFIG['disable_attachment'] = True
 
 AUTH_USER_MODEL = 'user.UserProfile'
+
+# cloudinary.config(
+#     cloud_name=config('CLOUDINARY_CLOUD_NAME'),
+#     api_key=config('CLOUDINARY_API_KEY'),
+#     api_secret=config('CLOUDINARY_API_SECRET')
+# )
+
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

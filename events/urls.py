@@ -16,16 +16,13 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
-from mainsite import views
-from mainsite.views import AllGalleryImagesListView
+from events.views import AllEventsList, CreateEventView, EventDetailView, PastEventsList, UpcomingEventsList
 
 urlpatterns = [
-    path('', views.home, name='homepage'),
-    path('about/', views.about, name='about-page'),
-    # path('contact/', views.contact, name='contact'),
-    path('gallery/', AllGalleryImagesListView.as_view(), name="gallery"),
-    path('donate/', views.donate, name='donate'),
-    path('thanks-donation/', views.donate_thanks, name='donate-thanks'),
-    path('upload/', views.upload_images, name='imageuploader'),
+    path('events/', AllEventsList.as_view(), name='events'),
+    path('events/upcoming', UpcomingEventsList.as_view(), name="future_events"),
+    path('events/past', PastEventsList.as_view(), name="past_events"),
+    path('events/<int:pk>/<slug:slug>', EventDetailView.as_view(), name="event-details"),
+    path('event/add', CreateEventView.as_view(), name="new-event"),
 ]
 
