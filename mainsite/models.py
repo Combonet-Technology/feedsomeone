@@ -1,32 +1,11 @@
 from django.urls import reverse
 from django.utils import timezone
 from django.db import models
-from user.models import UserProfile
-
-
-class Events(models.Model):
-    event_date = models.DateField(null=True)
-    event_slug = models.SlugField(null=True, unique=False, max_length=150)
-    title = models.CharField(max_length=100)
-    location = models.CharField(max_length=35)
-    time = models.CharField(max_length=35)
-    feature_img = models.ImageField(upload_to='event_feature_img')
-    content = models.TextField()
-    budget = models.FloatField(default=20000000)
-    date_posted = models.DateTimeField(default=timezone.now)
-    event_author = models.ForeignKey(UserProfile, related_name='event_author', on_delete=models.SET_NULL, null=True)
-
-    def __str__(self):
-        return self.title
-
-    def get_absolute_url(self):
-        return reverse('event', kwargs={'slug': self.event_slug})
-
-    class Meta:
-        verbose_name_plural = 'Events'
 
 # TODO reassign deleted posts and images to admin
 #  USING https://medium.com/@inem.patrick/django-database-integrity-foreignkey-on-delete-option-db7d160762e4
+from events.models import Events
+from user.models import UserProfile
 
 
 class TransactionHistory(models.Model):
@@ -54,3 +33,5 @@ class GalleryImage(models.Model):
 
     class Meta:
         verbose_name_plural = 'Gallery Images'
+
+
