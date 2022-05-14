@@ -24,7 +24,7 @@ SECRET_KEY = config['SECRET_KEY']
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
-
+INSTALLED_APPS += ['cloudinary']
 ALLOWED_HOSTS = ['www.feedsomone.org', 'feedsomeone.org', '88.80.191.154']
 
 DATABASES = {

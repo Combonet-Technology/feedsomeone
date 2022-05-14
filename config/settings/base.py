@@ -39,8 +39,7 @@ INSTALLED_APPS = [
     'django_summernote',
     'import_export',
     'django.contrib.humanize',
-    'errors.apps.ErrorsConfig',
-    'cloudinary'
+    'errors.apps.ErrorsConfig'
 ]
 
 MIDDLEWARE = [
