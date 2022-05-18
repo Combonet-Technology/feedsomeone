@@ -24,7 +24,7 @@ SECRET_KEY = config['SECRET_KEY']
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
-# INSTALLED_APPS += ['cloudinary']
+
 ALLOWED_HOSTS = ['www.feedsomone.org', 'feedsomeone.org', '88.80.191.154']
 
 DATABASES = {
@@ -52,11 +52,16 @@ AWS_STORAGE_BUCKET_NAME = config.get('AWS_STORAGE_BUCKET_NAME')
 AWS_S3_FILE_OVERWRITE = False
 AWS_DEFAULT_ACL = None
 
+
+INSTALLED_APPS += ['cloudinary']
 # DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-# CLOUDINARY_STORAGE = {
-#     'CLOUD_NAME': config.get('CLOUDINARY_CLOUD_NAME'),
-#     'API_KEY': config.get('CLOUDINARY_API_KEY'),
-#     'API_SECRET': config.get('CLOUDINARY_API_SECRET'),
-# }
-#
-# DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': config.get('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': config.get('CLOUDINARY_API_KEY'),
+    'API_SECRET': config.get('CLOUDINARY_API_SECRET'),
+}
+print('debugging >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+print(CLOUDINARY_STORAGE)
+print(INSTALLED_APPS)
+print('debugging ends >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
