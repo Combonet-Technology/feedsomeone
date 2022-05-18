@@ -36,12 +36,12 @@ INSTALLED_APPS = [
     'crispy_forms',
     'imagefit',
     'storages',
-    'captcha',
     'django_summernote',
     'import_export',
     'django.contrib.humanize',
     'errors.apps.ErrorsConfig',
     'cloudinary',
+    'captcha',
 ]
 
 MIDDLEWARE = [
