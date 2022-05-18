@@ -40,8 +40,8 @@ INSTALLED_APPS = [
     'import_export',
     'django.contrib.humanize',
     'errors.apps.ErrorsConfig',
-    # 'cloudinary',
-    # 'captcha',
+    'cloudinary',
+    'captcha',
 ]
 
 MIDDLEWARE = [
