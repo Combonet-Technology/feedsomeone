@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'crispy_forms',
     'imagefit',
     'storages',
+    'captcha',
     'django_summernote',
     'import_export',
     'django.contrib.humanize',
@@ -138,3 +139,5 @@ AUTH_USER_MODEL = 'user.UserProfile'
 
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+RECAPTCHA_PUBLIC_KEY = config('RECAPTCHA_PUBLIC_KEY')
+RECAPTCHA_PRIVATE_KEY = config('RECAPTCHA_PRIVATE_KEY')
