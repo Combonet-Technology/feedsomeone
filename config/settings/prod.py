@@ -13,7 +13,7 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 import json
 from .base import *
 
-with open('/etc/django_config.json') as config_file:
+with open("/etc/django_config.json") as config_file:
     config = json.load(config_file)
 
 # Quick-start development settings - unsuitable for production
