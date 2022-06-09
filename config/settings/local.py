@@ -33,8 +33,9 @@ DEBUG_TOOLBAR_CONFIG = {
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp-mail.outlook.com'
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# EMAIL_HOST = 'smtp-mail.outlook.com'
 
 AWS_ACCESS_KEY_ID = os.environ.get('FS_AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.environ.get('FS_AWS_SECRET_ACCESS_KEY')
