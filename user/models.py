@@ -24,7 +24,7 @@ class UserProfile(AbstractUser):
     date_updated = models.DateTimeField(
         auto_now=True, verbose_name="date_updated", null=True)
     innovator = models.BooleanField(default=False)
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=False)
     is_verified = models.BooleanField(default=False)
 
 

@@ -1,10 +1,12 @@
 from django.urls import path
 from . import views
 from django.contrib.auth import views as auth_views
-from .views import VolunteerListView, VolunteerDetailView
+from .views import VolunteerListView, VolunteerDetailView, activate
 
 urlpatterns = [
     path('register/', views.register, name="register"),
+    path(r'activate/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/',
+         activate, name='activate'),
     path('profile/', views.profile, name="profile"),
     path('login/', auth_views.LoginView.as_view(template_name='login.html'), name="login"),
     path('view-volunteers/', VolunteerListView.as_view(), name="volunteer-list"),
