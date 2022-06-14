@@ -1,3 +1,4 @@
+import requests
 from django.contrib.auth import get_user_model
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.mail import EmailMessage
@@ -8,6 +9,8 @@ from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.views.generic import ListView, DetailView
+
+from django.conf import settings
 from .forms import UserProfileRegistration, UserProfileUpdateForm
 from django.contrib.auth.decorators import login_required
 from .models import UserProfile
@@ -40,6 +43,20 @@ def profile(request):
 def register(request):
     if request.method == 'POST':
         form = UserProfileRegistration(request.POST)
+        form_data = form.__dict__['data']
+        _mutable = form_data._mutable
+        form_data._mutable = True
+        g_captcha = form_data.pop('g-recaptcha-response')
+        form_data._mutable = _mutable
+        data = {
+            'secret': settings.RECAPTCHA_PRIVATE_KEY,
+            'response': g_captcha
+        }
+        resp = requests.post('https://www.google.com/recaptcha/api/siteverify', data=data)
+        result_json = resp.json()
+        if not result_json.get('success'):
+            return render(request, 'robot_response.html', {'is_robot': True})
+        # end captcha verification
         if form.is_valid():
             user = form.save(commit=False)
             user.is_active = False
@@ -58,15 +75,18 @@ def register(request):
                 mail_subject, message, to=[to_email]
             )
             email.send()
-            messages.success(
-                request, f'Account for {username} Created Successfully!')
-            return HttpResponse('Please check your inbox or spam folder to complete the registration')
+            data = {
+                'msg': 'Please check your inbox or spam folder for next steps on how to complete the registration',
+                'subject': f'Account creation for {username} started!',
+                'title': 'Feedsomeone - registration next step',
+            }
+            return render(request, 'thank-you.html', data)
         else:
             messages.error(request, 'INVALID USER INPUTS')
             return render(request, 'register.html', {'forms': form})
     else:
         form = UserProfileRegistration()
-        return render(request, 'register.html', {'forms': form})
+        return render(request, 'register.html', {'forms': form, 'secret': settings.RECAPTCHA_PUBLIC_KEY})
 
 
 def activate(request, uidb64, token):

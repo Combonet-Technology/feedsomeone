@@ -2,21 +2,31 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Feedsomeone - Thank you for donating</title>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <title>{%if not title %}Feedsomeone - Thank you for donating{% else %}{{title}}{%endif%}</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
 </head>
 <body>
-{% load static %}
 <div class="jumbotron text-center" style="background-color: white">
-  <h1 class="display-3">Thank You!</h1>
-  <p class="lead"><strong>Your email has been received</strong> and you will be replied to shortly.</p>
-  <hr>
-  <p>
-    Still in haste? <a href="tel:08170838856">call us</a>
-  </p>
-  <p class="lead">
-    <a class="btn btn-primary btn-sm" href="{%url 'homepage'%}" role="button">Continue to homepage</a>
-  </p>
+    <h1 class="display-3">{%if not subject %}Thank You!{% else %}{{subject}}{%endif%}</h1>
+    <p class="lead">{%if not msg %}<strong>Your funds will be received by us</strong> and we will receive a receipt with
+        proof of donation.{%
+        else
+        %}{{msg}}{%endif%}</p>
+    <hr>
+    <p>
+        Still in haste? <a href="tel:08170838856">call us</a>
+    </p>
+<!--    <p>This page will be automatically redirected after 9 seconds.</p>-->
+    <p class="lead">
+        <a class="btn btn-primary btn-sm" href="{%url 'homepage'%}" role="button">Continue to homepage</a>
+    </p>
 </div>
+<script charset="utf-8">
+            setTimeout(function(){
+                window.location.href = "{% url 'homepage' %}"
+            }, 9000)
+
+</script>
 </body>
 </html>

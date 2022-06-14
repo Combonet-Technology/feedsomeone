@@ -49,7 +49,12 @@ def contact(request):
             except Exception as e:
                 return HttpResponse("Message sending failed because of this error: ", str(e), "\n\nMessage scheduled to be "
                                                                                               "resent later")
-            return HttpResponseRedirect('thanks')
+            data = {
+                'subject': 'Thank You!',
+                'title': 'Feedsomeone - contact form response',
+                'msg': """<strong>Your email has been received</strong> and you will be replied to shortly."""
+            }
+            return render(request, 'thank-you.html', data)
         else:
             messages.info(request, 'please fill make sure all fields are filled appropriately')
             return redirect('contact')
