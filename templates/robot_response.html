@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Registration invalid</title>
+</head>
+<body>
+    {% if is_robot %}
+        <h1>Hi, you are robot</h1>
+        {% else %}
+        <h1>Hi {{ name }}</h1>
+        {% endif %}
+        <p>You will be redirected into homepage</p>
+
+
+        <script charset="utf-8">
+            setTimeout(function(){
+                window.location.href = "{% url 'homepage' %}"
+            }, 2000)
+        </script>
+
+</body>
+</html>

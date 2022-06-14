@@ -9,7 +9,6 @@ class UserProfileRegistration(UserCreationForm):
     email = forms.EmailField()
     first_name = forms.CharField(max_length=30)
     last_name = forms.CharField(max_length=30)
-    captcha = ReCaptchaField(widget=ReCaptchaV2Checkbox)
 
     class Meta:
         model = get_user_model()
