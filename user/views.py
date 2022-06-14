@@ -72,8 +72,7 @@ def register(request):
             to_email = form.cleaned_data.get('email')
             username = form.cleaned_data.get('username')
             email = EmailMessage(
-                mail_subject, message, to=[to_email]
-            )
+                mail_subject, message, to=[to_email], reply_to='femolak@outlook.com')
             email.send()
             data = {
                 'msg': 'Please check your inbox or spam folder for next steps on how to complete the registration',
