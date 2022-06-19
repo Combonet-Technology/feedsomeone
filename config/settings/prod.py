@@ -13,51 +13,46 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 import json
 from .base import *
 
-with open("/etc/django_config.json") as config_file:
-    config = json.load(config_file)
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config['SECRET_KEY']
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = config('DEBUG')
 
 ALLOWED_HOSTS = ['www.feedsomone.org', 'feedsomeone.org', '88.80.191.154']
 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config.get('NAME'),
-        'USER': config.get('USER'),
-        'PASSWORD': config.get('PASSWORD'),
+        'NAME': config('DB_NAME'),
+        'USER': config('DB_USER'),
+        'PASSWORD': config('DB_PASSWORD'),
         'HOST': 'localhost',
         # 'PORT': ''
     }
 }
-
-EMAIL_USE_TLS = True
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp-mail.outlook.com'
-EMAIL_HOST_USER = config.get('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = config.get('EMAIL_HOST_PASS')
-EMAIL_PORT = 587
+#
+# EMAIL_USE_TLS = True
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp-mail.outlook.com'
+# EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+# EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASS')
+# EMAIL_PORT = 587
 
 IMAGEFIT_ROOT = BASE_DIR
-AWS_ACCESS_KEY_ID = config.get('AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = config.get('AWS_SECRET_ACCESS_KEY')
-AWS_STORAGE_BUCKET_NAME = config.get('AWS_STORAGE_BUCKET_NAME')
+AWS_ACCESS_KEY_ID = config('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = config('AWS_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = config('AWS_STORAGE_BUCKET_NAME')
 AWS_S3_FILE_OVERWRITE = False
 AWS_DEFAULT_ACL = None
 
 
 # INSTALLED_APPS += ['cloudinary']
-# DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': config.get('CLOUDINARY_CLOUD_NAME'),
-    'API_KEY': config.get('CLOUDINARY_API_KEY'),
-    'API_SECRET': config.get('CLOUDINARY_API_SECRET'),
+    'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': config('CLOUDINARY_API_KEY'),
+    'API_SECRET': config('CLOUDINARY_API_SECRET'),
 }
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'

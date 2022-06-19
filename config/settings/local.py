@@ -14,7 +14,6 @@ from .base import *
 import os
 from decouple import config
 
-SECRET_KEY = "5f*ovu$9jd%2io#8yy0t5o6_&dt)co-_z$#=d%^#*)3)y0uu(y"
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
