@@ -48,7 +48,7 @@ class Events(models.Model):
     time = models.CharField(max_length=35)
     content = models.TextField()
     date_posted = models.DateTimeField("date_posted", auto_now_add=True)
-    date_updated = models.DateTimeField("date_updated", auto_now=True)
+    date_updated = models.DateTimeField("date_updated", null=True)
     event_author = models.ForeignKey(User, related_name='event_author', on_delete=models.SET_NULL, null=True)
 
     def __str__(self):
