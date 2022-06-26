@@ -20,7 +20,7 @@ from decouple import config
 # SECURITY WARNING: keep the secret key used in production secret!
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG')
+DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = ['www.feedsomone.org', 'feedsomeone.org', '88.80.191.154']
 
