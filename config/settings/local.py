@@ -30,8 +30,6 @@ DEBUG_TOOLBAR_CONFIG = {
 }
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 # EMAIL_HOST = 'smtp-mail.outlook.com'
