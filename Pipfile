@@ -1,0 +1,28 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+
+[packages]
+django-donations = "*"
+rave-python = "*"
+pillow = "*"
+django-crispy-forms = "*"
+psycopg2 = "*"
+boto3 = "*"
+django-summernote = "*"
+django-debug-toolbar = "*"
+python-decouple = "*"
+cloudinary = "*"
+dj3-cloudinary-storage = "*"
+django-recaptcha = "*"
+django = "*"
+six = "*"
+install = "*"
+django-import-export = "*"
+sendgrid = "*"
+
+[requires]
+python_version = "3.8"
