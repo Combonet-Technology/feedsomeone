@@ -1,7 +1,6 @@
 import requests
 from django.contrib.auth import get_user_model
 from django.contrib.sites.shortcuts import get_current_site
-from django.core.mail import EmailMessage
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.contrib import messages
@@ -9,12 +8,14 @@ from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.views.generic import ListView, DetailView
-
 from django.conf import settings
 from .forms import UserProfileRegistration, UserProfileUpdateForm
 from django.contrib.auth.decorators import login_required
 from .models import UserProfile
 from .token import account_activation_token
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
+from decouple import config
 
 
 @login_required()
@@ -39,6 +40,37 @@ def profile(request):
     pass
 
 
+def verify_recaptcha(g_captcha):
+    data = {
+        'secret': settings.RECAPTCHA_PRIVATE_KEY,
+        'response': g_captcha
+    }
+    resp = requests.post('https://www.google.com/recaptcha/api/siteverify', data=data)
+    result_json = resp.json()
+    return 'success' in result_json
+
+
+def send_new_user_completion_link(current_site, user, form):
+    message = Mail(
+        from_email=settings.EMAIL_HOST_USER,
+        to_emails=form.cleaned_data.get('email'),
+        subject='Activation link has been sent to your email id',
+        html_content=render_to_string('acc_activation_email.html', {
+            'username': user.username,
+            'domain': current_site.domain,
+            'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+            'token': account_activation_token.make_token(user),
+        }))
+    try:
+        sg = SendGridAPIClient(config('SENDGRID_API_KEY'))
+        response = sg.send(message)
+        print(response.status_code)
+        print(response.body)
+        print(response.headers)
+    except Exception as e:
+        print(e)
+
+
 # @csrf_exempt
 def register(request):
     if request.method == 'POST':
@@ -48,32 +80,19 @@ def register(request):
         form_data._mutable = True
         g_captcha = form_data.pop('g-recaptcha-response')
         form_data._mutable = _mutable
-        data = {
-            'secret': settings.RECAPTCHA_PRIVATE_KEY,
-            'response': g_captcha
-        }
-        resp = requests.post('https://www.google.com/recaptcha/api/siteverify', data=data)
-        result_json = resp.json()
-        if not result_json.get('success'):
+
+        # verify recaptcha
+        if not verify_recaptcha(g_captcha):
             return render(request, 'robot_response.html', {'is_robot': True})
-        # end captcha verification
+
         if form.is_valid():
             user = form.save(commit=False)
             user.is_active = False
             user.save()
             current_site = get_current_site(request)
-            mail_subject = 'Activation link has been sent to your email id'
-            message = render_to_string('acc_activation_email.html', {
-                'username': user.username,
-                'domain': current_site.domain,
-                'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-                'token': account_activation_token.make_token(user),
-            })
-            to_email = form.cleaned_data.get('email')
+            send_new_user_completion_link(current_site, user, form)
             username = form.cleaned_data.get('username')
-            email = EmailMessage(
-                mail_subject, message, to=[to_email], reply_to='femolak@outlook.com')
-            email.send()
+
             data = {
                 'msg': 'Please check your inbox or spam folder for next steps on how to complete the registration',
                 'subject': f'Account creation for {username} started!',

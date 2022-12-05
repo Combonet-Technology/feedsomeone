@@ -35,7 +35,7 @@ INSTALLED_APPS = [
     'contact.apps.ContactConfig',
     'crispy_forms',
     'imagefit',
-    'storages',
+    # 'storages',
     'django_summernote',
     'import_export',
     'django.contrib.humanize',
