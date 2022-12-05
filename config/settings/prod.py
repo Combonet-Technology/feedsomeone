@@ -10,46 +10,22 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
-import json
 from .base import *
 from decouple import config
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
-
-ALLOWED_HOSTS = ['www.feedsomone.org', 'feedsomeone.org', '88.80.191.154']
-
+ALLOWED_HOSTS = config("DJANGO_ALLOWED_HOSTS").split(" ")
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DB_NAME'),
-        'USER': config('DB_USER'),
-        'PASSWORD': config('DB_PASSWORD'),
+        'NAME': config('POSTGRES_DB_NAME'),
+        'USER': config('POSTGRES_DB_USER'),
+        'PASSWORD': config('POSTGRES_DB_PASS'),
         'HOST': 'localhost',
-        # 'PORT': ''
+        'PORT': '5444'
     }
 }
-#
-# EMAIL_USE_TLS = True
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_HOST = 'smtp-mail.outlook.com'
-# EMAIL_HOST_USER = config('EMAIL_HOST_USER')
-# EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASS')
-# EMAIL_PORT = 587
-
 IMAGEFIT_ROOT = BASE_DIR
-AWS_ACCESS_KEY_ID = config('AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = config('AWS_SECRET_ACCESS_KEY')
-AWS_STORAGE_BUCKET_NAME = config('AWS_STORAGE_BUCKET_NAME')
-AWS_S3_FILE_OVERWRITE = False
-AWS_DEFAULT_ACL = None
-
-
 # INSTALLED_APPS += ['cloudinary']
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME'),

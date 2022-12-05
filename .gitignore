@@ -180,3 +180,5 @@ venv
 .env
  .idea/
 settings.ini
+db
+config/settings/cli.py
