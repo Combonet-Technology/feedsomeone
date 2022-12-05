@@ -1,21 +1,21 @@
 version: '3.8'
 services:
-  web:
-    build: .
-    command: python /code/manage.py runserver 0.0.0.0:8000
-    volumes:
-      - .:/code
-    ports:
-      - 8000:8000
-    depends_on:
-      - db
-  db:
-    image: postgres:13
+  postgres:
+    image: postgres:15.1
+    container_name: postgres
+    restart: always
     environment:
-#      POSTGRES_DB: "db"
-      POSTGRES_PASSWORD: "postgres"
-#      POSTGRES_HOST_AUTH_METHOD: "trust"
+      - POSTGRES_USER=${POSTGRES_DB_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_DB_PASS}
+      - POSTGRES_DB=${POSTGRES_DB_NAME}
+    ports:
+      - '5444:5432'
     volumes:
-        - postgres_data:/var/lib/postgresql/data/
+      - ./db:/var/lib/postgresql/data
+    networks:
+      - app-network
 volumes:
   postgres_data:
+networks:
+  app-network:
+    driver: bridge
