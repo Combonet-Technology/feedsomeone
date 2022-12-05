@@ -12,9 +12,6 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 
 from pathlib import Path
 import os
-# import cloudinary
-# import cloudinary.uploader
-# import cloudinary.api
 from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
