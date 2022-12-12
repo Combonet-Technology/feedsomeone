@@ -17,11 +17,13 @@ import debug_toolbar
 from imagefit.urls import urlpatterns
 from django.conf import settings
 from django.conf.urls.static import static
-from django.contrib import admin
+# from django.contrib import admin
+from baton.autodiscover import admin
 from django.urls import path, include, re_path
 
 urlpatterns = [
     path('bcx/', admin.site.urls),
+    path('baton/', include('baton.urls')),
     path('', include('mainsite.urls')),
     path('', include('events.urls')),
     path('contact/', include('contact.urls')),

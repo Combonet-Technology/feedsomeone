@@ -15,7 +15,7 @@ from decouple import config
 ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 # debug toolbar settings
-INSTALLED_APPS.append('debug_toolbar')
+INSTALLED_APPS.insert(-1, 'debug_toolbar')
 MIDDLEWARE.insert(5, 'debug_toolbar.middleware.DebugToolbarMiddleware')
 
 DEBUG_TOOLBAR_CONFIG = {
