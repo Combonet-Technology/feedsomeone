@@ -14,10 +14,8 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 import debug_toolbar
-from imagefit.urls import urlpatterns
 from django.conf import settings
 from django.conf.urls.static import static
-# from django.contrib import admin
 from baton.autodiscover import admin
 from django.urls import path, include, re_path
 
@@ -31,6 +29,8 @@ urlpatterns = [
     path('article/', include('blog.urls')),
     re_path('imagefit/', include('imagefit.urls')),
     path('summernote/', include('django_summernote.urls')),
+    # path('admin/', include('admin_honeypot.urls', namespace='admin_honeypot')),
+    re_path(r'^', include('cms.urls'))
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

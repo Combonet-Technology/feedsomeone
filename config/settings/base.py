@@ -20,12 +20,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 SECRET_KEY = config('SECRET_KEY')
 INSTALLED_APPS = [
     'baton',
+    # 'djangocms_admin_style',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
     'mainsite.apps.MainsiteConfig',
     'blog.apps.BlogConfig',
     'user.apps.UserConfig',
@@ -33,7 +35,6 @@ INSTALLED_APPS = [
     'contact.apps.ContactConfig',
     'crispy_forms',
     'imagefit',
-    # 'storages',
     'django_summernote',
     'import_export',
     'django.contrib.humanize',
@@ -41,16 +42,26 @@ INSTALLED_APPS = [
     'cloudinary',
     'captcha',
     'baton.autodiscover',
+    'cms',
+    'menus',
+    'treebeard',
+    'sekizai'
 ]
 
 MIDDLEWARE = [
+    # 'cms.middleware.utils.ApphookReloadMiddleware'
     'django.middleware.security.SecurityMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'cms.middleware.user.CurrentUserMiddleware',
+    'cms.middleware.page.CurrentPageMiddleware',
+    'cms.middleware.toolbar.ToolbarMiddleware',
+    'cms.middleware.language.LanguageCookieMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -66,6 +77,9 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'sekizai.context_processors.sekizai',
+                'cms.context_processors.cms_settings',
+                'django.template.context_processors.i18n',
             ],
         },
     },
@@ -96,6 +110,12 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
+LANGUAGES = [
+    ('en-us', 'English'),
+    ('de', 'German'),
+    ('fr', 'French'),
+]
+
 TIME_ZONE = 'UTC'
 
 USE_I18N = True
@@ -103,6 +123,10 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = True
+
+SITE_ID = 1
+
+X_FRAME_OPTIONS = 'SAMEORIGIN'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
@@ -147,7 +171,7 @@ BATON = {
     'SITE_TITLE': 'OEF BACKEND',
     'INDEX_TITLE': 'OEF administration',
     'SUPPORT_HREF': 'mailto:info@oluwafemiebenezerfoundation.org',
-    'COPYRIGHT': 'copyright © 2020 <a href="https://www.otto.to.it">Otto srl</a>', # noqa
+    'COPYRIGHT': 'copyright © 2020 <a href="https://www.otto.to.it">Otto srl</a>',  # noqa
     'POWERED_BY': '<a href="https://www.otto.to.it">Otto srl</a>',
     'CONFIRM_UNSAVED_CHANGES': True,
     'SHOW_MULTIPART_UPLOADING': True,
@@ -165,7 +189,7 @@ BATON = {
         'url': '/search/',
     },
     'MENU': (
-        { 'type': 'title', 'label': 'main', 'apps': ('auth', ) },
+        {'type': 'title', 'label': 'main', 'apps': ('auth',)},
         {
             'type': 'app',
             'name': 'auth',
@@ -182,16 +206,25 @@ BATON = {
                 },
             )
         },
-        { 'type': 'title', 'label': 'Contents', 'apps': ('flatpages', ) },
-        { 'type': 'model', 'label': 'Pages', 'name': 'flatpage', 'app': 'flatpages' },
-        { 'type': 'free', 'label': 'Custom Link', 'url': 'http://www.google.it', 'perms': ('flatpages.add_flatpage', 'auth.change_user') },
-        { 'type': 'free', 'label': 'My parent voice', 'default_open': True, 'children': [
-            { 'type': 'model', 'label': 'A Model', 'name': 'mymodelname', 'app': 'myapp' },
-            { 'type': 'free', 'label': 'Another custom link', 'url': 'http://www.google.it' },
-        ] },
+        {'type': 'title', 'label': 'Contents', 'apps': ('flatpages',)},
+        {'type': 'model', 'label': 'Pages', 'name': 'flatpage', 'app': 'flatpages'},
+        {
+            'type': 'free', 'label': 'Custom Link', 'url': 'http://www.google.it',
+            'perms': ('flatpages.add_flatpage', 'auth.change_user')
+        },
+        {
+            'type': 'free', 'label': 'My parent voice', 'default_open': True, 'children': [
+            {'type': 'model', 'label': 'A Model', 'name': 'mymodelname', 'app': 'myapp'},
+            {'type': 'free', 'label': 'Another custom link', 'url': 'http://www.google.it'},
+        ]
+        },
     ),
     # 'ANALYTICS': {
     #     'CREDENTIALS': os.path.join(BASE_DIR, 'credentials.json'),
     #     'VIEW_ID': '12345678',
     # }
 }
+
+CMS_TEMPLATES = [
+    ('index.html', 'Home page template'),
+]

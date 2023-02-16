@@ -183,3 +183,5 @@ settings.ini
 db
 config/settings/cli.py
 static/
+broken.txt
+keywords.txt
