@@ -22,8 +22,8 @@ DATABASES = {
         'NAME': os.environ.get('POSTGRES_DB_NAME'),
         'USER': os.environ.get('POSTGRES_DB_USER'),
         'PASSWORD': os.environ.get('POSTGRES_DB_PASS'),
-        'HOST': 'localhost',
-        'PORT': '5444'
+        'HOST': os.environ.get('POSTGRES_HOST'),
+        'PORT': os.environ.get('POSTGRES_PORT')
     }
 }
 IMAGEFIT_ROOT = BASE_DIR

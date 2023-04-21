@@ -10,8 +10,10 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
-from .base import *
 from decouple import config
+
+from .base import *
+
 ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 # debug toolbar settings
@@ -32,7 +34,7 @@ DATABASES = {
         'USER': config('POSTGRES_DB_USER'),
         'PASSWORD': config('POSTGRES_DB_PASS'),
         'HOST': 'localhost',
-        'PORT': 5433
+        'PORT': config('POSTGRES_PORT')
     }
 }
 # for custom error handler
