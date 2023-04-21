@@ -11,8 +11,11 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         if not User.objects.filter(username='admin').exists():
-            User.objects.create_superuser(
-                username=os.getenv('SUPER_USERNAME'),
-                password=os.getenv('SUPER_USER_PASSWORD')
-            )
+            try:
+                User.objects.create_superuser(
+                    username=os.getenv('SUPER_USERNAME'),
+                    password=os.getenv('SUPER_USER_PASSWORD')
+                )
+            except Exception as e:
+                print(f'Super user creation failed with error {str(e)}')
         print('Superuser has been created.')
