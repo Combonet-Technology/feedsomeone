@@ -69,6 +69,7 @@ sqlparse==0.4.2
 starkbank-ecdsa==2.2.0
 tablib==2.0.0
 tzdata==2022.1
+whitenoise
 urllib3==1.26.9
 virtualenv==20.22.0
 webencodings==0.5.1
