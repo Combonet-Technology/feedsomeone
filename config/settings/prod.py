@@ -11,27 +11,26 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
 from .base import *
-from decouple import config
 
-DEBUG = config('DEBUG', default=False, cast=bool)
-ALLOWED_HOSTS = config("DJANGO_ALLOWED_HOSTS").split(" ")
-CSRF_TRUSTED_ORIGINS = config("ALLOWED_CSRF").split(" ")
- 
+DEBUG = os.environ.get('DEBUG', default=False)
+ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS").split(" ")
+CSRF_TRUSTED_ORIGINS = os.environ.get("ALLOWED_CSRF").split(" ")
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('POSTGRES_DB_NAME'),
-        'USER': config('POSTGRES_DB_USER'),
-        'PASSWORD': config('POSTGRES_DB_PASS'),
+        'NAME': os.environ.get('POSTGRES_DB_NAME'),
+        'USER': os.environ.get('POSTGRES_DB_USER'),
+        'PASSWORD': os.environ.get('POSTGRES_DB_PASS'),
         'HOST': 'localhost',
         'PORT': '5444'
     }
 }
 IMAGEFIT_ROOT = BASE_DIR
-# INSTALLED_APPS += ['cloudinary']
+INSTALLED_APPS.insert(-1, 'cloudinary')
 CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME'),
-    'API_KEY': config('CLOUDINARY_API_KEY'),
-    'API_SECRET': config('CLOUDINARY_API_SECRET'),
+    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': os.environ.get('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
 }
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'

@@ -10,8 +10,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
-from pathlib import Path
 import os
+from pathlib import Path
+
 from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -51,6 +52,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     # 'cms.middleware.utils.ApphookReloadMiddleware'
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -154,13 +156,6 @@ SUMMERNOTE_THEME = 'bs4'
 # SUMMERNOTE_CONFIG['disable_attachment'] = True
 
 AUTH_USER_MODEL = 'user.UserProfile'
-
-# cloudinary.config(
-#     cloud_name=config('CLOUDINARY_CLOUD_NAME'),
-#     api_key=config('CLOUDINARY_API_KEY'),
-#     api_secret=config('CLOUDINARY_API_SECRET')
-# )
-
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 RECAPTCHA_PUBLIC_KEY = config('RECAPTCHA_PUBLIC_KEY_v3')
