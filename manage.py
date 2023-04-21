@@ -6,17 +6,13 @@ from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-print('INSIDE MANAGE.PY')
-print(os.getenv("SETTINGS"))
-print('\nthis should also work\n')
-print(os.environ.get("SETTINGS"))
 
 
 def main():
     """Run administrative tasks."""
     os.environ.setdefault(
         'DJANGO_SETTINGS_MODULE',
-        os.environ.get("SETTINGS", "config.settings.prod"))
+        os.environ.get("SETTINGS", "config.settings.local"))
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

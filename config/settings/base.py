@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     'errors.apps.ErrorsConfig',
     'captcha',
     'baton.autodiscover',
-    'cms',
+    # 'cms',
     'menus',
     'treebeard',
     'sekizai'
@@ -59,10 +59,10 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'cms.middleware.user.CurrentUserMiddleware',
-    'cms.middleware.page.CurrentPageMiddleware',
-    'cms.middleware.toolbar.ToolbarMiddleware',
-    'cms.middleware.language.LanguageCookieMiddleware',
+    # 'cms.middleware.user.CurrentUserMiddleware',
+    # 'cms.middleware.page.CurrentPageMiddleware',
+    # 'cms.middleware.toolbar.ToolbarMiddleware',
+    # 'cms.middleware.language.LanguageCookieMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -79,7 +79,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'sekizai.context_processors.sekizai',
-                'cms.context_processors.cms_settings',
+                # 'cms.context_processors.cms_settings',
                 'django.template.context_processors.i18n',
             ],
         },
