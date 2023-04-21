@@ -6,6 +6,10 @@ from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+print('INSIDE MANAGE.PY')
+print(os.getenv("SETTINGS"))
+print('\nthis should also work\n')
+print(os.environ.get("SETTINGS"))
 
 
 def main():
