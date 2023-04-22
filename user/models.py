@@ -52,7 +52,7 @@ class UserProfile(AbstractUser):
     innovator = models.BooleanField(default=False)
     is_verified = models.BooleanField(default=False)
 
-    objects = UserManager
+    objects = UserManager()
 
     def __str__(self):
         return self.username
