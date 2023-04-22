@@ -1,9 +1,11 @@
 import json
 import os
 from datetime import datetime
+
 from django.contrib import messages
-from django.shortcuts import render, redirect
+from django.db.models import Sum
 from django.http import HttpResponse
+from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import ListView
 
@@ -11,14 +13,13 @@ from events.models import Events
 from mainsite.models import GalleryImage, TransactionHistory
 from rave_python import Rave
 from user.models import UserProfile
-from django.db.models import Sum
 
 
 # Create your views here.
 def home(request):
     volunteers = UserProfile.objects.exclude(is_verified=False).order_by("?")[:4]
     total_transaction = TransactionHistory.objects.aggregate(amount=Sum('amount'))
-    number_of_donations = len(list(TransactionHistory.objects.all())) - 2
+    number_of_donations = len(list(TransactionHistory.objects.all()))
     events = len(list(Events.objects.filter(event_date__lt=datetime.now())))
     context = {
         'total_amount': total_transaction.get('amount'),
@@ -93,7 +94,7 @@ def upload_images(request):
             new_image = GalleryImage()
             # Save the image using the model's ImageField settings
             filename, ext = os.path.splitext(image.name)
-            new_image.image.save("%s-%s%s" % (image.name, datetime.now(), ext), image)
+            new_image.image.save(f"{image.name}-{datetime.now()}{ext}", image)
             new_image.image_title = filename
             new_image.event_id = request.POST['event']
             new_image.save()
@@ -103,7 +104,7 @@ def upload_images(request):
                 'size': '%d' % image.size,
                 'url': '%s' % new_image.image.url,
                 'thumbnailUrl': '%s' % new_image.image.url,
-                'deleteUrl': '\/image\/delete\/%s' % image.name,
+                'deleteUrl': r'\/image\/delete\/%s' % image.name,
                 "deleteType": 'DELETE'
             })
 
@@ -119,7 +120,9 @@ def donate_thanks(request):
         status = query_dict.get('status')
         tx_ref = query_dict.get('tx_ref')
         tr_id = query_dict.get('transaction_id')
-        rave = Rave("FLWPUBK-ef604c855317a5fd377639a5a6744efe-X", "FLWSECK-439f20374599e622cf6b0b03bacf2793-X",
+        # cannot remember why this is like this, will check it out when i want to extend payment
+        rave = Rave("FLWPUBK-ef604c855317a5fd377639a5a6744efe-X",
+                    "FLWSECK-439f20374599e622cf6b0b03bacf2793-X",
                     usingEnv=False, production=True)
         if status == 'successful':
             res = rave.Card.verify(tx_ref)
@@ -127,6 +130,7 @@ def donate_thanks(request):
         else:
             messages.info(request, 'PAYMENT UNSUCCESSFUL AND REVERSED')
             return redirect('donate')
-        transaction = TransactionHistory.objects.create(status=status, tx_ref=tx_ref, tr_id=tr_id, amount=amount)
+        transaction = TransactionHistory.objects.create(
+            status=status, tx_ref=tx_ref, tr_id=tr_id, amount=amount)
         transaction.save()
     return render(request, 'thanks-donation.html')
