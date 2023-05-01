@@ -1,13 +1,10 @@
 from django.urls import path
-from .views import (ArticleListView,
-                    # ArticleDetailView,
-                    # CreateArticleView,
-                    UpdateArticleView,
-                    ArticleDeleteView,
-                    UserArticleListView)
+
 from . import views
-from django.conf import settings
-from django.conf.urls.static import static
+from .views import (ArticleDeleteView, ArticleListView, UpdateArticleView,
+                    UserArticleListView)
+
+app_name = 'article'
 
 urlpatterns = [
     path('create/', views.create_article, name="create-article"),
@@ -16,6 +13,7 @@ urlpatterns = [
     # path('article/<int:pk>', ArticleDetailView.as_view(), name="full-article"),
     path('<int:pk>/update/', UpdateArticleView.as_view(), name="update-post"),
     path('<int:pk>/<slug:slug>/', views.article_detail, name='article-detail'),
+    path('<int:year>/<int:month>/<int:day>/<slug:post>/', views.article_detail, name='article_detail'),
     path('<str:username>/', UserArticleListView.as_view(), name="article-by-user"),
     path('<int:pk>/delete/', ArticleDeleteView.as_view(), name="delete-post"),
     # path('inspiration/', views.about, name="inspiration"),

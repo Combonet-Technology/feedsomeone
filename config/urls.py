@@ -26,7 +26,7 @@ urlpatterns = [
     path('', include('events.urls')),
     path('contact/', include('contact.urls')),
     path('volunteers/', include('user.urls')),
-    path('article/', include('blog.urls')),
+    path('article/', include('blog.urls', namespace='article')),
     path('imagefit/', include('imagefit.urls')),
     path('summernote/', include('django_summernote.urls')),
     # path('admin/', include('admin_honeypot.urls', namespace='admin_honeypot')),

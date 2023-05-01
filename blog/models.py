@@ -1,7 +1,8 @@
 import uuid
+
 from django.db import models
 from django.urls import reverse
-
+from django.utils import timezone
 
 # Create your models here.
 # class Category(models.Model):
@@ -32,27 +33,36 @@ class Article(models.Model):
     article_slug = models.SlugField(null=False, unique=True, max_length=150)
     article_content = models.TextField()
     feature_img = models.ImageField(upload_to='article_feature_img', default='feature_default.jpg')
-    article_author = models.ForeignKey(UserProfile, on_delete=models.CASCADE, null=True, blank=True,
+    article_author = models.ForeignKey(UserProfile,
+                                       on_delete=models.CASCADE,
+                                       null=True,
+                                       blank=True,
                                        related_name="user_article")
-    category = models.ForeignKey(Categories, null=True, blank=True, verbose_name="Category", related_name="article",
+    category = models.ForeignKey(Categories,
+                                 null=True,
+                                 blank=True,
+                                 verbose_name="Category",
+                                 related_name="article",
                                  on_delete=models.DO_NOTHING)
+    publish = models.DateTimeField(default=timezone.now)
     date_created = models.DateTimeField(auto_now_add=True, verbose_name="Created_at")
     date_updated = models.DateTimeField(auto_now=True, verbose_name="Updated_at")
 
-    # post_categories = models.ForeignKey(Category, on_delete=models.SET_DEFAULT, default='UNCATEGORIZED')
-    # post_tags = models.ForeignKey(Taggs, on_delete=models.SET_DEFAULT, default='UNCATEGORIZED')
+    # post_categories = models.ForeignKey(Category,
+    # on_delete=models.SET_DEFAULT,
+    # default='UNCATEGORIZED')
+    # post_tags = models.ForeignKey(Taggs,
+    # on_delete=models.SET_DEFAULT,
+    # default='UNCATEGORIZED')
 
     def __str__(self):
         return self.article_title
 
     def get_absolute_url(self):
-        return reverse('article-detail', kwargs={'slug': self.article_slug})
-
-
-# class Taggs(models.Model):
-#     tag_title = models.CharField(max_length=30, default='UNCATEGORIZED')
-#     tag_posts = models.ForeignKey(Post, on_delete=models.CASCADE)
-#     date_created = models.DateTimeField(default=timezone.now)
+        return reverse('article:article_detail',
+                       args=[self.publish.year,
+                             self.publish.month,
+                             self.publish.day, self.article_slug])
 
 
 class Comments(models.Model):
@@ -68,7 +78,7 @@ class Comments(models.Model):
         ordering = ['created_on']
 
     def __str__(self):
-        return 'Comment {} by {}'.format(self.body, self.name)
+        return f'Comment {self.body} by {self.name}'
 
 
 class InnerComments(models.Model):
@@ -81,4 +91,4 @@ class InnerComments(models.Model):
     active = models.BooleanField(default=False)
 
     def __str__(self):
-        return 'reply {} to {}'.format(self.body, self.post)
+        return f'reply {self.body} to {self.post}'
