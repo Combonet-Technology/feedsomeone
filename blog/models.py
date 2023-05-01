@@ -3,12 +3,8 @@ import uuid
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
+from taggit.managers import TaggableManager
 
-# Create your models here.
-# class Category(models.Model):
-#     category_title = models.CharField(max_length=30, default='UNCATEGORIZED')
-#     category_posts = models.ForeignKey(Post, on_delete=models.CASCADE)
-#     date_created = models.DateTimeField(default=timezone.now)
 from user.models import UserProfile
 
 
@@ -44,16 +40,10 @@ class Article(models.Model):
                                  verbose_name="Category",
                                  related_name="article",
                                  on_delete=models.DO_NOTHING)
+    tags = TaggableManager()
     publish = models.DateTimeField(default=timezone.now)
     date_created = models.DateTimeField(auto_now_add=True, verbose_name="Created_at")
     date_updated = models.DateTimeField(auto_now=True, verbose_name="Updated_at")
-
-    # post_categories = models.ForeignKey(Category,
-    # on_delete=models.SET_DEFAULT,
-    # default='UNCATEGORIZED')
-    # post_tags = models.ForeignKey(Taggs,
-    # on_delete=models.SET_DEFAULT,
-    # default='UNCATEGORIZED')
 
     def __str__(self):
         return self.article_title
@@ -62,7 +52,8 @@ class Article(models.Model):
         return reverse('article:article_detail',
                        args=[self.publish.year,
                              self.publish.month,
-                             self.publish.day, self.article_slug])
+                             self.publish.day,
+                             self.article_slug])
 
 
 class Comments(models.Model):

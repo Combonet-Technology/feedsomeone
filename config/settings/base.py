@@ -46,7 +46,8 @@ INSTALLED_APPS = [
     # 'cms',
     'menus',
     'treebeard',
-    'sekizai'
+    'sekizai',
+    'taggit',
 ]
 
 MIDDLEWARE = [

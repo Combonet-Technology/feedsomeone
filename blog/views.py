@@ -4,13 +4,14 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import User
+from django.core.mail import send_mail
 from django.db.models import Count
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.generic import DeleteView, ListView, UpdateView
 
-from blog.forms import ArticleForm, CommentForm
+from blog.forms import ArticleForm, CommentForm, EmailShareForm
 from blog.models import Article, Categories
 
 # Get an instance of a logger
@@ -18,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 # Post Page Fxn recreated into a class
-class ArticleListView(LoginRequiredMixin, ListView):
+class ArticleListView(ListView):
     model = Article
     context_object_name = 'posts'
     ordering = ['-date_created']
@@ -159,7 +160,7 @@ def create_article(request):
     return render(request, template_name, context)
 
 
-class UpdateArticleView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+class UpdateArticleView(UserPassesTestMixin, UpdateView):
     model = Article
     form_class = ArticleForm
     template_name = 'blog/article_form.html'
@@ -184,7 +185,7 @@ class UpdateArticleView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         return context
 
 
-class ArticleDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+class ArticleDeleteView(UserPassesTestMixin, DeleteView):
     model = Article
     # template_name = 'article_detail.html'
     context_object_name = 'post'
@@ -216,3 +217,21 @@ def single_post(request):
 def about(request):
     # return HttpResponse('WELCOME TO ABOUT/HOME PAGE')
     return render(request, 'about.html')
+
+
+def post_share(request, post_id):
+    post = get_object_or_404(Article, id=post_id, status='published')
+    sent = False
+    if request.method == 'POST':
+        form = EmailShareForm(request.POST)
+        if form.is_valid():
+            cd = form.cleaned_data
+            post_url = request.build_absolute(post.get_absolute_url())
+            subject = f"{cd['name']} recommends you read {post.title}"
+            message = f"Read {post.title} at {post_url}\n\n {cd['name']}\'s comments: {cd['comments']}"
+            send_mail(subject, message, 'info@oluwafemiebenezerfoundation.org', [cd['to']])
+            sent = True
+    else:
+        form = EmailShareForm()
+
+    return render(request, 'blog/post/share.html', {'post': post, 'form': form, 'sent': sent})

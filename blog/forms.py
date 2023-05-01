@@ -40,6 +40,13 @@ class ArticleForm(forms.ModelForm):
             cleaned_data['article_slug'] = slugify(title)
             return self.cleaned_data
 
+
+class EmailShareForm(forms.Form):
+    name = forms.CharField(max_length=25)
+    email = forms.EmailField()
+    to = forms.EmailField()
+    comments = forms.CharField(required=False,
+                               widget=forms.Textarea)
 # class CategoryForm(forms.ModelForm):
 #     class Meta:
 #         model = Categories
