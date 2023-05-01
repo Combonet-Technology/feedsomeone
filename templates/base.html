@@ -4,14 +4,15 @@
 <html class="no-js" lang="zxx">
 <head>
     <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-SN22VH6DM1"></script>
-<script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-SN22VH6DM1"></script>
+    <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
 
   gtag('config', 'G-SN22VH6DM1');
-</script>
+
+    </script>
     <meta charset="utf-8">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <title> FEEDSOMEONE | {% block page_title %} {% endblock %}</title>
@@ -67,6 +68,7 @@ div.nice-select {
 }
 
 
+
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.9/summernote-lite.js"></script>
     {% endif %}
@@ -77,6 +79,7 @@ div.nice-select {
     font-size: 1.5rem;
 }
 
+
     </style>
     {% endif %}
     {% if profile_update_form %}
@@ -86,6 +89,7 @@ div.nice-select {
     font-size: 1.5rem;
 }
 
+
     </style>
     {% endif %}
     {% if volunteers %}
@@ -93,6 +97,7 @@ div.nice-select {
  div#yes:hover {
     transform: scale(1.2) !important;
 }
+
 
     </style>
     {% endif %}
@@ -119,6 +124,7 @@ margin: 0 23.5% !important;
 .articleform > fieldset{
 margin-top:100px
 }
+
 
     </style>
 
@@ -167,7 +173,8 @@ margin-top:100px
                                 </ul>
                                 <div class="header-social">
                                     <ul>
-                                        <li style="margin-right: 0px; padding-right: 0px"><a href="https://www.twitter.com/feedsomeone_"><i
+                                        <li style="margin-right: 0px; padding-right: 0px"><a
+                                                href="https://www.twitter.com/feedsomeone_"><i
                                                 class="fab fa-twitter"></i></a></li>
                                         <li style="margin-right: 0px; padding-right: 0px"><a
                                                 href="https://www.instagram.com/feedsomeone_"><i
@@ -175,7 +182,7 @@ margin-top:100px
                                         <li style="margin-right: 0px; padding-right: 0px"><a
                                                 href="https://www.linkedin.com/company/feed-someone/"><i
                                                 class="fab fa-linkedin-in"></i></a></li>
-<!--                                        <li style="margin-right: 0px; padding-right: 0px"> <a href="#"><i class="fab fa-google-plus-g"></i></a></li>-->
+                                        <!--                                        <li style="margin-right: 0px; padding-right: 0px"> <a href="#"><i class="fab fa-google-plus-g"></i></a></li>-->
                                     </ul>
                                 </div>
                             </div>
@@ -202,7 +209,8 @@ margin-top:100px
                                 </ul>
                                 {% else %}
                                 <ul class="contact-now">
-                                    <li><a href="{% url 'register' %}">Register</a> <a href="{% url 'login' %}">Login</a></li>
+                                    <li><a href="{% url 'register' %}">Register</a> <a
+                                            href="{% url 'login' %}">Login</a></li>
                                 </ul>
                                 {% endif %}
 
@@ -238,12 +246,13 @@ margin-top:100px
                                                 <ul style="width: 220px;" class="submenu">
                                                     <li><a href="{% url 'register' %}">Become a volunteer</a></li>
                                                     <li><a href="#">Become a Group Leader</a></li>
-                                                    <li><a href="{% url 'volunteer-list' %}">View our Volunteers</a></li>
+                                                    <li><a href="{% url 'volunteer-list' %}">View our Volunteers</a>
+                                                    </li>
                                                 </ul>
                                             </li>
                                             <li><a href=" '' %}">News</a>
                                                 <ul class="submenu">
-                                                    <li><a href="{% url 'all-articles' %}">Articles</a></li>
+                                                    <li><a href="{% url 'article:all-articles' %}">Articles</a></li>
                                                     <li><a href="#">News Briefing</a></li>
                                                     <li><a href="#">Testimonials</a></li>
                                                 </ul>
@@ -294,12 +303,14 @@ margin-top:100px
                     <div class="footer-logo">
                         <a class="logo" href="#"><img src="{% static 'img/logo/logo.png' %}" alt=""></a>
                     </div>
-                    <p>Everybody deserves good meal, a comfortable shelter and opportunities to exploit their potentials.
+                    <p>Everybody deserves good meal, a comfortable shelter and opportunities to exploit their
+                        potentials.
                         Together we move !!!</p>
                     <ul class="footer-contact">
                         <li><i class="fa fa-map-marker"></i>Chika FCT-Abuja, Nigeria</li>
                         <li><i class="fa fa-phone"></i> <a href="tel:+2348170838856">(+234) 8111 333 971</a></li>
-                        <li><i class="fa fa-envelope"></i> <a href="mailto:info@oluwafemiebenezerfoundation.org">Email: info@oluwafemiebenezer...</a>
+                        <li><i class="fa fa-envelope"></i> <a href="mailto:info@oluwafemiebenezerfoundation.org">Email:
+                            info@oluwafemiebenezer...</a>
                         </li>
                     </ul>
                 </div>
@@ -357,7 +368,7 @@ margin-top:100px
                     <li><a href="{% url 'about-page' %}">About</a></li>
                     <li><a href="{% url 'future_events' %}">Programs</a></li>
                     <li><a href="{% url 'volunteer-list' %}">Volunteers</a></li>
-                    <li><a href="{% url 'all-articles' %}">Blog</a></li>
+                    <li><a href="{% url 'article:all-articles' %}">Blog</a></li>
                     <li><a href="{% url 'contact' %}">Contact</a></li>
                     {% if user.is_authenticated %}
                     <li><a href="{% url 'profile' %}"> Edit Profile</a></li>
@@ -373,7 +384,8 @@ margin-top:100px
                 <div class="footer-copyright">
 						<span><!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->Copyright &copy;<script>document.write(new Date().getFullYear());</script> All rights reserved | Template with <i
                                 class="far fa-heart" aria-hidden="true"></i> by <a style="color: #232323"
-                                                                                   href="https://colorlib.com" target="_blank">Colorlib</a> | Site by <a
+                                                                                   href="https://colorlib.com"
+                                                                                   target="_blank">Colorlib</a> | Site by <a
                                 style="color: #232323" href="http://combonettechnology.com.ng" target="_blank">CBT</a>
                             <!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. --></span>
                 </div>

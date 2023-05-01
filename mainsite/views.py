@@ -33,7 +33,7 @@ def home(request):
 
 def about(request):
     total_transaction = TransactionHistory.objects.aggregate(amount=Sum('amount'))
-    transacters = len(list(TransactionHistory.objects.all())) - 2
+    transacters = len(list(TransactionHistory.objects.all()))
     total_volunteers = len(list(UserProfile.objects.all()))
     context = {
         'total_amount': total_transaction.get('amount'),

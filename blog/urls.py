@@ -16,6 +16,7 @@ urlpatterns = [
     path('<int:year>/<int:month>/<int:day>/<slug:post>/', views.article_detail, name='article_detail'),
     path('<str:username>/', UserArticleListView.as_view(), name="article-by-user"),
     path('<int:pk>/delete/', ArticleDeleteView.as_view(), name="delete-post"),
+    path('<int:post_id>/share/', views.post_share, name='post_share'),
     # path('inspiration/', views.about, name="inspiration"),
     # path('testimonials/', views.about, name="testimonials"),
     # path('all-posts', ArticleListView.as_view(template_name='all-post.html'), name="all-posts"),
