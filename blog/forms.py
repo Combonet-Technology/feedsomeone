@@ -1,8 +1,9 @@
-from django_summernote.widgets import SummernoteWidget, SummernoteInplaceWidget
-from django.template.defaultfilters import slugify
-from .models import Comments, Categories, Article
 from django import forms
 from django.forms.widgets import HiddenInput
+from django.template.defaultfilters import slugify
+from django_summernote.widgets import SummernoteWidget
+
+from .models import Article, Comments
 
 
 class CommentForm(forms.ModelForm):
@@ -16,16 +17,18 @@ class ArticleForm(forms.ModelForm):
 
     class Meta:
         model = Article
-        fields = ('article_title', 'article_excerpt', 'article_slug', 'article_content', 'category', 'feature_img')
+        fields = ('article_title', 'article_excerpt', 'article_slug',
+                  'article_content', 'category', 'feature_img')
         widgets = {
-            'article_content': SummernoteWidget(attrs={'width': '100%',
-                                                    'height': '480px',
-                                                    'required': True,
-                                                    'placeholder': 'Type in your content here, you can format like Ms word'}),
+            'article_content': SummernoteWidget(
+                attrs={'width': '100%',
+                       'height': '480px',
+                       'required': True,
+                       'placeholder': 'Type in your content here, you can format like Ms word'}),
         }
 
     def __init__(self, *args, **kwargs):
-        super(ArticleForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['article_slug'].widget = HiddenInput()
 
     def clean(self):
@@ -36,8 +39,6 @@ class ArticleForm(forms.ModelForm):
         if title:
             cleaned_data['article_slug'] = slugify(title)
             return self.cleaned_data
-
-
 
 # class CategoryForm(forms.ModelForm):
 #     class Meta:

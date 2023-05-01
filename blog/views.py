@@ -1,21 +1,17 @@
 import logging
+
 from django.contrib import messages
-from django.db.models import Count
-from django.shortcuts import render, get_object_or_404, redirect
-
-# from blog.forms import CommentForm
-from django.urls import reverse
-from django_summernote.fields import SummernoteTextFormField
-
-from blog.forms import ArticleForm
-# from blog.forms import CategoryForm, ArticleForm
-from blog.models import Article, Comments, Categories
-from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
-
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import User
+from django.db.models import Count
+from django.http import HttpResponseRedirect
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
+from django.views.generic import DeleteView, ListView, UpdateView
+
+from blog.forms import ArticleForm, CommentForm
+from blog.models import Article, Categories
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
@@ -31,10 +27,11 @@ class ArticleListView(LoginRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         category_set = []
-        context = super(ArticleListView, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         context['posts'] = Article.objects.all()
         context['recent_posts'] = Article.objects.order_by("-date_created")[:8]
-        categories = Article.objects.filter(category__isnull=False).values('category').annotate(ct=Count('category')).order_by(
+        categories = Article.objects.filter(category__isnull=False).values('category').annotate(
+            ct=Count('category')).order_by(
             '-ct')[:10]
         if categories is not None:
             dist_cat = (list(categories))
@@ -85,40 +82,34 @@ class UserArticleListView(LoginRequiredMixin, ListView):
 #         new_comment = None
 
 
-def article_detail(request, pk, slug):
+def article_detail(request, year, month, day, post):
     template_name = 'blog/article_detail.html'
-    # post = get_object_or_404(Post, pk=pk)
-    post = get_object_or_404(Article, pk=pk, article_slug=slug)
+    post = get_object_or_404(Article, slug=post,
+                             status='published',
+                             publish__year=year,
+                             publish__month=month,
+                             publish__day=day)
     comments = post.comments.filter(active=True)
     posted_comment = None
     # Comment posted
     if request.method == 'POST':
-        # exit('tired')
-        comment_form = request.POST
-        name = comment_form.get('name')
-        email = comment_form.get('email')
-        website = comment_form.get('website')
-        comment = comment_form.get('comment')
-        while name != '' and email != '' and website != '' and comment != '':
-            # Create Comment object but don't save to database yet
-            new_comment = Comments.objects.create(
-                name=name, email=email, website=website, body=comment, post_id=post.id)
-            new_comment.save()
-            # posted_comment = new_comment.save(commit=False)
-            # Assign the current post to the comment
-            # posted_comment.post = post
+        comment = CommentForm(request.POST)
+        if comment.is_valid():
+            cleaned_comment = comment.cleaned_data
+            cleaned_comment.save(commit=False)
+            cleaned_comment.post = post
             # Save the comment to the database
-            # posted_comment.save()
+            cleaned_comment.save()
             # return redirect(f'/{post.id}')
-            if new_comment.pk:
+            if cleaned_comment.pk:
                 messages.info(
                     request, 'Your comment has been posted and is awaiting moderation')
             else:
                 messages.error(
                     request, 'Your comment was not posted, try again later')
-            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+            return HttpResponseRedirect(request.headers.get('referer'))
         messages.error(request, 'Form not fully filled, please retry.')
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        return HttpResponseRedirect(request.headers.get('referer'))
     else:
         # comment_form = CommentForm()
         return render(request, template_name, {
