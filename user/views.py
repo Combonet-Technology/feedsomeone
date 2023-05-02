@@ -1,21 +1,21 @@
 import requests
+from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import login_required
 from django.contrib.sites.shortcuts import get_current_site
 from django.http import HttpResponse
-from django.shortcuts import render, redirect
-from django.contrib import messages
+from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
-from django.views.generic import ListView, DetailView
-from django.conf import settings
+from django.views.generic import DetailView, ListView
+
+from ext_libs.sendgrid.sengrid import send_html_email
+
 from .forms import UserProfileRegistration, UserProfileUpdateForm
-from django.contrib.auth.decorators import login_required
 from .models import UserProfile
 from .token import account_activation_token
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail
-from decouple import config
 
 
 @login_required()
@@ -50,27 +50,6 @@ def verify_recaptcha(g_captcha):
     return 'success' in result_json
 
 
-def send_new_user_completion_link(current_site, user, form):
-    message = Mail(
-        from_email=settings.EMAIL_HOST_USER,
-        to_emails=form.cleaned_data.get('email'),
-        subject='Activation link has been sent to your email id',
-        html_content=render_to_string('acc_activation_email.html', {
-            'username': user.username,
-            'domain': current_site.domain,
-            'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-            'token': account_activation_token.make_token(user),
-        }))
-    try:
-        sg = SendGridAPIClient(config('SENDGRID_API_KEY'))
-        response = sg.send(message)
-        print(response.status_code)
-        print(response.body)
-        print(response.headers)
-    except Exception as e:
-        print(e)
-
-
 # @csrf_exempt
 def register(request):
     if request.method == 'POST':
@@ -90,7 +69,15 @@ def register(request):
             user.is_active = False
             user.save()
             current_site = get_current_site(request)
-            send_new_user_completion_link(current_site, user, form)
+            send_html_email(settings.EMAIL_HOST_USER,
+                            form.cleaned_data.get('email'),
+                            'Activation link has been sent to your email id',
+                            render_to_string('acc_activation_email.html', {
+                                'username': user.username,
+                                'domain': current_site.domain,
+                                'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+                                'token': account_activation_token.make_token(user),
+                            }))
             username = form.cleaned_data.get('username')
 
             data = {
@@ -112,7 +99,7 @@ def activate(request, uidb64, token):
     try:
         uid = force_str(urlsafe_base64_decode(uidb64))
         user = User.objects.get(pk=uid)
-    except(TypeError, ValueError, OverflowError, User.DoesNotExist):
+    except User.DoesNotExist:
         user = None
     if user is not None and account_activation_token.check_token(user, token):
         user.is_active = True

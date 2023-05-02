@@ -33,3 +33,4 @@ CLOUDINARY_STORAGE = {
     'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
 }
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
