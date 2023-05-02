@@ -17,7 +17,7 @@ from user.models import UserProfile
 
 # Create your views here.
 def home(request):
-    volunteers = UserProfile.objects.exclude(is_verified=False).order_by("?")[:4]
+    volunteers = UserProfile.objects.all().order_by("?")[:4]
     total_transaction = TransactionHistory.objects.aggregate(amount=Sum('amount'))
     number_of_donations = len(list(TransactionHistory.objects.all()))
     events = len(list(Events.objects.filter(event_date__lt=datetime.now())))

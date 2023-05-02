@@ -41,6 +41,7 @@ class Article(models.Model):
                                  related_name="article",
                                  on_delete=models.DO_NOTHING)
     tags = TaggableManager()
+    status = models.BooleanField(default=False)
     publish = models.DateTimeField(default=timezone.now)
     date_created = models.DateTimeField(auto_now_add=True, verbose_name="Created_at")
     date_updated = models.DateTimeField(auto_now=True, verbose_name="Updated_at")

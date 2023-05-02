@@ -1,5 +1,5 @@
-from captcha.fields import ReCaptchaField
-from captcha.widgets import ReCaptchaV2Checkbox
+# from captcha.fields import ReCaptchaField
+# from captcha.widgets import ReCaptchaV2Checkbox
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm
@@ -25,11 +25,4 @@ class UserProfileUpdateForm(forms.ModelForm):
                   'username',
                   'email',
                   'image',
-                  'phone_number',
-                  'facebook',
-                  'instagram',
-                  'twitter',
-                  'short_bio',
-                  'reason_joined',
-                  'state',
-                  'country']
+                  'phone_number']

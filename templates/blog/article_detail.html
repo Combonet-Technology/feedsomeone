@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block page_title %}{{post.article_title}}{% endblock %}
+{% block page_title %}{{article.article_title}}{% endblock %}
 {% load static %}
 {% load imagefit %}
 {% load crispy_forms_tags %}
@@ -28,20 +28,20 @@
                <div class="col-lg-8 posts-list">
                   <div class="single-post">
                      <div class="feature-img">
-                        <img class="img-fluid" src="{% if post.feature_img %}{{ post.feature_img.url}}{%endif%}" alt="">
+                        <img class="img-fluid" src="{% if article.feature_img %}{{ article.feature_img.url}}{%endif%}" alt="">
                      </div>
                      <div class="blog_details">
-                        <h2 style="color: #2d2d2d;">{{post.article_title}}
+                        <h2 style="color: #2d2d2d;">{{article.article_title}}
                         </h2>
                         <ul class="blog-info-link mt-3 mb-4">
-                           <li>Post by <a href="#"><i class="fa fa-user"></i>{{post.article_author.get_full_name}}</a></li>
+                           <li>Post by <a href="#"><i class="fa fa-user"></i>{{article.article_author.get_full_name}}</a></li>
 <!--                           <li><a href="#"><i class="fa fa-comments"></i> 03 Comments</a></li>-->
                         </ul>
                         <p class="excert">
-                           {{post.article_excerpt}}
+                           {{article.article_excerpt}}
                         </p>
                         <p>
-                           {{post.article_content | safe}}
+                           {{article.article_content | safe}}
                         </p>
 <!--                        <div class="quote-wrapper">-->
 <!--                           <div class="quotes">-->
@@ -69,8 +69,7 @@
                         <ul class="social-icons">
                            <li><a href="#"><i class="fab fa-facebook-f"></i></a></li>
                            <li><a href="#"><i class="fab fa-twitter"></i></a></li>
-                           <li><a href="#"><i class="fab fa-dribbble"></i></a></li>
-                           <li><a href="#"><i class="fab fa-behance"></i></a></li>
+                           <li><a href="{% url 'article:post_share' article.id %}"><i class="fa fa-envelope"></i></a></li>
                         </ul>
                      </div>
 <!--                     <div class="navigation-area">-->
@@ -87,7 +86,7 @@
 <!--                                    <span class="lnr text-white ti-arrow-left"></span>-->
 <!--                                 </a>-->
 <!--                              </div>-->
-<!--                              <div class="detials">-->
+<!--                              <div class="details">-->
 <!--                                 <p>Prev Post</p>-->
 <!--                                 <a href="#">-->
 <!--                                    <h4 style="color: #2d2d2d;">Space The Final Frontier</h4>-->
@@ -96,7 +95,7 @@
 <!--                           </div>-->
 <!--                           <div-->
 <!--                              class="col-lg-6 col-md-6 col-12 nav-right flex-row d-flex justify-content-end align-items-center">-->
-<!--                              <div class="detials">-->
+<!--                              <div class="details">-->
 <!--                                 <p>Next Post</p>-->
 <!--                                 <a href="#">-->
 <!--                                    <h4 style="color: #2d2d2d;">Telescopes 101</h4>-->
@@ -118,13 +117,13 @@
                   </div>
                   <div class="blog-author">
                      <div class="media align-items-center">
-                        <img src="{{post.article_author.image.url}}"
-                             alt="Image of {{post.article_author.get_full_name}}">
+                        <img src="{{article.article_author.image.url}}"
+                             alt="Image of {{article.article_author.get_full_name}}">
                         <div class="media-body">
-                           <a href="{% url 'article-by-user' post.article_author %}">
-                              <h4>View more post from {{post.article_author.get_full_name}}</h4>
+                           <a href="{% url 'article:article-by-user' article.article_author.username %}">
+                              <h4>View more post from {{article.article_author.get_full_name}}</h4>
                            </a>
-                           <p>{{post.article_author.profile.short_bio}}</p>
+                           <p>{{article.article_author.short_bio}}</p>
                         </div>
                      </div>
                   </div>
@@ -161,7 +160,7 @@
                   <div class="comment-form">
                      <h4>Leave a Reply</h4>
                      <form name="comment_form" class="form-contact comment_form"
-                           action="{% url 'article-detail' post.id post.article_slug %}"
+                           action="{{ article.get_absolute_url }}"
                            id="commentForm" method="post">
                         {% csrf_token %}
                         <div class="row">
@@ -215,7 +214,7 @@
 <!--                        <ul class="list cat-list">-->
 <!--                           <li>-->
 <!--                              <a href="#" class="d-flex">-->
-<!--                                 <p>Resaurant food</p>-->
+<!--                                 <p>Restaurant food</p>-->
 <!--                                 <p>(37)</p>-->
 <!--                              </a>-->
 <!--                           </li>-->
