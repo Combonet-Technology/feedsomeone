@@ -21,17 +21,20 @@ logger = logging.getLogger(__name__)
 # Post Page Fxn recreated into a class
 class ArticleListView(ListView):
     model = Article
-    context_object_name = 'posts'
+    context_object_name = 'articles'
     ordering = ['-date_created']
     paginate_by = 3
     template_name = 'blog/article_list.html'
 
+    def get_queryset(self):
+        return Article.objects.filter(status=True)
+
     def get_context_data(self, **kwargs):
         category_set = []
         context = super().get_context_data(**kwargs)
-        context['posts'] = Article.objects.all()
-        context['recent_posts'] = Article.objects.order_by("-date_created")[:8]
-        categories = Article.objects.filter(category__isnull=False).values('category').annotate(
+        context['posts'] = self.get_queryset()
+        context['recent_posts'] = self.get_queryset().order_by("-date_created")[:8]
+        categories = self.get_queryset().filter(category__isnull=False).values('category').annotate(
             ct=Count('category')).order_by(
             '-ct')[:10]
         if categories is not None:
@@ -53,7 +56,7 @@ class UserArticleListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         user = get_object_or_404(User, username=self.kwargs.get('username'))
-        return Article.objects.filter(post_author=user).order_by('-date_created')
+        return Article.objects.filter(article_author=user).order_by('-date_created')
 
 
 # class ArticleDetailView(LoginRequiredMixin, DetailView):
@@ -83,14 +86,13 @@ class UserArticleListView(LoginRequiredMixin, ListView):
 #         new_comment = None
 
 
-def article_detail(request, year, month, day, post):
+def article_detail(request, year, month, day, slug):
     template_name = 'blog/article_detail.html'
-    post = get_object_or_404(Article, slug=post,
-                             status='published',
-                             publish__year=year,
-                             publish__month=month,
-                             publish__day=day)
-    comments = post.comments.filter(active=True)
+    article = get_object_or_404(Article, article_slug=slug,
+                                publish__year=year,
+                                publish__month=month,
+                                publish__day=day)
+    comments = article.comments.filter(active=True)
     posted_comment = None
     # Comment posted
     if request.method == 'POST':
@@ -98,7 +100,7 @@ def article_detail(request, year, month, day, post):
         if comment.is_valid():
             cleaned_comment = comment.cleaned_data
             cleaned_comment.save(commit=False)
-            cleaned_comment.post = post
+            cleaned_comment.post = article
             # Save the comment to the database
             cleaned_comment.save()
             # return redirect(f'/{post.id}')
@@ -114,9 +116,10 @@ def article_detail(request, year, month, day, post):
     else:
         # comment_form = CommentForm()
         return render(request, template_name, {
-            'post': post,
+            'article': article,
             'comments': comments,
             'new_comment': posted_comment,
+            'tags': 2,
         })
 
 
@@ -220,7 +223,7 @@ def about(request):
 
 
 def post_share(request, post_id):
-    post = get_object_or_404(Article, id=post_id, status='published')
+    post = get_object_or_404(Article, id=post_id)
     sent = False
     if request.method == 'POST':
         form = EmailShareForm(request.POST)
