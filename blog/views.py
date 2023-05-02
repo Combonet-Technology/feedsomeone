@@ -1,10 +1,10 @@
 import logging
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import User
-from django.core.mail import send_mail
 from django.db.models import Count
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
@@ -13,8 +13,9 @@ from django.views.generic import DeleteView, ListView, UpdateView
 
 from blog.forms import ArticleForm, CommentForm, EmailShareForm
 from blog.models import Article, Categories
-
 # Get an instance of a logger
+from ext_libs.sendgrid.sengrid import send_html_email
+
 logger = logging.getLogger(__name__)
 
 
@@ -204,7 +205,6 @@ class ArticleDeleteView(UserPassesTestMixin, DeleteView):
 # Create your views here.
 @login_required()
 def all_post(request):
-    # return HttpResponse('WELCOME TO POST PAGE')
     post = Article.objects.all()
     return render(request, 'all-post.html', {'post': post})
 
@@ -212,28 +212,26 @@ def all_post(request):
 # Create your views here.
 @login_required()
 def single_post(request):
-    # return HttpResponse('WELCOME TO SINGLE POST')
     return render(request, 'article_detail.html')
 
 
 # Create your views here.
 def about(request):
-    # return HttpResponse('WELCOME TO ABOUT/HOME PAGE')
     return render(request, 'about.html')
 
 
-def post_share(request, post_id):
-    post = get_object_or_404(Article, id=post_id)
+# remove if field later for uuid from calling function
+def post_share(request, slug):
+    post = get_object_or_404(Article, article_slug=slug)
     sent = False
     if request.method == 'POST':
         form = EmailShareForm(request.POST)
         if form.is_valid():
             cd = form.cleaned_data
-            post_url = request.build_absolute(post.get_absolute_url())
-            subject = f"{cd['name']} recommends you read {post.title}"
-            message = f"Read {post.title} at {post_url}\n\n {cd['name']}\'s comments: {cd['comments']}"
-            send_mail(subject, message, 'info@oluwafemiebenezerfoundation.org', [cd['to']])
-            sent = True
+            post_url = request.build_absolute_uri(post.get_absolute_url())
+            subject = f"{cd['name']} recommends you read {post.article_title}"
+            message = f"Read {post.article_title} at {post_url}\n\n {cd['name']}\'s comments: {cd['comments']}"
+            sent = send_html_email(settings.EMAIL_HOST_USER, [cd['to']], subject, message, plain=True)
     else:
         form = EmailShareForm()
 
