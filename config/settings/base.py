@@ -21,7 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 # Application definition
 SECRET_KEY = config('SECRET_KEY')
 INSTALLED_APPS = [
-    # 'baton',
+    'baton',
     # 'djangocms_admin_style',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
     'errors.apps.ErrorsConfig',
     'captcha',
-    # 'baton.autodiscover',
+    'baton.autodiscover',
     # 'cms',
     'menus',
     'treebeard',
