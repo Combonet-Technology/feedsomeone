@@ -57,6 +57,8 @@ class Article(models.Model):
                              self.article_slug])
 
 
+#     override save method to autogenerate slug
+
 class Comments(models.Model):
     post = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='comments')
     name = models.CharField(max_length=80)
