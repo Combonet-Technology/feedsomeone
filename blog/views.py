@@ -27,7 +27,7 @@ class ArticleListView(ListView):
     template_name = 'blog/article_list.html'
 
     def get_queryset(self):
-        return Article.objects.filter(status=True)
+        return Article.objects.filter(is_published=True)
 
     def get_context_data(self, **kwargs):
         category_set = []
