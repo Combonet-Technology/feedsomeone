@@ -89,9 +89,9 @@ class UserArticleListView(LoginRequiredMixin, ListView):
 def article_detail(request, year, month, day, slug):
     template_name = 'blog/article_detail.html'
     article = get_object_or_404(Article, article_slug=slug,
-                                publish__year=year,
-                                publish__month=month,
-                                publish__day=day)
+                                publish_date__year=year,
+                                publish_date__month=month,
+                                publish_date__day=day)
     comments = article.comments.filter(active=True)
     posted_comment = None
     # Comment posted
