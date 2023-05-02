@@ -41,8 +41,8 @@ class Article(models.Model):
                                  related_name="article",
                                  on_delete=models.DO_NOTHING)
     tags = TaggableManager()
-    status = models.BooleanField(default=False)
-    publish = models.DateTimeField(default=timezone.now)
+    is_published = models.BooleanField(default=False)
+    publish_date = models.DateTimeField(default=timezone.now)
     date_created = models.DateTimeField(auto_now_add=True, verbose_name="Created_at")
     date_updated = models.DateTimeField(auto_now=True, verbose_name="Updated_at")
 
@@ -51,9 +51,9 @@ class Article(models.Model):
 
     def get_absolute_url(self):
         return reverse('article:article_detail',
-                       args=[self.publish.year,
-                             self.publish.month,
-                             self.publish.day,
+                       args=[self.publish_date.year,
+                             self.publish_date.month,
+                             self.publish_date.day,
                              self.article_slug])
 
 
