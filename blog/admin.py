@@ -17,6 +17,7 @@ class ArticleAdmin(ImportExportActionModelAdmin):
     raw_id_fields = ('article_author',)
     date_hierarchy = 'publish_date'
     ordering = ('is_published', 'publish_date')
+    actions = ['publish_article', 'unpublish_article']
 
     def publish_article(self, request, queryset):
         queryset.update(status=True)
