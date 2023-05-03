@@ -95,23 +95,21 @@ def article_detail(request, year, month, day, slug):
                                 publish_date__day=day)
     comments = article.comments.filter(active=True)
     posted_comment = None
-    # Comment posted
     if request.method == 'POST':
         comment = CommentForm(request.POST)
         if comment.is_valid():
-            cleaned_comment = comment.cleaned_data
-            cleaned_comment.save(commit=False)
-            cleaned_comment.post = article
-            # Save the comment to the database
-            cleaned_comment.save()
-            # return redirect(f'/{post.id}')
-            if cleaned_comment.pk:
+            new_comment = comment.save(commit=False)
+            new_comment.post = article
+            new_comment.save()
+            if new_comment.id:
                 messages.info(
                     request, 'Your comment has been posted and is awaiting moderation')
             else:
                 messages.error(
                     request, 'Your comment was not posted, try again later')
             return HttpResponseRedirect(request.headers.get('referer'))
+        else:
+            print(comment.errors)
         messages.error(request, 'Form not fully filled, please retry.')
         return HttpResponseRedirect(request.headers.get('referer'))
     else:
