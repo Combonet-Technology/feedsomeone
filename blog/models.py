@@ -1,5 +1,6 @@
 import uuid
 
+from django.contrib.auth.base_user import BaseUserManager
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
@@ -22,6 +23,11 @@ class Categories(models.Model):
         return self.title
 
 
+class PublishedManager(BaseUserManager):
+    def get_queryset(self):
+        return super().get_queryset().filter(is_published=True)
+
+
 class Article(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     article_title = models.CharField(max_length=100)
@@ -40,11 +46,14 @@ class Article(models.Model):
                                  verbose_name="Category",
                                  related_name="article",
                                  on_delete=models.DO_NOTHING)
-    tags = TaggableManager()
     is_published = models.BooleanField(default=False)
     publish_date = models.DateTimeField(default=timezone.now)
     date_created = models.DateTimeField(auto_now_add=True, verbose_name="Created_at")
     date_updated = models.DateTimeField(auto_now=True, verbose_name="Updated_at")
+
+    published = PublishedManager()
+    objects = models.Manager()
+    tags = TaggableManager()
 
     def __str__(self):
         return self.article_title
