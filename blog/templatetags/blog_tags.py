@@ -1,6 +1,6 @@
 from django import template
 
-from ..models import Article
+from ..models import Article, Categories
 
 register = template.Library()
 
@@ -32,6 +32,11 @@ def total_daily_posts():
 
 @register.inclusion_tag('blog/latest.html')
 def show_recent_articles(count=5):
-    print('inside here')
     recent_articles = Article.published.order_by('-publish_date')[:count]
     return {'recent_articles': recent_articles}
+
+
+@register.inclusion_tag('blog/latest.html')
+def show_all_categories(count=5):
+    categories = Categories.objects.all()[:count]
+    return {'categories': categories}
