@@ -1,0 +1,19 @@
+{% load static %}
+<aside class="single_sidebar_widget popular_post_widget">
+    <h3 class="widget_title" style="color: #2d2d2d;">Latest Post</h3>
+    {% for post in recent_articles %}
+    <div class="media post_item">
+        <!--                                    <img src="{% static 'img/post/post_1.png' %}" alt="post">-->
+        <!--                                    <img height="100px" width="100px" src="{{post.feature_img.url}}" alt="post">-->
+        <div id="" style="height: 70px; width:70px; background:transparent no-repeat center;background-size: cover;
+                                        background-image: url('{{post.feature_img.url}}');
+                                        transition: all .5s;"></div>
+        <div class="media-body">
+            <a href="blog_details.html">
+                <h3 style="color: #2d2d2d;">{{post.article_title}}</h3>
+            </a>
+            <p>{{ post.date_created | date:"d M" }}, {{ post.date_created | date:"Y" }}</p>
+        </div>
+    </div>
+    {% endfor %}
+</aside>

@@ -28,3 +28,10 @@ def total_weekly_posts():
 @register.simple_tag(name='total_articles_today')
 def total_daily_posts():
     return Article.published.count()
+
+
+@register.inclusion_tag('blog/latest.html')
+def show_recent_articles(count=5):
+    print('inside here')
+    recent_articles = Article.published.order_by('-publish_date')[:count]
+    return {'recent_articles': recent_articles}
