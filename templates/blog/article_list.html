@@ -58,7 +58,7 @@
                                         Tags:
                                         {% for tag in article.tags.all %}
 
-                                        <a href="{% url 'article:all-articles' %}">
+                                        <a href="{% url 'article:articles-by-slug' tag.slug %}">
                                             {{ tag.name }}
                                         </a>
                                         {% if not forloop.last %}, {% endif %}

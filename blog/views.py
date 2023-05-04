@@ -2,9 +2,9 @@ import logging
 
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.contrib.auth.models import User
 from django.db.models import Count
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
@@ -58,13 +58,17 @@ class ArticleListView(ListView):
 
 class UserArticleListView(LoginRequiredMixin, ListView):
     model = Article
-    template_name = 'blog/posts-by-user.html'
-    context_object_name = 'post'
-    paginate_by = 2
+    template_name = 'blog/article_list.html'
+    context_object_name = 'articles'
+    paginate_by = 3
 
     def get_queryset(self):
-        user = get_object_or_404(User, username=self.kwargs.get('username'))
-        return Article.objects.filter(article_author=user).order_by('-date_created')
+        print(self.kwargs['username'])
+        user = get_object_or_404(get_user_model(), username=self.kwargs.get('username'))
+        print(user)
+        articles = Article.objects.filter(article_author=user).order_by('-date_created')
+        print(articles)
+        return articles
 
 
 # class ArticleDetailView(LoginRequiredMixin, DetailView):
@@ -94,6 +98,12 @@ class UserArticleListView(LoginRequiredMixin, ListView):
 #         new_comment = None
 
 
+def get_similar_articles(article, limit=3):
+    article_tags_ids = article.tags.values_list('id', flat=True)
+    similar_articles = Article.objects.filter(tags__in=article_tags_ids).exclude(id=article.id)
+    return similar_articles.annotate(same_tags=Count('tags')).order_by('-same_tags', '-publish_date')[:limit]
+
+
 def article_detail(request, year, month, day, slug):
     template_name = 'blog/article_detail.html'
     article = get_object_or_404(Article, article_slug=slug,
@@ -101,6 +111,7 @@ def article_detail(request, year, month, day, slug):
                                 publish_date__month=month,
                                 publish_date__day=day)
     comments = article.comments.filter(active=True)
+    similar_articles = get_similar_articles(article)
     posted_comment = None
     if request.method == 'POST':
         comment = CommentForm(request.POST)
@@ -125,7 +136,7 @@ def article_detail(request, year, month, day, slug):
             'article': article,
             'comments': comments,
             'new_comment': posted_comment,
-            'tags': 2,
+            'similar': similar_articles,
         })
 
 
@@ -226,7 +237,8 @@ def about(request):
 
 
 # remove if field later for uuid from calling function
-def post_share(request, slug):
+# add option to share pot on FB, Twitter and IG
+def post_share(request, slug, medium=None):
     post = get_object_or_404(Article, article_slug=slug)
     sent = False
     if request.method == 'POST':
