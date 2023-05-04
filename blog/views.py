@@ -10,6 +10,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.generic import DeleteView, ListView, UpdateView
+from taggit.models import Tag
 
 from blog.forms import ArticleForm, CommentForm, EmailShareForm
 from blog.models import Article, Categories
@@ -26,13 +27,19 @@ class ArticleListView(ListView):
     ordering = ['-date_created']
     paginate_by = 3
     template_name = 'blog/article_list.html'
+    tag = None
 
     def get_queryset(self):
-        return Article.objects.filter(is_published=True)
+        queryset = Article.objects.filter(is_published=True)
+        if self.kwargs.get('tag'):
+            self.tag = get_object_or_404(Tag, slug=self.kwargs.get('tag'))
+            queryset = queryset.filter(tags__in=[self.tag])
+        return queryset
 
     def get_context_data(self, **kwargs):
         category_set = []
         context = super().get_context_data(**kwargs)
+        context['tags'] = self.tag
         context['posts'] = self.get_queryset()
         context['recent_posts'] = self.get_queryset().order_by("-date_created")[:8]
         categories = self.get_queryset().filter(category__isnull=False).values('category').annotate(

@@ -25,6 +25,9 @@
             <div class="row">
                 <div class="col-lg-8 mb-5 mb-lg-0">
                     <div class="blog_left_sidebar">
+                        {% if tag %}
+                        <h2>Articles tagged with "{{ tag.name }}"</h2>
+                        {% endif %}
                         {% for article in articles %}
                         <article class="blog_item">
                             <div class="blog_item_img">
@@ -46,9 +49,21 @@
                                 </a>
                                 <p>{{article.article_excerpt}}</p>
                                 <ul class="blog-info-link">
-                                    <li><a href="{% url 'article:article-by-user' article.article_author.username %}">Written
-                                        by
-                                        <i class="fa fa-user"></i> {{article.article_author}}</a></li>
+                                    <li>
+                                        <a href="{% url 'article:article-by-user' article.article_author.username %}">Written
+                                            by
+                                            <i class="fa fa-user"></i> {{article.article_author}}</a>
+                                    </li>
+                                    <li class="tags">
+                                        Tags:
+                                        {% for tag in article.tags.all %}
+
+                                        <a href="{% url 'article:all-articles' %}">
+                                            {{ tag.name }}
+                                        </a>
+                                        {% if not forloop.last %}, {% endif %}
+                                        {% endfor %}
+                                    </li>
                                     <!--                                        <li><a href="#"><i class="fa fa-comments"></i> 03 Comments</a></li>-->
                                 </ul>
                             </div>
