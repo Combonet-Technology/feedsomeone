@@ -13,7 +13,7 @@ from django.views.generic import DeleteView, ListView, UpdateView
 from taggit.models import Tag
 
 from blog.forms import ArticleForm, CommentForm, EmailShareForm
-from blog.models import Article, Categories
+from blog.models import Article
 # Get an instance of a logger
 from ext_libs.sendgrid.sengrid import send_html_email
 
@@ -28,31 +28,34 @@ class ArticleListView(ListView):
     paginate_by = 3
     template_name = 'blog/article_list.html'
     tag = None
+    category = None
 
     def get_queryset(self):
         queryset = Article.objects.filter(is_published=True)
         if self.kwargs.get('tag'):
             self.tag = get_object_or_404(Tag, slug=self.kwargs.get('tag'))
             queryset = queryset.filter(tags__in=[self.tag])
+        if self.kwargs.get('category'):
+            queryset = queryset.filter(category=self.kwargs.get('category'))
         return queryset
 
     def get_context_data(self, **kwargs):
-        category_set = []
+        # category_set = []
         context = super().get_context_data(**kwargs)
         context['tags'] = self.tag
         context['posts'] = self.get_queryset()
         context['recent_posts'] = self.get_queryset().order_by("-date_created")[:8]
-        categories = self.get_queryset().filter(category__isnull=False).values('category').annotate(
-            ct=Count('category')).order_by(
-            '-ct')[:10]
-        if categories is not None:
-            dist_cat = (list(categories))
-            for item in dist_cat:
-                category = Categories.objects.filter(
-                    id=item['category']).values().first()
-                category['ct'] = item['ct']
-                category_set.append(category)
-            context['category_set'] = category_set
+        # # categories = self.get_queryset().filter(category__isnull=False).values('category').annotate(
+        # #     ct=Count('category')).order_by(
+        # #     '-ct')[:10]
+        # if categories is not None:
+        #     dist_cat = (list(categories))
+        #     for item in dist_cat:
+        #         category = Categories.objects.filter(
+        #             id=item['category']).values().first()
+        #         category['ct'] = item['ct']
+        #         category_set.append(category)
+        #     context['category_set'] = category_set
         return context
 
 
