@@ -1,4 +1,5 @@
 {% load static %}
+
 {% if recent_articles %}
 <aside class="single_sidebar_widget popular_post_widget">
     <h3 class="widget_title" style="color: #2d2d2d;">Latest Post</h3>
@@ -10,7 +11,7 @@
                                         background-image: url('{{post.feature_img.url}}');
                                         transition: all .5s;"></div>
         <div class="media-body">
-            <a href="blog_details.html">
+            <a href="{{ post.get_absolute_url }}">
                 <h3 style="color: #2d2d2d;">{{post.article_title}}</h3>
             </a>
             <p>{{ post.date_created | date:"d M" }}, {{ post.date_created | date:"Y" }}</p>
@@ -19,6 +20,7 @@
     {% endfor %}
 </aside>
 {%endif%}
+
 {% if categories %}
 <aside class="single_sidebar_widget post_category_widget">
     <h4 class="widget_title" style="color: #2d2d2d;">Category</h4>
@@ -33,4 +35,72 @@
         {% endfor %}
     </ul>
 </aside>
+{%endif%}
+
+{% if tags %}
+<aside class="single_sidebar_widget tag_cloud_widget">
+    <h4 class="widget_title" style="color: #2d2d2d;">Tag Clouds</h4>
+    <ul class="list">
+        {% for tag in tags %}
+        <li>
+            <a href="{% url 'article:articles-by-slug' tag.slug %}">{{tag.name}}</a>
+        </li>
+        {% endfor %}
+    </ul>
+</aside>
+{% endif %}
+
+{% if newsletter %}
+<aside class="single_sidebar_widget newsletter_widget">
+    <h4 class="widget_title" style="color: #2d2d2d;">Newsletter</h4>
+    <form action="#">
+        <div class="form-group">
+            <input type="email" class="form-control" onfocus="this.placeholder = ''"
+                   onblur="this.placeholder = 'Enter email'" placeholder='Enter email' required>
+        </div>
+        <button class="button rounded-0 primary-bg text-white w-100 btn_1 boxed-btn"
+                type="submit">Subscribe
+        </button>
+    </form>
+</aside>
+{%endif%}
+
+{% if search %}
+<aside class="single_sidebar_widget search_widget">
+                            <form action="#">
+                                <div class="form-group">
+                                    <div class="input-group mb-3">
+                                        <input type="text" class="form-control" placeholder='Search Keyword'
+                                               onfocus="this.placeholder = ''"
+                                               onblur="this.placeholder = 'Search Keyword'">
+                                        <div class="input-group-append">
+                                            <button class="btns" type="button"><i class="ti-search"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button class="button rounded-0 primary-bg text-white w-100 btn_1 boxed-btn"
+                                        type="submit">Search
+                                </button>
+                            </form>
+                        </aside>
+{%endif%}
+
+{% if instagram_feeds %}
+<aside class="single_sidebar_widget search_widget">
+                            <form action="#">
+                                <div class="form-group">
+                                    <div class="input-group mb-3">
+                                        <input type="text" class="form-control" placeholder='Search Keyword'
+                                               onfocus="this.placeholder = ''"
+                                               onblur="this.placeholder = 'Search Keyword'">
+                                        <div class="input-group-append">
+                                            <button class="btns" type="button"><i class="ti-search"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button class="button rounded-0 primary-bg text-white w-100 btn_1 boxed-btn"
+                                        type="submit">Search
+                                </button>
+                            </form>
+                        </aside>
 {%endif%}
