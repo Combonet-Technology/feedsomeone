@@ -3,6 +3,7 @@
 {% load static %}
 {% load imagefit %}
 {% load crispy_forms_tags %}
+{% load blog_tags %}
 {% block content %}
 
 <main>
@@ -29,13 +30,16 @@
                     <div class="single-post">
                         <div class="feature-img">
                             <img class="img-fluid"
-                                 src="{% if article.feature_img %}{{ article.feature_img.url}}{%endif%}" alt="">
+                                 src="{% if article.feature_img %}{{ article.feature_img.url |resize:'800x420,C' }}{%endif%}"
+                                 alt="">
                         </div>
                         <div class="blog_details">
                             <h2 style="color: #2d2d2d;">{{article.article_title}}
                             </h2>
                             <ul class="blog-info-link mt-3 mb-4">
-                                <li>Post by <a href="#"><i class="fa fa-user"></i>{{article.article_author.get_full_name}}</a>
+                                <li>Post by <a
+                                        href="{% url 'article:article-by-user' article.article_author.username %}"><i
+                                        class="fa fa-user"></i>{{article.article_author.get_full_name}}</a>
                                 </li>
                                 <!--                           <li><a href="#"><i class="fa fa-comments"></i> 03 Comments</a></li>-->
                             </ul>
@@ -45,21 +49,6 @@
                             <p>
                                 {{article.article_content | safe}}
                             </p>
-                            <!--                        <div class="quote-wrapper">-->
-                            <!--                           <div class="quotes">-->
-                            <!--                           </div>-->
-                            <!--                        </div>-->
-                            <!--                        <p>-->
-                            <!--                           MCSE boot camps have its supporters and its detractors. Some people do not understand why you-->
-                            <!--                           should have to spend money on boot camp when you can get the MCSE study materials yourself at a-->
-                            <!--                           fraction of the camp price. However, who has the willpower-->
-                            <!--                        </p>-->
-                            <!--                        <p>-->
-                            <!--                           MCSE boot camps have its supporters and its detractors. Some people do not understand why you-->
-                            <!--                           should have to spend money on boot camp when you can get the MCSE study materials yourself at a-->
-                            <!--                           fraction of the camp price. However, who has the willpower to actually sit through a-->
-                            <!--                           self-imposed MCSE training. who has the willpower to actually-->
-                            <!--                        </p>-->
                         </div>
                     </div>
                     <div class="navigation-top">
@@ -203,156 +192,26 @@
                 </div>
                 <div class="col-lg-4">
                     <div class="blog_right_sidebar">
-                        <aside class="single_sidebar_widget search_widget">
-                            <form action="#">
-                                <div class="form-group">
-                                    <div class="input-group mb-3">
-                                        <input type="text" class="form-control" placeholder='Search Keyword'
-                                               onfocus="this.placeholder = ''"
-                                               onblur="this.placeholder = 'Search Keyword'">
-                                        <div class="input-group-append">
-                                            <button class="btns" type="button"><i class="ti-search"></i></button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <button class="button rounded-0 primary-bg text-white w-100 btn_1 boxed-btn"
-                                        type="submit">Search
-                                </button>
-                            </form>
-                        </aside>
-                        <aside class="single_sidebar_widget post_category_widget">
-                            <h4 class="widget_title" style="color: #2d2d2d;">Category</h4>
-                            <ul class="list cat-list">
-                                <li>
-                                    <a href="#" class="d-flex">
-                                        <p>Restaurant food</p>
-                                        <p>(37)</p>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="#" class="d-flex">
-                                        <p>Travel news</p>
-                                        <p>(10)</p>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="#" class="d-flex">
-                                        <p>Modern technology</p>
-                                        <p>(03)</p>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="#" class="d-flex">
-                                        <p>Product</p>
-                                        <p>(11)</p>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="#" class="d-flex">
-                                        <p>Inspiration</p>
-                                        <p>(21)</p>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="#" class="d-flex">
-                                        <p>Health Care</p>
-                                        <p>(21)</p>
-                                    </a>
-                                </li>
-                            </ul>
-                        </aside>
+
                         <aside class="single_sidebar_widget popular_post_widget">
-                            <h3 class="widget_title" style="color: #2d2d2d;">Related Post</h3>
+                            <h3 class="widget_title" style="color: #2d2d2d;">You may also like</h3>
                             {% for post in similar %}
                             <div class="media post_item">
-                                <img src="{{post.feature_img}}" alt="post">
+                                <img src="{{ post.feature_img.url|resize:'thumbnail' }}" alt="post">
                                 <div class="media-body">
                                     <a href="{{ post.get_absolute_url }}">
                                         <h3 style="color: #2d2d2d;">{{post.article_title}}</h3>
                                     </a>
-                                    <p>{{post.publish_date}}</p>
+                                    <p>{{ post.date_created | date:"d M" }}, {{ post.date_created | date:"Y" }}</p>
                                 </div>
                             </div>
                             {% empty %}
                             There are no similar posts yet.
                             {% endfor %}
                         </aside>
-                        <aside class="single_sidebar_widget tag_cloud_widget">
-                            <h4 class="widget_title" style="color: #2d2d2d;">Tag Clouds</h4>
-                            <ul class="list">
-                                <li>
-                                    <a href="#">project</a>
-                                </li>
-                                <li>
-                                    <a href="#">love</a>
-                                </li>
-                                <li>
-                                    <a href="#">technology</a>
-                                </li>
-                                <li>
-                                    <a href="#">travel</a>
-                                </li>
-                                <li>
-                                    <a href="#">restaurant</a>
-                                </li>
-                                <li>
-                                    <a href="#">life style</a>
-                                </li>
-                                <li>
-                                    <a href="#">design</a>
-                                </li>
-                                <li>
-                                    <a href="#">illustration</a>
-                                </li>
-                            </ul>
-                        </aside>
-                        <aside class="single_sidebar_widget instagram_feeds">
-                            <h4 class="widget_title" style="color: #2d2d2d;">Instagram Feeds</h4>
-                            <ul class="instagram_row flex-wrap">
-                                <li>
-                                    <a href="#">
-                                        <img class="img-fluid" src="{% static 'img/post/post_5.png' %}" alt="">
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="#">
-                                        <img class="img-fluid" src="{% static 'img/post/post_6.png' %}" alt="">
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="#">
-                                        <img class="img-fluid" src="{% static 'img/post/post_7.png' %}" alt="">
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="#">
-                                        <img class="img-fluid" src="{% static 'img/post/post_8.png' %}" alt="">
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="#">
-                                        <img class="img-fluid" src="{% static 'img/post/post_9.png' %}" alt="">
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="#">
-                                        <img class="img-fluid" src="{% static 'img/post/post_10.png' %}" alt="">
-                                    </a>
-                                </li>
-                            </ul>
-                        </aside>
-                        <aside class="single_sidebar_widget newsletter_widget">
-                            <h4 class="widget_title" style="color: #2d2d2d;">Newsletter</h4>
-                            <form action="#">
-                                <div class="form-group">
-                                    <input type="email" class="form-control" onfocus="this.placeholder = ''"
-                                           onblur="this.placeholder = 'Enter email'" placeholder='Enter email' required>
-                                </div>
-                                <button class="button rounded-0 primary-bg text-white w-100 btn_1 boxed-btn"
-                                        type="submit">Subscribe
-                                </button>
-                            </form>
-                        </aside>
+                        {% show_top_categories 6 %}
+                        {% show_most_used_tags 5 %}
+
                     </div>
                 </div>
             </div>

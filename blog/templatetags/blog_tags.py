@@ -3,6 +3,7 @@ from typing import Optional
 from django import template
 from django.db.models import Count, Q
 from django.utils import timezone
+from taggit.models import Tag
 
 from ..models import Article, Categories
 
@@ -73,3 +74,12 @@ def show_top_categories(count=5):
 @register.simple_tag
 def get_most_commented_posts(count=5):
     return Article.published.annotate(total_comments=Count('comments')).order_by('-total_comments')[:count]
+
+
+@register.inclusion_tag('blog/latest.html')
+def show_most_used_tags(count=5):
+    """Return the most used tags i.e. tags common to all posts in descending order of count"""
+    tags = Tag.objects.annotate(
+        num_articles=Count('taggit_taggeditem_items__tag_id')).order_by('-num_articles')[:count]
+    print(tags)
+    return {'tags': tags}
