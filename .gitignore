@@ -169,10 +169,10 @@ dashboard/__pycache__
 venv
 .venv
 *_env
-**/migrations/*
-**/migrations/**
-!**/migrations
-!**/migrations/__init__.py
+#**/migrations/*
+#**/migrations/**
+#!**/migrations
+#!**/migrations/__init__.py
  .settings.ini
 *.ini
 **.ini
