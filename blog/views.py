@@ -31,7 +31,7 @@ class ArticleListView(ListView):
     category = None
 
     def get_queryset(self):
-        queryset = Article.objects.filter(is_published=True)
+        queryset = Article.published.all()
         if self.kwargs.get('tag'):
             self.tag = get_object_or_404(Tag, slug=self.kwargs.get('tag'))
             queryset = queryset.filter(tags__in=[self.tag])
@@ -40,21 +40,10 @@ class ArticleListView(ListView):
         return queryset
 
     def get_context_data(self, **kwargs):
-        # category_set = []
         context = super().get_context_data(**kwargs)
         context['tags'] = self.tag
         context['posts'] = self.get_queryset()
         context['recent_posts'] = self.get_queryset().order_by("-date_created")[:8]
-        # categories = self.get_queryset().filter(category__isnull=False).values('category')
-        # .annotate(ct=Count('category')).order_by('-ct')[:10]
-        # if categories is not None:
-        #     dist_cat = (list(categories))
-        #     for item in dist_cat:
-        #         category = Categories.objects.filter(
-        #             id=item['category']).values().first()
-        #         category['ct'] = item['ct']
-        #         category_set.append(category)
-        #     context['category_set'] = category_set
         return context
 
 
@@ -65,11 +54,8 @@ class UserArticleListView(LoginRequiredMixin, ListView):
     paginate_by = 3
 
     def get_queryset(self):
-        print(self.kwargs['username'])
         user = get_object_or_404(get_user_model(), username=self.kwargs.get('username'))
-        print(user)
         articles = Article.objects.filter(article_author=user).order_by('-date_created')
-        print(articles)
         return articles
 
 
