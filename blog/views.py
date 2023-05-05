@@ -45,9 +45,8 @@ class ArticleListView(ListView):
         context['tags'] = self.tag
         context['posts'] = self.get_queryset()
         context['recent_posts'] = self.get_queryset().order_by("-date_created")[:8]
-        # # categories = self.get_queryset().filter(category__isnull=False).values('category').annotate(
-        # #     ct=Count('category')).order_by(
-        # #     '-ct')[:10]
+        # categories = self.get_queryset().filter(category__isnull=False).values('category')
+        # .annotate(ct=Count('category')).order_by('-ct')[:10]
         # if categories is not None:
         #     dist_cat = (list(categories))
         #     for item in dist_cat:
