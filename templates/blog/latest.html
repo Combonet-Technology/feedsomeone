@@ -27,7 +27,7 @@
         <li>
             <a href="{% url 'article:articles-by-category' category.title %}" class="d-flex">
                 <p>{{category.title}}</p>
-                <p>({{category.ct}})</p>
+                <p>({{category.num_articles}})</p>
             </a>
         </li>
         {% endfor %}

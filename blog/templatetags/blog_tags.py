@@ -1,7 +1,7 @@
 from typing import Optional
 
 from django import template
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.utils import timezone
 
 from ..models import Article, Categories
@@ -65,7 +65,8 @@ def show_recent_articles(count=5):
 
 @register.inclusion_tag('blog/latest.html')
 def show_top_categories(count=5):
-    categories = Categories.objects.all()[:count]
+    categories = Categories.objects.annotate(
+        num_articles=Count('article', filter=Q(article__is_published=True))).order_by('-num_articles')[:count]
     return {'categories': categories}
 
 
