@@ -30,8 +30,8 @@ class PublishedManager(BaseUserManager):
 
 class Article(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    article_title = models.CharField(max_length=100)
-    article_excerpt = models.CharField(max_length=100, null=True, blank=True)
+    article_title = models.CharField(max_length=100, null=False, blank=False)
+    article_excerpt = models.CharField(max_length=255, null=True, blank=True)
     article_slug = models.SlugField(null=False, unique=True, max_length=150)
     article_content = models.TextField()
     feature_img = models.ImageField(upload_to='article_feature_img', default='feature_default.jpg')

@@ -47,7 +47,7 @@
                                 {{article.article_excerpt}}
                             </p>
                             <p>
-                                {{article.article_content | safe}}
+                                {{article.article_content | markdown_filter}}
                             </p>
                         </div>
                     </div>
