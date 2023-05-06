@@ -87,6 +87,6 @@ def show_most_used_tags(count=5):
     return {'tags': tags}
 
 
-@register.filter(name='markdown')
+@register.filter(name='markdown_filter')
 def markdown_format(text):
     return mark_safe(markdown.markdown(text))
