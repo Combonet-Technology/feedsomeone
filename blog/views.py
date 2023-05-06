@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.postgres.search import SearchVector
 from django.db.models import Count
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
@@ -12,7 +13,7 @@ from django.urls import reverse
 from django.views.generic import DeleteView, ListView, UpdateView
 from taggit.models import Tag
 
-from blog.forms import ArticleForm, CommentForm, EmailShareForm
+from blog.forms import ArticleForm, CommentForm, EmailShareForm, SearchForm
 from blog.models import Article
 # Get an instance of a logger
 from ext_libs.sendgrid.sengrid import send_html_email
@@ -126,6 +127,23 @@ def article_detail(request, year, month, day, slug):
             'new_comment': posted_comment,
             'similar': similar_articles,
         })
+
+
+def search_article(request):
+    form = SearchForm()
+    query = None
+    results = []
+    if 'query' in request.GET:
+        form = SearchForm(request.GET)
+    if form.is_valid():
+        query = form.cleaned_data['query']
+        results = Article.published.annotate(
+            search=SearchVector('article_title', 'article_excerpt', 'article_content', 'article_author'),
+        ).filter(search=query)
+    return render(request, 'blog/post/search.html',
+                  {'form': form,
+                   'query': query,
+                   'results': results})
 
 
 # class ArticleDetailView(LoginRequiredMixin, DetailView):
