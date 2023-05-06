@@ -17,7 +17,14 @@ import debug_toolbar
 from baton.autodiscover import admin
 from django.conf import settings
 from django.conf.urls.static import static
+from django.contrib.sitemaps.views import sitemap
 from django.urls import include, path
+
+from blog.sitemaps import ArticleSitemap
+
+sitemaps = {
+    'articles': ArticleSitemap,
+}
 
 urlpatterns = [
     path('bcx/', admin.site.urls),
@@ -29,6 +36,8 @@ urlpatterns = [
     path('article/', include('blog.urls', namespace='article')),
     path('imagefit/', include('imagefit.urls')),
     path('summernote/', include('django_summernote.urls')),
+    path('sitemap.xml', sitemap, {'sitemaps': sitemaps},
+         name='django.contrib.sitemaps.views.sitemap')
     # path('admin/', include('admin_honeypot.urls', namespace='admin_honeypot')),
     # re_path(r'^', include('cms.urls'))
 ]
