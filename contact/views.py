@@ -1,54 +1,50 @@
-from django.core.mail import send_mail, BadHeaderError
-from django.http import HttpResponseRedirect, HttpResponse
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from django.template.loader import render_to_string
-from django.utils.html import strip_tags
+import logging
 
+from django.conf import settings
+from django.contrib import messages
+from django.core.mail import BadHeaderError
+from django.http import HttpResponse
+from django.shortcuts import redirect, render
+from django.template.loader import render_to_string
+
+from ext_libs.sendgrid.sengrid import send_html_email
+
+from .forms import ContactForm
 from .models import Contact
+
+logger = logging.getLogger(__name__)
 
 
 def contact(request):
-    message = Contact()
-
     if request.method == 'POST':
-        firstname = request.POST['first_name']
-        lastname = request.POST['last_name']
-        email = request.POST['email']
-        subject = request.POST['subject']
-        message = request.POST['message']
-        if email != '' and subject != '' and firstname != '' and message != '':
+        contact = ContactForm(request.POST)
+        if contact.is_valid():
+            new_message = contact.save(commit=False)
             context = {
-                'sender': email,
-                'fname': firstname,
-                'lname': lastname,
-                'detail': message,
-                'title': subject,
+                'sender': contact.data.get('email'),
+                'fname': contact.data.get('firstname'),
+                'lname': contact.data.get('lastname'),
+                'detail': contact.data.get('message'),
+                'title': contact.data.get('subject'),
             }
-            html_message = render_to_string('new_email.html', context)
-            plain_message = strip_tags(html_message)
-            from_email = email
-            to = 'femolak@outlook.com'
-            new_message = Contact.objects.create(firstname=firstname,
-                                                 lastname=lastname,
-                                                 email=email,
-                                                 subject=subject,
-                                                 message=message)
             try:
-                if send_mail('FEEDSOMEONE CONTACT FORM',
-                             plain_message,
-                             'femolak@outlook.com',
-                             [to],
-                             html_message=html_message,
-                             fail_silently=False, ):
-                    new_message.received = True
-                new_message.save()
+                send_html_email(settings.EMAIL_HOST_USER,
+                                contact.cleaned_data.get('email'),
+                                'FEEDSOMEONE CONTACT FORM',
+                                render_to_string('new_email.html', context))
             except BadHeaderError as e:
-                return HttpResponse("Message sending failed because of this error: ", str(e), "\n\nMessage scheduled to be "
-                                                                                              "resent later")
+                new_message.received = False
+                return HttpResponse("Message sending failed because of this error: ", str(e),
+                                    "\n\nMessage scheduled to be "
+                                    "resent later")
             except Exception as e:
-                return HttpResponse("Message sending failed because of this error: ", str(e), "\n\nMessage scheduled to be "
-                                                                                              "resent later")
+                new_message.received = False
+                logger.log(level=logging.ERROR, msg=f'Error sending mail: {str(e)}')
+                return HttpResponse("Message sending failed, kindly retry later: ")
+            else:
+                new_message.received = True
+            finally:
+                new_message.save()
             data = {
                 'subject': 'Thank You!',
                 'title': 'Feedsomeone - contact form response',
@@ -59,7 +55,7 @@ def contact(request):
             messages.info(request, 'please fill make sure all fields are filled appropriately')
             return redirect('contact')
     else:
-        return render(request, 'contact.html', {'message': message})
+        return render(request, 'contact.html', {'message': Contact()})
 
 
 def thanks(request):
