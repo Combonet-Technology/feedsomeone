@@ -84,6 +84,8 @@ jdcal==1.4.1
 
 jmespath==1.0.0
 
+Markdown==3.2.1
+
 MarkupPy==1.14
 
 marshmallow==3.19.0
