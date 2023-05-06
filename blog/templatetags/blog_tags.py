@@ -1,8 +1,10 @@
 from typing import Optional
 
+import markdown
 from django import template
 from django.db.models import Count, Q
 from django.utils import timezone
+from django.utils.safestring import mark_safe
 from taggit.models import Tag
 
 from ..models import Article, Categories
@@ -83,3 +85,8 @@ def show_most_used_tags(count=5):
         num_articles=Count('taggit_taggeditem_items__tag_id')).order_by('-num_articles')[:count]
     print(tags)
     return {'tags': tags}
+
+
+@register.filter(name='markdown')
+def markdown_format(text):
+    return mark_safe(markdown.markdown(text))
