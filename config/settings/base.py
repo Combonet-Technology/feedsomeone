@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'user.apps.UserConfig',
     'events.apps.EventsConfig',
     'contact.apps.ContactConfig',
+    'django.contrib.postgres',
     'crispy_forms',
     'imagefit',
     'django_summernote',

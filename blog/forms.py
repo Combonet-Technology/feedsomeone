@@ -47,6 +47,11 @@ class EmailShareForm(forms.Form):
     to = forms.EmailField()
     comments = forms.CharField(required=False,
                                widget=forms.Textarea)
+
+
+class SearchForm(forms.Form):
+    query = forms.CharField()
+
 # class CategoryForm(forms.ModelForm):
 #     class Meta:
 #         model = Categories
