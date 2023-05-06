@@ -115,7 +115,7 @@ def article_detail(request, year, month, day, slug):
                     request, 'Your comment was not posted, try again later')
             return HttpResponseRedirect(request.headers.get('referer'))
         else:
-            print(comment.errors)
+            logger.error(msg=str(comment.errors))
         messages.error(request, 'Form not fully filled, please retry.')
         return HttpResponseRedirect(request.headers.get('referer'))
     else:

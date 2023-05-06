@@ -37,7 +37,7 @@ urlpatterns = [
     path('imagefit/', include('imagefit.urls')),
     path('summernote/', include('django_summernote.urls')),
     path('sitemap.xml', sitemap, {'sitemaps': sitemaps},
-         name='django.contrib.sitemaps.views.sitemap')
+         name='django.contrib.sitemaps.views.sitemap'),
     # path('admin/', include('admin_honeypot.urls', namespace='admin_honeypot')),
     # re_path(r'^', include('cms.urls'))
 ]
