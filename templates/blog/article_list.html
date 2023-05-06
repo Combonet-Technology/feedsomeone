@@ -35,10 +35,11 @@
                                 <a href="{{ article.get_absolute_url }}">
                                     <div id="yes"
                                          style="background:transparent no-repeat center;background-size: cover;
-                            background-image: url('{% if article.feature_img %}{{ article.feature_img.url}}{%endif%}');
+                            background-image: url('{% if article.feature_img %}{{ article.feature_img.url| resize:'385770'}}{%endif%}');
                             transition: all .5s;"></div>
                                 </a><img class="card-img rounded-0" src="
-                                    {% if article.feature_img %}{{ article.feature_img.url}}{%endif%}" alt="">
+                                    {% if article.feature_img %}{{ article.feature_img.url|resize:'320x240,C'}}{%endif%}"
+                                         alt="">
                                 <a href="{{ article.get_absolute_url }}" class="blog_item_date">
                                     <h3>{{ article.date_created | date:"d" }}</h3>
                                     <p>{{ article.date_created | date:"M" }}, {{ article.date_created | date:"Y" }}</p>
@@ -100,7 +101,7 @@
                             <!--                                </form>-->
                         </aside>
                         {% show_top_categories 6 %}
-                        {% show_recent_articles 3 %}
+                        {% show_most_used_tags 5 %}
                     </div>
                 </div>
             </div>
