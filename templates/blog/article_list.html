@@ -71,9 +71,7 @@
                             </div>
                         </article>
                         {% endfor %}
-                        {% block pagination %}
-                        {% include "pagination.html" with page_obj=article %}
-                        {% endblock %}
+                        {% include "pagination.html" with page_obj=articles %}
                     </div>
                 </div>
                 <div class="col-lg-4">

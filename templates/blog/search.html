@@ -26,8 +26,16 @@
             <div class="row">
                 <div class="col-lg-8 mb-5 mb-lg-0">
                     <div class="blog_left_sidebar">
+                        {% if results.has_previous %}
+                        <h2>More matching results</h2>
+                        {% elif results %}
+                        <h2>{% with results.count as total_results %}
+                            Found {{ total_results }} result{{ total_results|pluralize }} containing "{{query}}"
+                            {% endwith %}</h2>
+                        {%else%}
+                        <h2>No result found matching "{{query}}"</h2>
+                        {% endif %}
                         {% for article in results %}
-                        <h2>We found some articles that match</h2>
                         <article class="blog_item">
                             <div class="blog_details">
                                 <a class="d-inline-block" href="{{ article.get_absolute_url  }}">
@@ -60,6 +68,7 @@
                         <h2>Search another term ?</h2>
                         {%endif%}
 
+
                         <form action="{%url 'article:search_articles' %}">
                             <div class="form-group">
                                 <div class="input-group mb-3">
@@ -68,7 +77,8 @@
                                            onfocus="this.placeholder = ''"
                                            onblur="this.placeholder = 'Search Keyword'" name="query">
                                     <div class="input-group-append">
-                                        <button class="btns" type="button"><i class="ti-search search_form_button"></i></button>
+                                        <button class="btns" type="button"><i class="ti-search search_form_button"></i>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -76,10 +86,8 @@
                                     type="submit">Search
                             </button>
                         </form>
+                        {% include "pagination.html" with page_obj=results query_term=query %}
 
-                        {% block pagination %}
-                        {% include "pagination.html" with page_obj=article %}
-                        {% endblock %}
                     </div>
                 </div>
                 <div class="col-lg-4">
@@ -101,37 +109,5 @@
         </div>
     </section>
     <!-- Blog Area End -->
-    <nav class="blog-pagination justify-content-center d-flex">
-        <ul class="pagination mb-4">
-            {% if page_obj.has_previous %}
-            <li class="page-item">
-                <a href="?page=1" class="page-link" aria-label="Previous">First</a>
-            </li>
-            <li class="page-item">
-                <a href="?page={{page_obj.previous_page_number}}" class="page-link" aria-label="Previous"><i
-                        class="ti-angle-left"></i></a>
-            </li>
-            {% endif %}
-            {% for page in page_obj.paginator.page_range %}
-            {% if page_obj.number == page %}
-            <li class="page-item active">
-                <a class="page-link" href="?page={{page}}">{{page}}</a>
-            </li>
-            {% elif page > page_obj.number|add:'-2' and page < page_obj.number|add:'2' %}
-            <li class="page-item"><a class="page-link" href="?page={{page}}">{{page}}</a></li>
-            {% endif %}
-            {% endfor %}
-            {% if page_obj.has_next %}
-            <li class="page-item">
-                <a href="?page={{ page_obj.next_page_number }}" class="page-link" aria-label="Next">
-                    <i class="ti-angle-right"></i>
-                </a>
-            </li>
-            <li class="page-item">
-                <a href="?page={{ page_obj.paginator.num_pages }}" class="page-link">Last</a>
-            </li>
-            {% endif %}
-        </ul>
-    </nav>
 </main>
 {% endblock %}
