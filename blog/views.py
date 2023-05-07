@@ -134,7 +134,6 @@ def search_article(request):
     form = SearchForm()
     query = None
     results = []
-    print(request.GET)
     page = request.GET.get('page')
     if 'query' in request.GET:
         form = SearchForm(request.GET)
