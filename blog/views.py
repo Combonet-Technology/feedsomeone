@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.postgres.search import SearchVector
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db.models import Count
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
@@ -133,15 +134,25 @@ def search_article(request):
     form = SearchForm()
     query = None
     results = []
+    print(request.GET)
+    page = request.GET.get('page')
     if 'query' in request.GET:
         form = SearchForm(request.GET)
-    if form.is_valid():
-        query = form.cleaned_data['query']
-        results = Article.published.annotate(
-            search=SearchVector('article_title', 'article_excerpt', 'article_content', 'article_author'),
-        ).filter(search=query)
+        if form.is_valid():
+            query = form.cleaned_data['query']
+            results = Article.published.annotate(
+                search=SearchVector('article_title', 'article_excerpt', 'article_content', 'article_author'),
+            ).filter(search=query)
+            paginator = Paginator(results, 2)
+            try:
+                results = paginator.page(page)
+            except PageNotAnInteger:
+                results = paginator.page(1)
+            except EmptyPage:
+                results = paginator.page(paginator.num_pages)
     return render(request, 'blog/search.html',
                   {'form': form,
+                   'page': page,
                    'query': query,
                    'results': results})
 
