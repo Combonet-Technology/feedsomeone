@@ -11,3 +11,7 @@
     left: 0;
 }
 
+body > main > section > div > div > div.col-lg-8.mb-5.mb-lg-0 > div > form > div > div > input.search_form_input {
+    height: 60px;
+    font-size: x-large;
+}

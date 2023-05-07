@@ -6,8 +6,8 @@
 	  Support:
 	  Description:
 	  Version:
-	  
-------------------------------------------------- 
+
+-------------------------------------------------
 */
 /* CSS Index
 -------------------------------------------------
@@ -8690,3 +8690,13 @@ del {
 
 /*# sourceMappingURL=style.css.map */
 
+/*custom by me*/
+input.search_form_input {
+    height: 60px;
+    font-size: x-large;
+}
+
+button.search_form_button {
+    background-color: #09cc7f;
+    width: 55px;
+}
