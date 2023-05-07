@@ -25,7 +25,7 @@ class Categories(models.Model):
 
 class PublishedManager(BaseUserManager):
     def get_queryset(self):
-        return super().get_queryset().filter(is_published=True)
+        return super().get_queryset().filter(is_published=True).order_by('-publish_date')
 
 
 class Article(models.Model):

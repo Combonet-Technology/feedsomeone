@@ -33,7 +33,6 @@ class ArticleForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        print(cleaned_data)
         title = cleaned_data.get("article_title")
 
         if title:
