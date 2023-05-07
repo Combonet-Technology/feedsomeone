@@ -7,7 +7,7 @@ from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 
-from ext_libs.sendgrid.sengrid import send_html_email
+from ext_libs.sendgrid.sengrid import send_email
 
 from .forms import ContactForm
 from .models import Contact
@@ -28,15 +28,13 @@ def contact(request):
                 'title': contact_form.data.get('subject'),
             }
             try:
-                send_html_email(settings.EMAIL_HOST_USER,
-                                contact_form.cleaned_data.get('email'),
-                                'FEEDSOMEONE CONTACT FORM',
-                                render_to_string('new_email.html', context))
+                send_email(settings.EMAIL_HOST_USER,
+                           contact_form.cleaned_data.get('email'), 'FEEDSOMEONE CONTACT FORM',
+                           render_to_string('new_email.html', context))
             except BadHeaderError as e:
                 new_message.received = False
                 return HttpResponse("Message sending failed because of this error: ", str(e),
-                                    "\n\nMessage scheduled to be "
-                                    "resent later")
+                                    "\n\nMessage scheduled to be resent later")
             except Exception as e:
                 new_message.received = False
                 logger.log(level=logging.ERROR, msg=f'Error sending mail: {str(e)}')

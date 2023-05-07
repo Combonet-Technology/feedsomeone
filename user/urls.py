@@ -1,7 +1,8 @@
-from django.urls import path, re_path
-from . import views
 from django.contrib.auth import views as auth_views
-from .views import VolunteerListView, VolunteerDetailView
+from django.urls import path
+
+from . import views
+from .views import VolunteerDetailView, VolunteerListView
 
 urlpatterns = [
     path('register/', views.register, name="register"),
@@ -23,4 +24,5 @@ urlpatterns = [
     path('password-reset/complete/',
          auth_views.PasswordResetCompleteView.as_view(template_name='password_reset_complete.html'),
          name="password_reset_complete"),
+    path('subscribe/', views.newsletter_signup, name='newsletter'),
 ]

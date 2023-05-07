@@ -18,7 +18,7 @@ from taggit.models import Tag
 from blog.forms import ArticleForm, CommentForm, EmailShareForm, SearchForm
 from blog.models import Article
 # Get an instance of a logger
-from ext_libs.sendgrid.sengrid import send_html_email
+from ext_libs.sendgrid.sengrid import send_email
 
 logger = logging.getLogger(__name__)
 
@@ -271,7 +271,7 @@ def post_share(request, slug, medium=None):
             post_url = request.build_absolute_uri(post.get_absolute_url())
             subject = f"{cd['name']} recommends you read {post.article_title}"
             message = f"Read {post.article_title} at {post_url}\n\n {cd['name']}\'s comments: {cd['comments']}"
-            sent = send_html_email(settings.EMAIL_HOST_USER, [cd['to']], subject, message, plain=True)
+            sent = send_email(settings.EMAIL_HOST_USER, [cd['to']], subject, message, plain=True)
     else:
         form = EmailShareForm()
 

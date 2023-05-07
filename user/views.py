@@ -11,9 +11,10 @@ from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.views.generic import DetailView, ListView
 
-from ext_libs.sendgrid.sengrid import send_html_email
+from ext_libs.sendgrid.sengrid import send_email
 
-from .forms import UserProfileRegistration, UserProfileUpdateForm
+from .forms import (NewsletterForm, UserProfileRegistration,
+                    UserProfileUpdateForm)
 from .models import UserProfile
 from .token import account_activation_token
 
@@ -69,15 +70,15 @@ def register(request):
             user.is_active = False
             user.save()
             current_site = get_current_site(request)
-            send_html_email(settings.EMAIL_HOST_USER,
-                            form.cleaned_data.get('email'),
-                            'Activation link has been sent to your email id',
-                            render_to_string('acc_activation_email.html', {
-                                'username': user.username,
-                                'domain': current_site.domain,
-                                'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-                                'token': account_activation_token.make_token(user),
-                            }))
+            send_email(settings.EMAIL_HOST_USER,
+                       form.cleaned_data.get('email'),
+                       'Activation link has been sent to your email id',
+                       render_to_string('acc_activation_email.html', {
+                           'username': user.username,
+                           'domain': current_site.domain,
+                           'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+                           'token': account_activation_token.make_token(user),
+                       }))
             username = form.cleaned_data.get('username')
 
             data = {
@@ -122,3 +123,31 @@ class VolunteerListView(ListView):
 class VolunteerDetailView(DetailView):
     model = UserProfile
     context_object_name = 'volunteer'
+
+
+# todo create templates for new subscriber emails
+def newsletter_signup(request):
+    new_lead = NewsletterForm(request.POST)
+    if new_lead.is_valid():
+        try:
+            new_lead.save(commit=False)
+            send_email(source=settings.EMAIL_HOST_USER,
+                       destination=new_lead.data.get('email'),
+                       subject='Welcome to the family',
+                       content='''
+                       Thank you for subscribing to our newsletter,
+                        we will be sending you updates on our events,
+                        causes, outreaches, and articles from our team
+                        of brilliant volunteer writers. <br><br>Regards<br>
+                        Oluwafemi Ebenezer<Founder>
+                        ''',
+                       plain=True
+                       )
+        except Exception as e:
+            # handle already subscribed exception or any other exception
+            print('email cannot be added', str(e))
+        else:
+            # send welcome email for campaign
+            new_lead.save()
+        finally:
+            return redirect('/')
