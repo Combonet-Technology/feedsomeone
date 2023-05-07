@@ -59,14 +59,16 @@
                         {% if results %}
                         <h2>Search another term ?</h2>
                         {%endif%}
-                        <form action="#">
+
+                        <form action="{%url 'article:search_articles' %}">
                             <div class="form-group">
                                 <div class="input-group mb-3">
-                                    <input type="text" class="form-control" placeholder='Search Keyword'
+                                    <input type="text" class="form-control search_form_input"
+                                           placeholder='Search Keyword'
                                            onfocus="this.placeholder = ''"
                                            onblur="this.placeholder = 'Search Keyword'" name="query">
                                     <div class="input-group-append">
-                                        <button class="btns" type="button"><i class="ti-search"></i></button>
+                                        <button class="btns" type="button"><i class="ti-search search_form_button"></i></button>
                                     </div>
                                 </div>
                             </div>
@@ -74,6 +76,7 @@
                                     type="submit">Search
                             </button>
                         </form>
+
                         {% block pagination %}
                         {% include "pagination.html" with page_obj=article %}
                         {% endblock %}
