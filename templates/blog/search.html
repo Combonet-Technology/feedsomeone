@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% block page_title %}our articles{% endblock %}
+{% load static %}
+{% load imagefit %}
+{% load blog_tags %}
+{% block content %}
+<main>
+    <!--? Hero Start -->
+    <div class="slider-area2">
+        <div class="slider-height2 d-flex align-items-center">
+            <div class="container">
+                <div class="row">
+                    <div class="col-xl-12">
+                        <div class="hero-cap hero-cap2 pt-70 text-center">
+                            <h2>Search {%if results%}Results{%else%}Page{%endif%}</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Hero End -->
+    <!--? Blog Area Start-->
+    <section class="blog_area section-padding">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 mb-5 mb-lg-0">
+                    <div class="blog_left_sidebar">
+                        {% for article in results %}
+                        <h2>We found some articles that match</h2>
+                        <article class="blog_item">
+                            <div class="blog_details">
+                                <a class="d-inline-block" href="{{ article.get_absolute_url  }}">
+                                    <h2 class="blog-head" style="color: #2d2d2d;">{{article.article_title}}</h2>
+                                </a>
+                                <p>{{article.article_excerpt|truncatewords_html:30|linebreaks}}</p>
+                                <ul class="blog-info-link">
+                                    <li>
+                                        <a href="{% url 'article:article-by-user' article.article_author.username %}">Written
+                                            by
+                                            <i class="fa fa-user"></i> {{article.article_author}}</a>
+                                    </li>
+                                    <li class="tags">
+                                        Tags:
+                                        {% for tag in article.tags.all %}
+
+                                        <a href="{% url 'article:articles-by-slug' tag.slug %}">
+                                            {{ tag.name }}
+                                        </a>
+                                        {% if not forloop.last %}, {% endif %}
+                                        {% endfor %}
+                                    </li>
+                                    <!--                                        <li><a href="#"><i class="fa fa-comments"></i> 03 Comments</a></li>-->
+                                </ul>
+
+                            </div>
+                        </article>
+                        {% endfor %}
+                        {% if results %}
+                        <h2>Search another term ?</h2>
+                        {%endif%}
+                        <form action="#">
+                            <div class="form-group">
+                                <div class="input-group mb-3">
+                                    <input type="text" class="form-control" placeholder='Search Keyword'
+                                           onfocus="this.placeholder = ''"
+                                           onblur="this.placeholder = 'Search Keyword'" name="query">
+                                    <div class="input-group-append">
+                                        <button class="btns" type="button"><i class="ti-search"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="button rounded-0 primary-bg text-white w-100 btn_1 boxed-btn"
+                                    type="submit">Search
+                            </button>
+                        </form>
+                        {% block pagination %}
+                        {% include "pagination.html" with page_obj=article %}
+                        {% endblock %}
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="blog_right_sidebar">
+                        <aside class="single_sidebar_widget search_widget">
+                            <h4 class="widget_title" style="color: #2d2d2d;">Published Articles Statistics</h4>
+                            <p>All time: {%total_articles_count%}</p>
+                            <p>Today: {%total_articles_today%}</p>
+                            <p>This week: {%total_articles_week%}</p>
+                            <p>This month: {%total_articles_month%}</p>
+                            <p>This year: {%total_articles_year%}</p>
+
+                        </aside>
+                        {% show_top_categories 6 %}
+                        {% show_most_used_tags 5 %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Blog Area End -->
+    <nav class="blog-pagination justify-content-center d-flex">
+        <ul class="pagination mb-4">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a href="?page=1" class="page-link" aria-label="Previous">First</a>
+            </li>
+            <li class="page-item">
+                <a href="?page={{page_obj.previous_page_number}}" class="page-link" aria-label="Previous"><i
+                        class="ti-angle-left"></i></a>
+            </li>
+            {% endif %}
+            {% for page in page_obj.paginator.page_range %}
+            {% if page_obj.number == page %}
+            <li class="page-item active">
+                <a class="page-link" href="?page={{page}}">{{page}}</a>
+            </li>
+            {% elif page > page_obj.number|add:'-2' and page < page_obj.number|add:'2' %}
+            <li class="page-item"><a class="page-link" href="?page={{page}}">{{page}}</a></li>
+            {% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a href="?page={{ page_obj.next_page_number }}" class="page-link" aria-label="Next">
+                    <i class="ti-angle-right"></i>
+                </a>
+            </li>
+            <li class="page-item">
+                <a href="?page={{ page_obj.paginator.num_pages }}" class="page-link">Last</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+</main>
+{% endblock %}

@@ -3,11 +3,12 @@ from django.urls import path
 from . import views
 from .rss_feeds import LatestArticlesFeed
 from .views import (ArticleDeleteView, ArticleListView, UpdateArticleView,
-                    UserArticleListView)
+                    UserArticleListView, search_article)
 
 app_name = 'article'
 urlpatterns = [
     path('feed/', LatestArticlesFeed(), name='article_feed'),
+    path('search/', search_article, name='search_articles'),
     path('create/', views.create_article, name="create-article"),
     path('<slug:slug>/share/', views.post_share, name='post_share'),
     path('<int:pk>/update/', UpdateArticleView.as_view(), name="update-post"),
