@@ -8,11 +8,8 @@
 </head>
 <body>
 <div class="jumbotron text-center" style="background-color: white">
-    <h1 class="display-3">{%if not subject %}Thank You!{% else %}{{subject}}{%endif%}</h1>
-    <p class="lead">{%if not msg %}<strong>Your funds will be received by us</strong> and we will receive a receipt with
-        proof of donation.{%
-        else
-        %}{{msg}}{%endif%}</p>
+    <h1 class="display-3">{{subject}}</h1>
+    <p class="lead">{{msg | safe}}</p>
     <hr>
     <p>
         Still in haste? <a href="tel:08170838856">call us</a>

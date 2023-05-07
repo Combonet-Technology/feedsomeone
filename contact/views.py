@@ -17,19 +17,19 @@ logger = logging.getLogger(__name__)
 
 def contact(request):
     if request.method == 'POST':
-        contact = ContactForm(request.POST)
-        if contact.is_valid():
-            new_message = contact.save(commit=False)
+        contact_form = ContactForm(request.POST)
+        if contact_form.is_valid():
+            new_message = contact_form.save(commit=False)
             context = {
-                'sender': contact.data.get('email'),
-                'fname': contact.data.get('firstname'),
-                'lname': contact.data.get('lastname'),
-                'detail': contact.data.get('message'),
-                'title': contact.data.get('subject'),
+                'sender': contact_form.data.get('email'),
+                'fname': contact_form.data.get('firstname'),
+                'lname': contact_form.data.get('lastname'),
+                'detail': contact_form.data.get('message'),
+                'title': contact_form.data.get('subject'),
             }
             try:
                 send_html_email(settings.EMAIL_HOST_USER,
-                                contact.cleaned_data.get('email'),
+                                contact_form.cleaned_data.get('email'),
                                 'FEEDSOMEONE CONTACT FORM',
                                 render_to_string('new_email.html', context))
             except BadHeaderError as e:
@@ -52,7 +52,7 @@ def contact(request):
             }
             return render(request, 'thank-you.html', data)
         else:
-            messages.info(request, 'please fill make sure all fields are filled appropriately')
+            messages.info(request, 'please fill make sure all fields are filled appropriately \n', contact_form.errors)
             return redirect('contact')
     else:
         return render(request, 'contact.html', {'message': Contact()})
