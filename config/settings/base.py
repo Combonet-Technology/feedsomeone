@@ -232,3 +232,8 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+IMAGEFIT_PRESETS = {
+    'thumbnail': {'width': 64, 'height': 64, 'crop': True},
+    'my_preset1': {'width': 300, 'height': 220},
+    'my_preset2': {'width': 100},
+}

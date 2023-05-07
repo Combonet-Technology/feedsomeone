@@ -83,7 +83,6 @@ def show_most_used_tags(count=5):
     """Return the most used tags i.e. tags common to all posts in descending order of count"""
     tags = Tag.objects.annotate(
         num_articles=Count('taggit_taggeditem_items__tag_id')).order_by('-num_articles')[:count]
-    print(tags)
     return {'tags': tags}
 
 

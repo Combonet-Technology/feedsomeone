@@ -39,7 +39,7 @@ class ArticleListView(ListView):
             self.tag = get_object_or_404(Tag, slug=self.kwargs.get('tag'))
             queryset = queryset.filter(tags__in=[self.tag])
         if self.kwargs.get('category'):
-            queryset = queryset.filter(category=self.kwargs.get('category'))
+            queryset = queryset.filter(category__title=self.kwargs.get('category'))
         return queryset
 
     def get_context_data(self, **kwargs):
@@ -140,20 +140,23 @@ def search_article(request):
         form = SearchForm(request.GET)
         if form.is_valid():
             query = form.cleaned_data['query']
-            search_vector = SearchVector('article_title', 'article_excerpt', 'article_content',
-                                         'article_author__username', 'article_author__first_name',
-                                         'article_author__last_name')
+            search_vector = \
+                SearchVector('article_title', weight='A') + SearchVector('article_excerpt', weight='C') + \
+                SearchVector('article_content', weight='C') + SearchVector('article_author__username', weight='D') + \
+                SearchVector('article_author__first_name', weight='B') + SearchVector('article_author__last_name',
+                                                                                      weight='B')
             search_query = SearchQuery(query)
             results = Article.published.annotate(
                 search=search_vector, rank=SearchRank(search_vector, search_query)
-            ).filter(search=search_query).order_by('-rank')
-            paginator = Paginator(results, 2)
-            try:
-                results = paginator.page(page)
-            except PageNotAnInteger:
-                results = paginator.page(1)
-            except EmptyPage:
-                results = paginator.page(paginator.num_pages)
+            ).filter(rank__gte=0.2).order_by('-rank')
+        paginator = Paginator(results, 2)
+        try:
+            results = paginator.page(page)
+        except PageNotAnInteger:
+            results = paginator.page(1)
+        except EmptyPage:
+            results = paginator.page(paginator.num_pages)
+
     return render(request, 'blog/search_page.html',
                   {'form': form,
                    'page': page,
@@ -191,7 +194,6 @@ def create_article(request):
             return redirect('all-articles')
         # return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
         errors = form.errors
-        print(errors)
         logger.error(errors)
     article_form = form if form else ArticleForm()
     context = {
