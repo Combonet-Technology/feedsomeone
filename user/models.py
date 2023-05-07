@@ -26,13 +26,14 @@ class CustomUserManager(BaseUserManager):
         user = self.create_user(email=email, password=password)
         user.is_staff = True
         user.is_active = True
+        user.is_verified = True
         user.is_superuser = True
         user.save(using=self._db)
         return user
 
     def get_queryset(self):
         return super().get_queryset() \
-            .filter(is_active=True)
+            .filter(is_verified=True)
 
 
 # TODO add user ipaddress information for security
@@ -52,6 +53,7 @@ class UserProfile(AbstractBaseUser, PermissionsMixin):
     date_updated = models.DateTimeField(
         auto_now=True, verbose_name="date_updated", null=True)
     is_active = models.BooleanField(default=False)
+    is_verified = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'email'

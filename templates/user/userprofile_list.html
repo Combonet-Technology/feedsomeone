@@ -24,7 +24,7 @@
         <div class="container">
             <div class="row justify-content-center">
                 <div class="col-xl-6 col-lg-7 col-md-10 col-sm-10">
-                    <!-- Section Tittle -->
+                    <!-- Section Title -->
                     <div class="section-tittle section-tittle2 text-center mb-70">
                         <h2>Get Motivated to join</h2>
                     </div>
@@ -48,10 +48,7 @@
                         </div>
                         <div class="team-caption">
 			    <h3><a href="#" style="font-size: 20px !important;">{{member.get_full_name}}</a></h3>
-                            {%if member.innovator%}<p>Innovator</p>
-                            {% elif member.coordinator %}<p>Coordinator</p>
-                            {%elif member.volunteer %}<p>Volunteer</p>
-                            {% endif %}
+<!--                            <p>Volunteer</p>-->
                         </div>
                     </div>
                 </div>
@@ -108,43 +105,13 @@
 <!--                    </div>-->
 <!--                </div>-->
             </div>
+      {% include "pagination.html" %}
         </div>
     </div>
 
     <!-- Team Ara End -->
     <!-- Hero End -->
     <!--? Count Down Start -->
-      <nav class="blog-pagination justify-content-center d-flex">
-        <ul class="pagination mb-4">
-            {% if page_obj.has_previous %}
-            <li class="page-item">
-                <a href="?page=1" class="page-link" aria-label="Previous">First</a>
-            </li>
-            <li class="page-item">
-                <a href="?page={{page_obj.previous_page_number}}" class="page-link" aria-label="Previous"><i class="ti-angle-left"></i></a>
-            </li>
-            {% endif %}
-            {% for page in page_obj.paginator.page_range %}
-            {% if page_obj.number == page %}
-            <li class="page-item active">
-                <a class="page-link" href="?page={{page}}">{{page}}</a>
-            </li>
-            {% elif page > page_obj.number|add:'-2' and page < page_obj.number|add:'2' %}
-            <li class="page-item"><a class="page-link" href="?page={{page}}">{{page}}</a></li>
-            {% endif %}
-            {% endfor %}
-            {% if page_obj.has_next %}
-            <li class="page-item">
-                <a href="?page={{ page_obj.next_page_number }}" class="page-link" aria-label="Next">
-                    <i class="ti-angle-right"></i>
-                </a>
-            </li>
-            <li class="page-item">
-                <a href="?page={{ page_obj.paginator.num_pages }}" class="page-link">Last</a>
-            </li>
-            {% endif %}
-        </ul>
-    </nav>
     <section class="wantToWork-area ">
         <div class="container">
             <div class="wants-wrapper w-padding2  section-bg" data-background="{% static 'img/gallery/section_bg01.png' %}">

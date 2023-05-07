@@ -116,7 +116,7 @@ class VolunteerListView(ListView):
     paginate_by = 8
 
     def get_queryset(self):
-        return UserProfile.objects.exclude(is_verified=False).order_by('date_joined')
+        return UserProfile.objects.all().order_by('date_joined')
 
 
 class VolunteerDetailView(DetailView):
