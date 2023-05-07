@@ -45,9 +45,6 @@ class UserProfile(AbstractBaseUser, PermissionsMixin):
     last_name = models.CharField(max_length=255, null=True)
     image = models.ImageField(default='default.png', upload_to='profile_pics')
     phone_number = models.CharField(max_length=15, null=True)
-    state = models.CharField(max_length=30, null=True)
-    country = models.CharField(max_length=30, null=True)
-    short_bio = models.CharField(max_length=255, null=True, blank=True)
     date_joined = models.DateTimeField(
         auto_now_add=True, verbose_name="date_joined", null=True)
     date_updated = models.DateTimeField(
@@ -68,3 +65,44 @@ class UserProfile(AbstractBaseUser, PermissionsMixin):
     def get_full_name(self):
         full_name = f'{self.first_name} {self.last_name}'
         return full_name.strip()
+
+
+class Volunteer(UserProfile):
+    state = models.CharField(max_length=30, null=True)
+    country = models.CharField(max_length=30, null=True)
+    short_bio = models.CharField(max_length=255, null=True, blank=True)
+    pass
+
+
+class Donor(UserProfile):
+    """users that donates to the Foundation"""
+    pass
+
+
+class Lead(models.Model):
+    """mark lead as converted based on user actions and create entry
+     for them in donor or volunteers as the case may be"""
+    options = (('Facebook', 'Facebook'),
+               ('Google', 'Google'),
+               ('Youtube', 'Youtube'),
+               ('Twitter', 'Twitter'),
+               ('Linkedin', 'Linkedin'),
+               ('Website', 'Website'),
+               ('Other', 'Other'))
+    stages = (('Volunteer', 'Volunteer'),
+              ('Donor', 'Donor'),
+              ('Subscriber', 'Subscriber'),
+              ('New', 'New'))
+    id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
+    email = models.CharField(unique=True, null=False, blank=False, max_length=255)
+    source = models.CharField(max_length=50, choices=options, null=True, blank=True, default='Website')
+    stage = models.CharField(max_length=50, choices=stages, null=True, blank=True, default='New')
+    converted = models.BooleanField(default=False, blank=False, null=False)
+    date_created = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    date_updated = models.DateTimeField(auto_now=True, null=True, blank=True)
+
+    class Meta:
+        ordering = ["-date_created"]
+
+    def __str__(self):
+        return f'{self.stage} {self.email} from {self.source}'
