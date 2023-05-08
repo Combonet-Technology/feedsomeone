@@ -120,7 +120,7 @@ def donate_thanks(request):
         status = query_dict.get('status')
         tx_ref = query_dict.get('tx_ref')
         tr_id = query_dict.get('transaction_id')
-        # cannot remember why this is like this, will check it out when i want to extend payment
+        # cannot remember why this is like this, will check it out when I want to extend payment
         rave = Rave("FLWPUBK-ef604c855317a5fd377639a5a6744efe-X",
                     "FLWSECK-439f20374599e622cf6b0b03bacf2793-X",
                     usingEnv=False, production=True)
@@ -134,3 +134,7 @@ def donate_thanks(request):
             status=status, tx_ref=tx_ref, tr_id=tr_id, amount=amount)
         transaction.save()
     return render(request, 'thanks-donation.html')
+
+
+def webhooks(request):
+    pass
