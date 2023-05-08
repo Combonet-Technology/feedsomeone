@@ -25,8 +25,6 @@ DEBUG_TOOLBAR_CONFIG = {
 }
 DEBUG = True
 
-EMAIL_HOST_USER = config('EMAIL_HOST_USER')
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -44,3 +42,5 @@ TEMPLATE_DEBUG = DEBUG
 INTERNAL_IPS = (
     '127.0.0.1',
 )
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

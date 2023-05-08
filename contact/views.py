@@ -28,19 +28,16 @@ def contact(request):
                 'title': contact_form.data.get('subject'),
             }
             try:
-                send_email(settings.EMAIL_HOST_USER,
-                           contact_form.cleaned_data.get('email'), 'FEEDSOMEONE CONTACT FORM',
-                           render_to_string('new_email.html', context))
+                send_email(source=settings.EMAIL_HOST_USER, destination=settings.GMAIL_EMAIL,
+                           subject='FEEDSOMEONE CONTACT FORM', content=render_to_string('new_email.html', context))
+                new_message.received = True
             except BadHeaderError as e:
                 new_message.received = False
                 return HttpResponse("Message sending failed because of this error: ", str(e),
                                     "\n\nMessage scheduled to be resent later")
             except Exception as e:
-                new_message.received = False
-                logger.log(level=logging.ERROR, msg=f'Error sending mail: {str(e)}')
-                return HttpResponse("Message sending failed, kindly retry later: ")
-            else:
                 new_message.received = True
+                logger.log(level=logging.ERROR, msg=f'Error sending mail: {str(e)}')
             finally:
                 new_message.save()
             data = {

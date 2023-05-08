@@ -12,9 +12,6 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 
 from .base import *
 
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS").split(" ")
-CSRF_TRUSTED_ORIGINS = os.environ.get("ALLOWED_CSRF").split(" ")
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -25,7 +22,8 @@ DATABASES = {
         'PORT': os.environ.get('POSTGRES_PORT')
     }
 }
-IMAGEFIT_ROOT = BASE_DIR
+CSRF_TRUSTED_ORIGINS = os.environ.get("ALLOWED_CSRF").split(" ")
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS").split(" ")
 INSTALLED_APPS.insert(-1, 'cloudinary')
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
@@ -33,4 +31,3 @@ CLOUDINARY_STORAGE = {
     'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
 }
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')

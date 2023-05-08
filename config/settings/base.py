@@ -131,8 +131,6 @@ USE_TZ = True
 
 SITE_ID = 1
 
-X_FRAME_OPTIONS = 'SAMEORIGIN'
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
@@ -231,9 +229,13 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend'
 ]
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
 IMAGEFIT_PRESETS = {
     'thumbnail': {'width': 64, 'height': 64, 'crop': True},
     'my_preset1': {'width': 300, 'height': 220},
     'my_preset2': {'width': 100},
 }
+
+EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+GMAIL_EMAIL = config('GMAIL_EMAIL')
+OUTLOOK_EMAIL = config('OUTLOOK_EMAIL')
