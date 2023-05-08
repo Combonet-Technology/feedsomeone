@@ -44,7 +44,7 @@ def contact(request):
             errors = contact_form.errors
             return render(request, 'contact.html', {'form': contact_form, 'errors': errors})
     else:
-        return render(request, 'contact.html', {'message': contact_form})
+        return render(request, 'contact.html', {'form': contact_form})
 
 
 def thanks(request):

@@ -2,6 +2,7 @@
 {% block page_title %}get in touch with us{% endblock %}
 {% load static %}
 {% block content %}
+{% load contact_tags %}
     <main>
         <!--? Hero Start -->
         <div class="slider-area2">
@@ -31,6 +32,7 @@
                             <div class="row">
                                 <div class="col-sm-6">
                                     <div class="form-group">
+                                         {{ form.firstname|add_attr "name:firstname"|add_attr id:"first_name" }}
                                         <input class="form-control valid" name="firstname" id="first_name" type="text" onfocus="this.placeholder = ''" onblur="this.placeholder = 'First name'" placeholder="First name" required>
                                     </div>
                                 </div>
