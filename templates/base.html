@@ -225,7 +225,7 @@ margin-top:100px
                         <!-- Logo -->
                         <div class="col-xl-2 col-lg-2">
                             <div class="logo">
-                                <a href="{% url 'homepage' %}"><img src="{% static 'img/logo/logo.png' %}" alt=""></a>
+                                <a href="{% url 'mainsite:homepage' %}"><img src="{% static 'img/logo/logo.png' %}" alt=""></a>
                             </div>
                         </div>
                         <div class="col-xl-10 col-lg-10">
@@ -234,8 +234,8 @@ margin-top:100px
                                 <div class="main-menu d-none d-lg-block">
                                     <nav>
                                         <ul id="navigation">
-                                            <li><a href="{% url 'homepage' %}">Home</a></li>
-                                            <li><a href="{% url 'about-page' %}">About</a></li>
+                                            <li><a href="{% url 'mainsite:homepage' %}">Home</a></li>
+                                            <li><a href="{% url 'mainsite:about-page' %}">About</a></li>
                                             <li><a href="#">Events</a>
                                                 <ul style="width: 220px;" class="submenu">
                                                     <li><a href="{% url 'past_events' %}">Past Events</a></li>
@@ -258,7 +258,7 @@ margin-top:100px
                                                 </ul>
                                             </li>
                                             <li><a href="{% url 'contact' %}">Contact us</a></li>
-                                            <li><a href="{% url 'gallery' %}">Gallery</a></li>
+                                            <li><a href="{% url 'mainsite:gallery' %}">Gallery</a></li>
                                             <!--                                                <li><a href="blog.html">Blog</a>-->
                                             <!--                                                    <ul class="submenu">-->
                                             <!--                                                        <li><a href="blog.html">Blog</a></li>-->
@@ -271,7 +271,7 @@ margin-top:100px
                                 </div>
                                 <!-- Header-btn -->
                                 <div class="header-right-btn d-none d-lg-block ml-20">
-                                    <a href="{% url 'donate' %}" class="btn header-btn">Donate</a>
+                                    <a href="{% url 'mainsite:donate' %}" class="btn header-btn">Donate</a>
                                 </div>
                             </div>
                         </div>
@@ -322,15 +322,15 @@ margin-top:100px
                 <div class="footer">
                     <h3 class="footer-title">Gallery</h3>
                     <ul class="footer-galery">
-                        <li><a href="{% url 'gallery' %}"><img src="{% static 'img/fs-seven.jpg' %}" alt=""></a></li>
-                        <li><a href="{% url 'gallery' %}"><img src="{% static 'img/fs-three.jpg' %}" alt=""></a></li>
-                        <li><a href="{% url 'gallery' %}"><img src="{% static 'img/fs-five.jpg' %}" alt=""></a></li>
-                        <li><a href="{% url 'gallery' %}"><img src="{% static 'img/fs-four.jpg' %}" alt=""></a></li>
-                        <li><a href="{% url 'gallery' %}"><img src="{% static 'img/fs-six.jpg' %}" alt=""></a></li>
-                        <li><a href="{% url 'gallery' %}"><img src="{% static 'img/fs-two.jpg' %}" alt=""></a></li>
-                        <li><a href="{% url 'gallery' %}"><img src="{% static 'img/fs-nine.jpg' %}" alt=""></a></li>
-                        <li><a href="{% url 'gallery' %}"><img src="{% static 'img/fs-one.jpg' %}" alt=""></a></li>
-                        <li><a href="{% url 'gallery' %}"><img src="{% static 'img/fs-eight.jpg' %}" alt=""></a></li>
+                        <li><a href="{% url 'mainsite:gallery' %}"><img src="{% static 'img/fs-seven.jpg' %}" alt=""></a></li>
+                        <li><a href="{% url 'mainsite:gallery' %}"><img src="{% static 'img/fs-three.jpg' %}" alt=""></a></li>
+                        <li><a href="{% url 'mainsite:gallery' %}"><img src="{% static 'img/fs-five.jpg' %}" alt=""></a></li>
+                        <li><a href="{% url 'mainsite:gallery' %}"><img src="{% static 'img/fs-four.jpg' %}" alt=""></a></li>
+                        <li><a href="{% url 'mainsite:gallery' %}"><img src="{% static 'img/fs-six.jpg' %}" alt=""></a></li>
+                        <li><a href="{% url 'mainsite:gallery' %}"><img src="{% static 'img/fs-two.jpg' %}" alt=""></a></li>
+                        <li><a href="{% url 'mainsite:gallery' %}"><img src="{% static 'img/fs-nine.jpg' %}" alt=""></a></li>
+                        <li><a href="{% url 'mainsite:gallery' %}"><img src="{% static 'img/fs-one.jpg' %}" alt=""></a></li>
+                        <li><a href="{% url 'mainsite:gallery' %}"><img src="{% static 'img/fs-eight.jpg' %}" alt=""></a></li>
                     </ul>
                 </div>
             </div>
@@ -366,7 +366,7 @@ margin-top:100px
             <div class="col-md-6 col-md-push-6">
                 <ul class="footer-nav">
                     <li><a href="/">Home</a></li>
-                    <li><a href="{% url 'about-page' %}">About</a></li>
+                    <li><a href="{% url 'mainsite:about-page' %}">About</a></li>
                     <li><a href="{% url 'future_events' %}">Programs</a></li>
                     <li><a href="{% url 'volunteer-list' %}">Volunteers</a></li>
                     <li><a href="{% url 'article:all-articles' %}">Blog</a></li>

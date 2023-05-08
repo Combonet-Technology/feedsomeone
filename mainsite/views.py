@@ -15,7 +15,6 @@ from rave_python import Rave
 from user.models import UserProfile
 
 
-# Create your views here.
 def home(request):
     volunteers = UserProfile.objects.all().order_by("?")[:4]
     total_transaction = TransactionHistory.objects.aggregate(amount=Sum('amount'))
@@ -129,7 +128,7 @@ def donate_thanks(request):
             amount = res.get('amount')
         else:
             messages.info(request, 'PAYMENT UNSUCCESSFUL AND REVERSED')
-            return redirect('donate')
+            return redirect('mainsite:donate')
         transaction = TransactionHistory.objects.create(
             status=status, tx_ref=tx_ref, tr_id=tr_id, amount=amount)
         transaction.save()
@@ -137,4 +136,8 @@ def donate_thanks(request):
 
 
 def webhooks(request):
+    pass
+
+
+def services(request):
     pass
