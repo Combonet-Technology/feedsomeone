@@ -40,7 +40,7 @@ def contact(request):
             }
             return render(request, 'thank-you.html', data)
         else:
-            logger.log(msg='please fill make sure all fields are filled appropriately', level=logging.ERROR)
+            logger.log(msg='please make sure all fields are filled appropriately', level=logging.ERROR)
             errors = contact_form.errors
             return render(request, 'contact.html', {'form': contact_form, 'errors': errors})
     else:
