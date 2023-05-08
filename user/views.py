@@ -144,10 +144,13 @@ def newsletter_signup(request):
                        plain=True
                        )
         except Exception as e:
+            print('AAAA')
             # handle already subscribed exception or any other exception
             print('email cannot be added', str(e))
         else:
             # send welcome email for campaign
+            print('BBB')
             new_lead.save()
         finally:
+            print('CCC')
             return redirect('/')
