@@ -70,7 +70,7 @@ def register(request):
             user.is_active = False
             user.save()
             current_site = get_current_site(request)
-            send_email(settings.EMAIL_HOST_USER,
+            send_email(settings.EMAIL_NO_REPLY,
                        form.cleaned_data.get('email'),
                        'Activation link has been sent to your email id',
                        render_to_string('acc_activation_email.html', {

@@ -1,5 +1,6 @@
 from decouple import config
-from sendgrid import Mail, SendGridAPIClient
+from django.conf import settings
+from sendgrid import Cc, Mail, Personalization, SendGridAPIClient
 
 
 def send_email(source, destination, subject, content, plain=False):
@@ -18,14 +19,13 @@ def send_email(source, destination, subject, content, plain=False):
             subject=subject,
             plain_text_content=content,
             is_multiple=is_multiple)
+        personalization = Personalization()
+        personalization.add_email(Cc(settings.OUTLOOK_EMAIL))
+        message.add_personalization(personalization)
     try:
         sg = SendGridAPIClient(config('SENDGRID_API_KEY'))
-        response = sg.send(message)
+        sg.send(message)
     except Exception as e:
-        print(e)
-        return False
+        raise Exception(str(e))
     else:
-        print(response.status_code)
-        print(response.body)
-        print(response.headers)
         return True
