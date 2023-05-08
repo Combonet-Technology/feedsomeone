@@ -342,8 +342,9 @@ margin-top:100px
                     <h3 class="footer-title">Newsletter</h3>
                     <p>Subscribe to our newsletter and you will always be updated on our upcoming charity events</p>
                     <form id="subscribenow" class="footer-newsletter"
-                          action="https://gmail.us2.list-manage.com/subscribe/post?u=49004ed56b35f3315d8022f98&amp;id=a324975d09"
+                          action="{% url 'newsletter'%}"
                           method="post" target="_blank" novalidate>
+                        {% csrf_token %}
                         <input class="input" id="footer-input" type="email" name="EMAIL" placeholder="Enter your email">
                         <button class="primary-button">Subscribe</button>
                     </form>

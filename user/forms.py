@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm
 
 from user.models import Lead
+from utils.email import clean_email
 
 
 class UserProfileRegistration(UserCreationForm):
@@ -16,6 +17,11 @@ class UserProfileRegistration(UserCreationForm):
     class Meta:
         model = get_user_model()
         fields = ['first_name', 'last_name', 'username', 'email', 'password1', 'password2']
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        clean_email(email)
+        return email
 
 
 class UserProfileUpdateForm(forms.ModelForm):
