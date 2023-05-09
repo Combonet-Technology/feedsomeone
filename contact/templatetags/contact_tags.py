@@ -1,12 +1,39 @@
-from django import template
+from django import forms, template
 
 register = template.Library()
 
 
-@register.filter(name='add_attr')
-def add_attr(field, css):
-    attrs = {}
+@register.filter(name='add_attrib')
+def add_attrib(field, css):
+    name_to_id = {
+        'firstname': 'First Name',
+        'lastname': 'Last Name',
+        'subject': 'Enter Subject',
+        'message': 'Enter Message',
+        'email': 'Enter email address'
+    }
+    onblur = f"this.placeholder = '{name_to_id[field.name]}'"
+    placeholder = f"{name_to_id[field.name]}"
+
+    errors = field.errors.as_text().strip()
+    value = field.value()
+    if value and errors:
+        field.value = f"{value}, ({errors})"
+    elif errors:
+        placeholder = errors
+
+    attrs = {'onfocus': "this.placeholder = ''",
+             'onblur': onblur,
+             'placeholder': placeholder,
+             'id': "",
+             'name': ""}
     definition = css.split(',')
+
+    if isinstance(field.field.widget, forms.Textarea):
+        if 'cols' not in attrs:
+            attrs['cols'] = '30'
+        if 'rows' not in attrs:
+            attrs['rows'] = '9'
 
     for d in definition:
         if ':' not in d:
