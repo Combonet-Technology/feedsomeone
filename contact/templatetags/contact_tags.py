@@ -16,17 +16,13 @@ def add_attrib(field, css):
     placeholder = f"{name_to_id[field.name]}"
 
     errors = field.errors.as_text().strip()
-    value = field.value()
-    if value and errors:
-        field.value = f"{value}, ({errors})"
-    elif errors:
-        placeholder = errors
 
     attrs = {'onfocus': "this.placeholder = ''",
              'onblur': onblur,
-             'placeholder': placeholder,
+             'placeholder': errors if errors else placeholder,
              'id': "",
              'name': ""}
+
     definition = css.split(',')
 
     if isinstance(field.field.widget, forms.Textarea):
