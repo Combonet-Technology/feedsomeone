@@ -12,6 +12,7 @@
 
   gtag('config', 'G-SN22VH6DM1');
 
+
     </script>
     <meta charset="utf-8">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
@@ -69,6 +70,7 @@ div.nice-select {
 
 
 
+
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.9/summernote-lite.js"></script>
     {% endif %}
@@ -78,6 +80,7 @@ div.nice-select {
     height: calc(2.25rem + 10px);
     font-size: 1.5rem;
 }
+
 
 
     </style>
@@ -90,6 +93,7 @@ div.nice-select {
 }
 
 
+
     </style>
     {% endif %}
     {% if volunteers %}
@@ -97,6 +101,7 @@ div.nice-select {
  div#yes:hover {
     transform: scale(1.2) !important;
 }
+
 
 
     </style>
@@ -124,6 +129,7 @@ margin: 0 23.5% !important;
 .articleform > fieldset{
 margin-top:100px
 }
+
 
 
     </style>
@@ -225,7 +231,8 @@ margin-top:100px
                         <!-- Logo -->
                         <div class="col-xl-2 col-lg-2">
                             <div class="logo">
-                                <a href="{% url 'mainsite:homepage' %}"><img src="{% static 'img/logo/logo.png' %}" alt=""></a>
+                                <a href="{% url 'mainsite:homepage' %}"><img src="{% static 'img/logo/logo.png' %}"
+                                                                             alt=""></a>
                             </div>
                         </div>
                         <div class="col-xl-10 col-lg-10">
@@ -322,15 +329,24 @@ margin-top:100px
                 <div class="footer">
                     <h3 class="footer-title">Gallery</h3>
                     <ul class="footer-galery">
-                        <li><a href="{% url 'mainsite:gallery' %}"><img src="{% static 'img/fs-seven.jpg' %}" alt=""></a></li>
-                        <li><a href="{% url 'mainsite:gallery' %}"><img src="{% static 'img/fs-three.jpg' %}" alt=""></a></li>
-                        <li><a href="{% url 'mainsite:gallery' %}"><img src="{% static 'img/fs-five.jpg' %}" alt=""></a></li>
-                        <li><a href="{% url 'mainsite:gallery' %}"><img src="{% static 'img/fs-four.jpg' %}" alt=""></a></li>
-                        <li><a href="{% url 'mainsite:gallery' %}"><img src="{% static 'img/fs-six.jpg' %}" alt=""></a></li>
-                        <li><a href="{% url 'mainsite:gallery' %}"><img src="{% static 'img/fs-two.jpg' %}" alt=""></a></li>
-                        <li><a href="{% url 'mainsite:gallery' %}"><img src="{% static 'img/fs-nine.jpg' %}" alt=""></a></li>
-                        <li><a href="{% url 'mainsite:gallery' %}"><img src="{% static 'img/fs-one.jpg' %}" alt=""></a></li>
-                        <li><a href="{% url 'mainsite:gallery' %}"><img src="{% static 'img/fs-eight.jpg' %}" alt=""></a></li>
+                        <li><a href="{% url 'mainsite:gallery' %}"><img src="{% static 'img/fs-seven.jpg' %}"
+                                                                        alt=""></a></li>
+                        <li><a href="{% url 'mainsite:gallery' %}"><img src="{% static 'img/fs-three.jpg' %}"
+                                                                        alt=""></a></li>
+                        <li><a href="{% url 'mainsite:gallery' %}"><img src="{% static 'img/fs-five.jpg' %}" alt=""></a>
+                        </li>
+                        <li><a href="{% url 'mainsite:gallery' %}"><img src="{% static 'img/fs-four.jpg' %}" alt=""></a>
+                        </li>
+                        <li><a href="{% url 'mainsite:gallery' %}"><img src="{% static 'img/fs-six.jpg' %}" alt=""></a>
+                        </li>
+                        <li><a href="{% url 'mainsite:gallery' %}"><img src="{% static 'img/fs-two.jpg' %}" alt=""></a>
+                        </li>
+                        <li><a href="{% url 'mainsite:gallery' %}"><img src="{% static 'img/fs-nine.jpg' %}" alt=""></a>
+                        </li>
+                        <li><a href="{% url 'mainsite:gallery' %}"><img src="{% static 'img/fs-one.jpg' %}" alt=""></a>
+                        </li>
+                        <li><a href="{% url 'mainsite:gallery' %}"><img src="{% static 'img/fs-eight.jpg' %}"
+                                                                        alt=""></a></li>
                     </ul>
                 </div>
             </div>
@@ -341,19 +357,15 @@ margin-top:100px
                 <div class="footer">
                     <h3 class="footer-title">Newsletter</h3>
                     <p>Subscribe to our newsletter and you will always be updated on our upcoming charity events</p>
-                    <form id="subscribenow" class="footer-newsletter"
-                          action="{% url 'newsletter'%}"
-                          method="post" target="_blank" novalidate>
-                        {% csrf_token %}
-                        <input class="input" id="footer-input" type="email" name="EMAIL" placeholder="Enter your email">
-                        <button class="primary-button">Subscribe</button>
-                    </form>
+                    {% newsletter_form %}
                     <ul class="footer-social" id="footer-social">
                         <li><a><i class="fa fa-arrow-right"></i></a></li>
                         <li><a href="https://www.twitter.com/feedsomeone_"><i class="fab fa-twitter"></i></a></li>
-                        <li><a href="https://www.facebook.com/oluwafemiebenezerfoundation"><i class="fab fa-facebook"></i></a></li>
+                        <li><a href="https://www.facebook.com/oluwafemiebenezerfoundation"><i
+                                class="fab fa-facebook"></i></a></li>
                         <li><a href="https://www.instagram.com/feedsomeone_"><i class="fab fa-instagram"></i></a></li>
-                        <li><a href="https://www.youtube.com/oluwafemiebenezerfoundation"><i class="fab fa-youtube"></i></a></li>
+                        <li><a href="https://www.youtube.com/oluwafemiebenezerfoundation"><i class="fab fa-youtube"></i></a>
+                        </li>
                     </ul>
                 </div>
             </div>

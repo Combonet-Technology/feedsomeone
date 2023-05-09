@@ -13,8 +13,7 @@ from django.views.generic import DetailView, ListView
 
 from ext_libs.sendgrid.sengrid import send_email
 
-from .forms import (NewsletterForm, UserProfileRegistration,
-                    UserProfileUpdateForm)
+from .forms import UserProfileRegistration, UserProfileUpdateForm
 from .models import UserProfile
 from .token import account_activation_token
 
@@ -126,31 +125,3 @@ class VolunteerDetailView(DetailView):
 
 
 # todo create templates for new subscriber emails
-def newsletter_signup(request):
-    new_lead = NewsletterForm(request.POST)
-    if new_lead.is_valid():
-        try:
-            new_lead.save(commit=False)
-            send_email(source=settings.EMAIL_HOST_USER,
-                       destination=new_lead.data.get('email'),
-                       subject='Welcome to the family',
-                       content='''
-                       Thank you for subscribing to our newsletter,
-                        we will be sending you updates on our events,
-                        causes, outreaches, and articles from our team
-                        of brilliant volunteer writers. <br><br>Regards<br>
-                        Oluwafemi Ebenezer<Founder>
-                        ''',
-                       plain=True
-                       )
-        except Exception as e:
-            print('AAAA')
-            # handle already subscribed exception or any other exception
-            print('email cannot be added', str(e))
-        else:
-            # send welcome email for campaign
-            print('BBB')
-            new_lead.save()
-        finally:
-            print('CCC')
-            return redirect('/')
