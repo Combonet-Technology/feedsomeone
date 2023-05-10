@@ -45,6 +45,8 @@ INSTALLED_APPS = [
     'captcha',
     'baton.autodiscover',
     # 'cms',
+    'admin_honeypot',
+    'honeypot',
     'menus',
     'treebeard',
     'sekizai',
@@ -228,7 +230,6 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend'
 ]
 
-
 IMAGEFIT_PRESETS = {
     'thumbnail': {'width': 64, 'height': 64, 'crop': True},
     'my_preset1': {'width': 300, 'height': 220},
@@ -238,3 +239,6 @@ IMAGEFIT_PRESETS = {
 EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 GMAIL_EMAIL = config('GMAIL_EMAIL')
 OUTLOOK_EMAIL = config('OUTLOOK_EMAIL')
+
+HONEYPOT_FIELD_NAME = 'phonenumber'
+HONEYPOT_VALUE = '+234812345678'

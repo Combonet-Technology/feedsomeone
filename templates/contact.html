@@ -3,6 +3,7 @@
 {% load static %}
 {% block content %}
 {% load contact_tags %}
+{% load honeypot %}
 <main>
     <!--? Hero Start -->
     <div class="slider-area2">
@@ -30,6 +31,9 @@
                     <form class="form-contact contact_form" action="{% url 'contact' %}" method="post" id="contactForm"
                           novalidate="novalidate">
                         {% csrf_token %}
+                        {% render_honeypot_field %}
+                        {% render_honeypot_field 'referral_code' %}
+                        {% render_honeypot_field 'website' %}
                         <div class="row">
                             <div class="col-sm-6">
                                 <div class="form-group">
