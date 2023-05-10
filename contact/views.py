@@ -3,6 +3,7 @@ import logging
 from django.conf import settings
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
+from honeypot.decorators import check_honeypot
 
 from ext_libs.sendgrid.sengrid import send_email
 
@@ -11,6 +12,7 @@ from .forms import ContactForm, NewsletterForm
 logger = logging.getLogger(__name__)
 
 
+@check_honeypot
 def contact(request):
     contact_form = ContactForm()
     if request.method == 'POST':
@@ -51,6 +53,7 @@ def thanks(request):
     return render(request, 'thank-you.html')
 
 
+@check_honeypot
 def newsletter_signup(request):
     new_lead = NewsletterForm(request.POST)
     if new_lead.is_valid():
