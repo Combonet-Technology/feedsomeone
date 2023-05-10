@@ -1,6 +1,6 @@
 from django import forms, template
 
-from .forms import NewsletterForm
+from contact.forms import NewsletterForm
 
 register = template.Library()
 
