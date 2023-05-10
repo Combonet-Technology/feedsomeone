@@ -42,9 +42,9 @@ def add_attrib(field, css):
 
     return field.as_widget(attrs=attrs)
 
-#
-# @register.inclusion_tag('newsletter_form.html')
-# def render_my_form(form=None):
-#     if form is None:
-#         form = NewsletterForm()
-#     return {'form': form}
+
+@register.inclusion_tag('newsletter_form.html')
+def render_my_form(form=None):
+    if form is None:
+        form = NewsletterForm()
+    return {'form': form}
