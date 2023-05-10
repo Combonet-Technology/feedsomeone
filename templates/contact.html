@@ -34,6 +34,7 @@
                         {% render_honeypot_field %}
                         {% render_honeypot_field 'referral_code' %}
                         {% render_honeypot_field 'website' %}
+
                         <div class="row">
                             <div class="col-sm-6">
                                 <div class="form-group">
@@ -71,6 +72,7 @@
                                 {% endif %}
                             </div>
                         </div>
+                        <input type="hidden" name="g-recaptcha-response" id='recaptcha'>
                         <div class="form-group mt-3">
                             <button type="submit" class="button button-contactForm boxed-btn">Send</button>
                         </div>
