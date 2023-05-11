@@ -10,7 +10,11 @@ pip install -r requirements.txt
 python manage.py collectstatic --no-input
 
 echo "migration commands"
-#python manage.py makemigrations
+python manage.py showmigrations
+python manage.py migrate taggit 0001
+python manage.py migrate taggit 0002
+python manage.py migrate taggit 0003
+python manage.py migrate taggit 0004
 python manage.py showmigrations
 python manage.py migrate
 
