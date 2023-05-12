@@ -4,6 +4,8 @@ from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.models import AbstractUser, PermissionsMixin
 from django.db import models
 
+from user.enums import EthnicityEnum, ReligionEnum, StateEnum
+
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
@@ -67,16 +69,24 @@ class UserProfile(AbstractBaseUser, PermissionsMixin):
         return full_name.strip()
 
 
-class Volunteer(UserProfile):
-    state_of_residence = models.CharField(max_length=30, null=True)
+class Volunteer(models.Model):
+    user = models.OneToOneField(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name='volunteer')
+    state_of_residence = models.CharField(max_length=30, null=True, blank=True,
+                                          choices=[(tag, tag.value) for tag in StateEnum])
+    ethnicity = models.CharField(max_length=30, null=True, blank=True,
+                                 choices=[(tag, tag.value) for tag in EthnicityEnum])
+    religion = models.CharField(max_length=30, null=True, blank=True,
+                                choices=[(tag, tag.value) for tag in ReligionEnum])
+    profession = models.CharField(max_length=255, null=True, blank=True)
     short_bio = models.CharField(max_length=255, null=True, blank=True)
     image = models.ImageField(default='default.png', upload_to='profile_pics')
     phone_number = models.CharField(max_length=15, null=True)
     is_verified = models.BooleanField(default=False)
 
 
-class Donor(UserProfile):
+class Donor(models.Model):
     """users that donates to the Foundation"""
+    user = models.OneToOneField(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name='donor')
     pass
 
 

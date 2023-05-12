@@ -13,7 +13,7 @@ from django.views.generic import DetailView, ListView
 
 from ext_libs.sendgrid.sengrid import send_email
 
-from .forms import UserProfileUpdateForm, UserRegistrationForm
+from .forms import UserRegistrationForm, VolunteerUpdateForm
 from .models import UserProfile
 from .token import account_activation_token
 
@@ -23,7 +23,7 @@ def profile(request):
     current_user_profile = UserProfile.objects.filter(
         id=request.user.id).first()
     if request.method == 'POST':
-        user_update_form = UserProfileUpdateForm(
+        user_update_form = VolunteerUpdateForm(
             request.POST, request.FILES, instance=request.user)
         if user_update_form.is_valid():  # and profile_update_form.is_valid():
             user_update_form.save()
@@ -31,7 +31,7 @@ def profile(request):
                 request, f'Account for {request.user} updated Successfully!')
             return redirect('profile')
     else:
-        user_update_form = UserProfileUpdateForm(instance=request.user)
+        user_update_form = VolunteerUpdateForm(instance=request.user)
     context = {
         'user_update_form': user_update_form,
         'user': current_user_profile,

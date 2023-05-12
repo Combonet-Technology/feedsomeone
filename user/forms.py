@@ -22,7 +22,7 @@ class UserRegistrationForm(UserCreationForm):
 class VolunteerRegistrationForm(forms.ModelForm):
     class Meta:
         model = Volunteer
-        fields = ['state', 'country']
+        fields = ['state_of_residence', 'phone_number']
 
 
 class VolunteerUpdateForm(forms.ModelForm):
@@ -30,4 +30,4 @@ class VolunteerUpdateForm(forms.ModelForm):
 
     class Meta:
         model = Volunteer
-        fields = ['state', 'short_bio', 'image', 'phone_number']
+        fields = ['state_of_residence', 'short_bio', 'image', 'phone_number', 'ethnicity', 'religion', 'profession']
