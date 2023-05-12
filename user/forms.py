@@ -30,6 +30,4 @@ class UserProfileUpdateForm(forms.ModelForm):
         fields = ['first_name',
                   'last_name',
                   'username',
-                  'email',
-                  'image',
-                  'phone_number']
+                  'email']

@@ -20,6 +20,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 # Application definition
 SECRET_KEY = config('SECRET_KEY')
 INSTALLED_APPS = [
+    'user.apps.UserConfig',
     'baton',
     # 'djangocms_admin_style',
     'django.contrib.admin',
@@ -32,7 +33,6 @@ INSTALLED_APPS = [
     'django.contrib.sitemaps',
     'mainsite.apps.MainsiteConfig',
     'blog.apps.BlogConfig',
-    'user.apps.UserConfig',
     'events.apps.EventsConfig',
     'contact.apps.ContactConfig',
     'django.contrib.postgres',
@@ -210,10 +210,11 @@ BATON = {
             'perms': ('flatpages.add_flatpage', 'auth.change_user')
         },
         {
-            'type': 'free', 'label': 'My parent voice', 'default_open': True, 'children': [
-            {'type': 'model', 'label': 'A Model', 'name': 'mymodelname', 'app': 'myapp'},
-            {'type': 'free', 'label': 'Another custom link', 'url': 'http://www.google.it'},
-        ]
+            'type': 'free', 'label': 'My parent voice', 'default_open': True, 'children':
+            [
+                {'type': 'model', 'label': 'A Model', 'name': 'mymodelname', 'app': 'myapp'},
+                {'type': 'free', 'label': 'Another custom link', 'url': 'http://www.google.it'},
+            ]
         },
     ),
     # 'ANALYTICS': {

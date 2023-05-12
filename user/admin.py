@@ -7,10 +7,10 @@ from user.models import UserProfile
 # Register your models here.
 @admin.register(UserProfile)
 class UserProfileAdmin(ImportExportActionModelAdmin):
-    list_display = ('first_name', 'last_name', 'phone_number',
+    list_display = ('first_name', 'last_name',
                     'date_joined', 'is_active',)
     list_filter = ('is_active', 'date_joined')
-    search_fields = ('state', 'phone_number')
+    search_fields = ('state',)
     actions = ['verify_profile', 'suspend_profile',
                'enable_user', 'disable_user']
 

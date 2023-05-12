@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+{% block page_title %}Login{% endblock %}
+{% block content %}
+<div id="colorlib-main">
+   <div id = "container">
+        <div class="row justify-content-center">
+            <div class="col-lg-6">
+            <div class="row d-flex mb-5 contact-info">
+	          <div class="col-sm-12">
+                    <form method="POST" name="login" class="mt-5 ml-5 mr-5" style="padding: 10% 15% !important;
+                        align-content: center !important;">
+                        {% csrf_token %}
+                      <fieldset class="form-group">
+                          <legend class="border-bottom mb-4">Log in to your profile</legend>
+                          <div id="contentform">
+                              {{form | crispy }}
+                          </div>
+                      </fieldset>
+                      <div class="form-group">
+                          <input type="submit" class="btn btn-primary ml-4" value="Sign in">
+                          <small class="text-muted mt-5 ml-1">
+                           <a href="{% url 'password_reset' %}">Forgot Password ?</a>
+                      </small>
+                      </div>
+                  </form>
+                  <div class="border-top pt-3">
+                      <small class="text-muted mt-5 ml-5">
+                          Don't have an account? <a href="{% url 'register' %}" style="color: #6ec54d;">Sign up</a>
+                      </small>
+                  </div>
+            </div>
+        </div>
+    </div>
+</div>
+   </div></div>
+{% endblock %}
