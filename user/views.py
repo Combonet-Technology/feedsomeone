@@ -13,7 +13,7 @@ from django.views.generic import DetailView, ListView
 
 from ext_libs.sendgrid.sengrid import send_email
 
-from .forms import UserProfileRegistration, UserProfileUpdateForm
+from .forms import UserProfileUpdateForm, UserRegistrationForm
 from .models import UserProfile
 from .token import account_activation_token
 
@@ -53,7 +53,7 @@ def verify_recaptcha(g_captcha):
 # @csrf_exempt
 def register(request):
     if request.method == 'POST':
-        form = UserProfileRegistration(request.POST)
+        form = UserRegistrationForm(request.POST)
         form_data = form.__dict__['data']
         _mutable = form_data._mutable
         form_data._mutable = True
@@ -90,7 +90,7 @@ def register(request):
             messages.error(request, 'INVALID USER INPUTS')
             return render(request, 'register.html', {'forms': form})
     else:
-        form = UserProfileRegistration()
+        form = UserRegistrationForm()
         return render(request, 'register.html', {'forms': form, 'secret': settings.RECAPTCHA_PUBLIC_KEY})
 
 

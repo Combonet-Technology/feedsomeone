@@ -68,8 +68,7 @@ class UserProfile(AbstractBaseUser, PermissionsMixin):
 
 
 class Volunteer(UserProfile):
-    state = models.CharField(max_length=30, null=True)
-    country = models.CharField(max_length=30, null=True)
+    state_of_residence = models.CharField(max_length=30, null=True)
     short_bio = models.CharField(max_length=255, null=True, blank=True)
     image = models.ImageField(default='default.png', upload_to='profile_pics')
     phone_number = models.CharField(max_length=15, null=True)
