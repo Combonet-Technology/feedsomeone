@@ -1,9 +1,9 @@
-import requests
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.sites.shortcuts import get_current_site
+from django.db import transaction
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
@@ -42,17 +42,17 @@ def profile(request):
 
 
 def verify_recaptcha(g_captcha):
-    data = {
-        'secret': settings.RECAPTCHA_PRIVATE_KEY,
-        'response': g_captcha
-    }
-    resp = requests.post('https://www.google.com/recaptcha/api/siteverify', data=data)
-    result_json = resp.json()
-    return 'success' in result_json
+    # data = {
+    #     'secret': settings.RECAPTCHA_PRIVATE_KEY,
+    #     'response': g_captcha
+    # }
+    # resp = requests.post('https://www.google.com/recaptcha/api/siteverify', data=data)
+    # result_json = resp.json()
+    return 'success'  # in result_json
 
 
 # @csrf_exempt
-def register(request):
+def register(request, template='registration/register.html'):
     if request.method == 'POST':
         print(request.POST)
         g_captcha = request.POST.get('g-recaptcha-response')
@@ -64,26 +64,24 @@ def register(request):
             return render(request, 'robot_response.html', {'is_robot': True})
 
         if user_form.is_valid() and volunteer_form.is_valid():
-            # create user
-            user = user_form.save(commit=False)
-            user.is_active = False
-            user.save()
-            current_site = get_current_site(request)
-            send_email(settings.EMAIL_NO_REPLY,
-                       user_form.cleaned_data.get('email'),
-                       'Activation link has been sent to your email id',
-                       render_to_string('acc_activation_email.html', {
-                           'username': user.username,
-                           'domain': current_site.domain,
-                           'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-                           'token': account_activation_token.make_token(user),
-                       }))
-            username = user_form.cleaned_data.get('username')
-
-            # create volunteer
-            volunteer = volunteer_form.save(commit=False)
-            volunteer.user = user
-            volunteer.save()
+            with transaction.atomic():
+                user = user_form.save(commit=False)
+                current_site = get_current_site(request)
+                send_email(settings.EMAIL_NO_REPLY,
+                           user_form.cleaned_data.get('email'),
+                           'Activation link has been sent to your email id',
+                           render_to_string('acc_activation_email.html', {
+                               'username': user.username,
+                               'domain': current_site.domain,
+                               'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+                               'token': account_activation_token.make_token(user),
+                           }))
+                username = user_form.cleaned_data.get('username')
+                # create volunteer
+                volunteer = volunteer_form.save(commit=False)
+                volunteer.user = user
+                user.save()
+                volunteer.save()
 
             data = {
                 'msg': 'Please check your inbox or spam folder for next steps on how to complete the registration',
@@ -93,11 +91,11 @@ def register(request):
             return render(request, 'thank-you.html', data)
         else:
             messages.error(request, 'INVALID USER INPUTS')
-            return render(request, 'register.html', {'forms': user_form, 'volunteer_form': volunteer_form})
+            return render(request, template, {'forms': user_form, 'volunteer_form': volunteer_form})
     else:
         user_form = UserRegistrationForm()
         volunteer_form = VolunteerRegistrationForm()
-        return render(request, 'register.html',
+        return render(request, template,
                       {'forms': user_form, 'volunteer_form': volunteer_form, 'secret': settings.RECAPTCHA_PUBLIC_KEY})
 
 

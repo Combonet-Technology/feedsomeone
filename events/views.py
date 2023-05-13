@@ -1,13 +1,10 @@
 from datetime import datetime
 
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.shortcuts import render
-
-# Create your views here.
 from django.views.generic import CreateView, DetailView, ListView
 
 from events.models import Events
-from user.models import UserProfile
+from user.models import Volunteer
 
 
 class AllEventsList(ListView):
@@ -47,7 +44,6 @@ class PastEventsList(ListView):
     paginate_by = 2
 
     def get_queryset(self):
-        current_date = datetime.today()
         return Events.objects.filter(event_date__lt=datetime.today()).order_by('-event_date')
 
     def get_context_data(self, **kwargs):
@@ -71,7 +67,7 @@ class EventDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        volunteers = UserProfile.objects.exclude(is_verified=False).order_by('date_joined')[:6]
+        volunteers = Volunteer.objects.all().order_by('date_joined')[:6]
         context['volunteers'] = volunteers
         return context
 
@@ -85,4 +81,4 @@ class CreateEventView(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.event_author = self.request.user
-        return super(CreateEventView, self).form_valid(form)
+        return super().form_valid(form)

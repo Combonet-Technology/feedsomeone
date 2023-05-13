@@ -1,7 +1,7 @@
 import uuid
 
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
-from django.contrib.auth.models import AbstractUser, PermissionsMixin
+from django.contrib.auth.models import PermissionsMixin
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -29,17 +29,9 @@ class CustomUserManager(BaseUserManager):
         user = self.create_user(email=email, password=password)
         user.is_staff = True
         user.is_active = True
-        user.is_verified = True
         user.is_superuser = True
         user.save(using=self._db)
         return user
-
-    def get_queryset(self):
-        return super().get_queryset() \
-            .filter(is_verified=True)
-
-
-AbstractUser
 
 
 # TODO add user ipaddress information for security
@@ -55,12 +47,10 @@ class UserProfile(AbstractBaseUser, PermissionsMixin):
         auto_now=True, verbose_name="date_updated", null=True)
     is_active = models.BooleanField(default=False)  # set to true after email verification
     is_staff = models.BooleanField(default=False)
-
+    objects = CustomUserManager()
     USERNAME_FIELD = 'email'
     EMAIL_FIELD = 'email'
     REQUIRED_FIELDS = ['first_name', 'last_name']
-
-    objects = CustomUserManager()
 
     def __str__(self):
         return self.email
@@ -74,7 +64,7 @@ class Volunteer(models.Model):
     uuid = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
     user = models.OneToOneField(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name='volunteer')
     state_of_residence = models.CharField(_('select state'), max_length=30, null=True, blank=True,
-                                          choices=[(tag, tag.value) for tag in StateEnum])
+                                          choices=[(tag.name, tag.value) for tag in StateEnum])
     ethnicity = models.CharField(max_length=30, null=True, blank=True,
                                  choices=[(tag, tag.value) for tag in EthnicityEnum])
     religion = models.CharField(max_length=30, null=True, blank=True,
@@ -87,6 +77,11 @@ class Volunteer(models.Model):
     image = models.ImageField(default='default.png', upload_to='profile_pics')
     phone_number = models.CharField(max_length=15, null=True)
     is_verified = models.BooleanField(default=False)
+
+
+class VolunteerManager(BaseUserManager):
+    def get_queryset(self):
+        return super().get_queryset().filter(is_verified=True)
 
 
 class Donor(models.Model):
@@ -116,6 +111,7 @@ class Lead(models.Model):
     converted = models.BooleanField(default=False, blank=False, null=False)
     date_created = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     date_updated = models.DateTimeField(auto_now=True, null=True, blank=True)
+    objects = VolunteerManager()
 
     class Meta:
         ordering = ["-date_created"]
