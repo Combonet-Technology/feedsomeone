@@ -3,6 +3,7 @@ import uuid
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.models import AbstractUser, PermissionsMixin
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from user.enums import EthnicityEnum, ReligionEnum, StateEnum
 
@@ -70,8 +71,9 @@ class UserProfile(AbstractBaseUser, PermissionsMixin):
 
 
 class Volunteer(models.Model):
+    uuid = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
     user = models.OneToOneField(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name='volunteer')
-    state_of_residence = models.CharField(max_length=30, null=True, blank=True,
+    state_of_residence = models.CharField(_('select state'), max_length=30, null=True, blank=True,
                                           choices=[(tag, tag.value) for tag in StateEnum])
     ethnicity = models.CharField(max_length=30, null=True, blank=True,
                                  choices=[(tag, tag.value) for tag in EthnicityEnum])
@@ -79,6 +81,9 @@ class Volunteer(models.Model):
                                 choices=[(tag, tag.value) for tag in ReligionEnum])
     profession = models.CharField(max_length=255, null=True, blank=True)
     short_bio = models.CharField(max_length=255, null=True, blank=True)
+    facebook = models.CharField(max_length=255, null=True, blank=True)
+    instagram = models.CharField(max_length=255, null=True, blank=True)
+    twitter = models.CharField(max_length=255, null=True, blank=True)
     image = models.ImageField(default='default.png', upload_to='profile_pics')
     phone_number = models.CharField(max_length=15, null=True)
     is_verified = models.BooleanField(default=False)
@@ -86,8 +91,8 @@ class Volunteer(models.Model):
 
 class Donor(models.Model):
     """users that donates to the Foundation"""
+    uuid = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
     user = models.OneToOneField(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name='donor')
-    pass
 
 
 class Lead(models.Model):

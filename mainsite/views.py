@@ -9,14 +9,14 @@ from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import ListView
 
-from events.models import Events
+from events.models import Events, Volunteer
 from mainsite.models import GalleryImage, TransactionHistory
 from rave_python import Rave
 from user.models import UserProfile
 
 
 def home(request):
-    volunteers = UserProfile.objects.all().order_by("?")[:4]
+    volunteers = Volunteer.objects.all().order_by("?")[:4]
     total_transaction = TransactionHistory.objects.aggregate(amount=Sum('amount'))
     number_of_donations = len(list(TransactionHistory.objects.all()))
     events = len(list(Events.objects.filter(event_date__lt=datetime.now())))
