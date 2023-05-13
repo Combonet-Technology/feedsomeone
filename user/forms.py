@@ -19,6 +19,17 @@ class UserRegistrationForm(UserCreationForm):
         return email
 
 
+class UserUpdateForm(forms.ModelForm):
+    class Meta:
+        model = get_user_model()
+        fields = ['first_name', 'last_name', 'email']
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        clean_email(email)
+        return email
+
+
 class VolunteerRegistrationForm(forms.ModelForm):
     class Meta:
         model = Volunteer
@@ -26,8 +37,6 @@ class VolunteerRegistrationForm(forms.ModelForm):
 
 
 class VolunteerUpdateForm(forms.ModelForm):
-    email = forms.EmailField()
-
     class Meta:
         model = Volunteer
         fields = ['state_of_residence', 'short_bio', 'image', 'phone_number', 'ethnicity', 'religion', 'profession']

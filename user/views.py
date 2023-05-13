@@ -13,7 +13,8 @@ from django.views.generic import DetailView, ListView
 
 from ext_libs.sendgrid.sengrid import send_email
 
-from .forms import UserRegistrationForm, VolunteerUpdateForm
+from .forms import (UserRegistrationForm, VolunteerRegistrationForm,
+                    VolunteerUpdateForm)
 from .models import UserProfile
 from .token import account_activation_token
 
@@ -53,24 +54,23 @@ def verify_recaptcha(g_captcha):
 # @csrf_exempt
 def register(request):
     if request.method == 'POST':
-        form = UserRegistrationForm(request.POST)
-        form_data = form.__dict__['data']
-        _mutable = form_data._mutable
-        form_data._mutable = True
-        g_captcha = form_data.pop('g-recaptcha-response')
-        form_data._mutable = _mutable
+        print(request.POST)
+        g_captcha = request.POST.get('g-recaptcha-response')
+        user_form = UserRegistrationForm(request.POST)
+        volunteer_form = VolunteerRegistrationForm(request.POST)
 
         # verify recaptcha
         if not verify_recaptcha(g_captcha):
             return render(request, 'robot_response.html', {'is_robot': True})
 
-        if form.is_valid():
-            user = form.save(commit=False)
+        if user_form.is_valid() and volunteer_form.is_valid():
+            # create user
+            user = user_form.save(commit=False)
             user.is_active = False
             user.save()
             current_site = get_current_site(request)
             send_email(settings.EMAIL_NO_REPLY,
-                       form.cleaned_data.get('email'),
+                       user_form.cleaned_data.get('email'),
                        'Activation link has been sent to your email id',
                        render_to_string('acc_activation_email.html', {
                            'username': user.username,
@@ -78,7 +78,12 @@ def register(request):
                            'uid': urlsafe_base64_encode(force_bytes(user.pk)),
                            'token': account_activation_token.make_token(user),
                        }))
-            username = form.cleaned_data.get('username')
+            username = user_form.cleaned_data.get('username')
+
+            # create volunteer
+            volunteer = volunteer_form.save(commit=False)
+            volunteer.user = user
+            volunteer.save()
 
             data = {
                 'msg': 'Please check your inbox or spam folder for next steps on how to complete the registration',
@@ -88,10 +93,12 @@ def register(request):
             return render(request, 'thank-you.html', data)
         else:
             messages.error(request, 'INVALID USER INPUTS')
-            return render(request, 'register.html', {'forms': form})
+            return render(request, 'register.html', {'forms': user_form, 'volunteer_form': volunteer_form})
     else:
-        form = UserRegistrationForm()
-        return render(request, 'register.html', {'forms': form, 'secret': settings.RECAPTCHA_PUBLIC_KEY})
+        user_form = UserRegistrationForm()
+        volunteer_form = VolunteerRegistrationForm()
+        return render(request, 'register.html',
+                      {'forms': user_form, 'volunteer_form': volunteer_form, 'secret': settings.RECAPTCHA_PUBLIC_KEY})
 
 
 def activate(request, uidb64, token):
@@ -122,6 +129,5 @@ class VolunteerListView(ListView):
 class VolunteerDetailView(DetailView):
     model = UserProfile
     context_object_name = 'volunteer'
-
 
 # todo create templates for new subscriber emails

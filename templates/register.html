@@ -2,6 +2,7 @@
 {% block page_title %}join us today{% endblock %}
 {% load static %}
 {% load crispy_forms_tags %}
+{% load honeypot %}
 {% block content %}
 <div id="colorlib-main">
     <div id="container">
@@ -16,6 +17,7 @@
                                                                             style="font-weight: 700; font-size: 4rem;">Become a
                                     volunteer</h1></legend>
                                 {{forms|crispy}}
+                                {{volunteer_form|crispy}}
                                 {% render_honeypot_field %}
                             {% render_honeypot_field 'state' %}
                             {% render_honeypot_field 'website' %}
