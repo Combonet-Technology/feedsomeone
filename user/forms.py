@@ -5,7 +5,6 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm
 
 from user.models import Volunteer
-from utils.email import clean_email
 
 
 class UserRegistrationForm(UserCreationForm):
@@ -13,10 +12,10 @@ class UserRegistrationForm(UserCreationForm):
         model = get_user_model()
         fields = ['first_name', 'last_name', 'username', 'email']
 
-    def clean_email(self):
-        email = self.cleaned_data.get('email')
-        clean_email(email)
-        return email
+    # def clean_email(self):
+    #     email = self.cleaned_data.get('email')
+    #     clean_email(email)
+    #     return email
 
 
 class UserUpdateForm(forms.ModelForm):
@@ -24,10 +23,10 @@ class UserUpdateForm(forms.ModelForm):
         model = get_user_model()
         fields = ['first_name', 'last_name', 'email']
 
-    def clean_email(self):
-        email = self.cleaned_data.get('email')
-        clean_email(email)
-        return email
+    # def clean_email(self):
+    #     email = self.cleaned_data.get('email')
+    #     clean_email(email)
+    #     return email
 
 
 class VolunteerRegistrationForm(forms.ModelForm):
