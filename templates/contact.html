@@ -39,28 +39,28 @@
                             <div class="col-sm-6">
                                 <div class="form-group">
 
-                                    {{ form.firstname|add_attrib:"class:form-control valid" }}
+                                    {{ form.firstname|add_attrib:"class:valid" }}
                                 </div>
                             </div>
                             <div class="col-sm-6">
                                 <div class="form-group">
-                                    {{ form.lastname|add_attrib:"class:form-control valid" }}
+                                    {{ form.lastname|add_attrib:"class:valid" }}
                                 </div>
                             </div>
                             <div class="col-12">
                                 <div class="form-group">
-                                    {{ form.subject|add_attrib:"class:form-control" }}
+                                    {{ form.subject|add_attrib }}
                                 </div>
                             </div>
                             <div class="col-12">
                                 <div class="form-group">
-                                    {{ form.message|add_attrib:"class:form-control w-100" }}
+                                    {{ form.message|add_attrib:"class:w-100" }}
                                 </div>
                             </div>
                             <div class="col-sm-12">
                                 {% if form.email.errors %}
                                 <div class="form-group">
-                                    {{ form.email|add_attrib:"class:form-control is-invalid" }}
+                                    {{ form.email|add_attrib:"class:valid" }}
                                     {% for error in form.email.errors %}
                                     <div class="invalid-feedback">{{ error }}</div>
                                     {% endfor %}

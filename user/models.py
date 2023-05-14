@@ -66,9 +66,9 @@ class Volunteer(models.Model):
     state_of_residence = models.CharField(_('select state'), max_length=30, null=True, blank=True,
                                           choices=[(tag.name, tag.value) for tag in StateEnum])
     ethnicity = models.CharField(max_length=30, null=True, blank=True,
-                                 choices=[(tag, tag.value) for tag in EthnicityEnum])
+                                 choices=[(tag.name, tag.value) for tag in EthnicityEnum])
     religion = models.CharField(max_length=30, null=True, blank=True,
-                                choices=[(tag, tag.value) for tag in ReligionEnum])
+                                choices=[(tag.name, tag.value) for tag in ReligionEnum])
     profession = models.CharField(max_length=255, null=True, blank=True)
     short_bio = models.CharField(max_length=255, null=True, blank=True)
     facebook = models.CharField(max_length=255, null=True, blank=True)

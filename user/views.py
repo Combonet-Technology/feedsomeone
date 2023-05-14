@@ -1,3 +1,4 @@
+import requests
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model
@@ -21,34 +22,35 @@ from .token import account_activation_token
 
 @login_required()
 def profile(request):
-    current_user_profile = UserProfile.objects.filter(
-        id=request.user.id).first()
+    current_user_profile = request.user.volunteer
     if request.method == 'POST':
-        user_update_form = VolunteerUpdateForm(
-            request.POST, request.FILES, instance=request.user)
-        if user_update_form.is_valid():  # and profile_update_form.is_valid():
-            user_update_form.save()
+        update_form_volunteer = VolunteerUpdateForm(
+            request.POST, request.FILES, instance=current_user_profile)
+        if update_form_volunteer.is_valid():
+            update_form_volunteer.save()
             messages.success(
                 request, f'Account for {request.user} updated Successfully!')
             return redirect('profile')
     else:
-        user_update_form = VolunteerUpdateForm(instance=request.user)
+        initial_data = {field_name: getattr(current_user_profile, field_name) for field_name in
+                        VolunteerUpdateForm.Meta.fields}
+        update_form_volunteer = VolunteerUpdateForm(instance=request.user, initial=initial_data)
     context = {
-        'user_update_form': user_update_form,
+        'user_update_form': update_form_volunteer,
         'user': current_user_profile,
+        'small_fields': ['state_of_residence', 'ethnicity', 'religion']
     }
     return render(request, 'profile.html', context)
-    pass
 
 
 def verify_recaptcha(g_captcha):
-    # data = {
-    #     'secret': settings.RECAPTCHA_PRIVATE_KEY,
-    #     'response': g_captcha
-    # }
-    # resp = requests.post('https://www.google.com/recaptcha/api/siteverify', data=data)
-    # result_json = resp.json()
-    return 'success'  # in result_json
+    data = {
+        'secret': settings.RECAPTCHA_PRIVATE_KEY,
+        'response': g_captcha
+    }
+    resp = requests.post('https://www.google.com/recaptcha/api/siteverify', data=data)
+    result_json = resp.json()
+    return 'success' in result_json
 
 
 # @csrf_exempt
@@ -77,7 +79,6 @@ def register(request, template='registration/register.html'):
                                'token': account_activation_token.make_token(user),
                            }))
                 username = user_form.cleaned_data.get('username')
-                # create volunteer
                 volunteer = volunteer_form.save(commit=False)
                 volunteer.user = user
                 user.save()

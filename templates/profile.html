@@ -1,48 +1,93 @@
 {% extends 'base.html' %}
 {% block page_title %}update your profile{% endblock %}
 {% load static %}
-{% block content %}
+{% load contact_tags %}
 {% load crispy_forms_tags %}
-<div id="colorlib-main">
-    <div id = "container" style="padding: 0 15%;">
-        <div class="row d-flex mb-5 contact-info">
-	          <div class="col-md-12 mb-4">
-                  <div class="mt-5 ml-5 mr-5 content-section">
-					  <img class="rounded-circle account-image" width="80px" height="80px"  src="{{ user.image.url }}">
-					  <div class="media-body">
-						  <h2>{{ user.username }} </h2>
-						  <p>{{ user.email }}</p>
-					  </div>
-                  <div>
-		  {% if user.is_verified == False %}
-                        <div class="content-section">
-                            <div class="media-body">
-                                <h2>Unverified <i class='fas fa-exclamation-circle'></i></h2>
-                            </div>
+{% block content %}
+<main>
+    <!--? Hero Start -->
+    <div class="slider-area2">
+        <div class="slider-height2 d-flex align-items-center">
+            <div class="container">
+                <div class="row">
+                    <div class="col-xl-12">
+                        <div class="hero-cap hero-cap2 pt-20 text-center">
+                            <h2>Update Profile</h2>
                         </div>
-                        {% else %}
-                         <div class="content-section">
-                            <div class="media-body">
-                                <h2>Verified <i class="material-icons">check_circle</i></h2>
-                            </div>
-                        </div>
-                        {% endif %}
-                  <div class="border-top pt-3">
-                      <form method="POST" name="update_form" class="" enctype="multipart/form-data">
-                          {% csrf_token %}
-                          <fieldset class="form-group">
-                              <legend class="border-bottom mb-4">Update Profile</legend>
-                              {{user_update_form | crispy}}
-                          </fieldset>
-                          <div class="form-group">
-                              <input type="submit" class="btn btn-large btn-primary" value="Update">
-                          </div>
-                      </form>
-                  </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-</div>
-</div>
-</div>
-{% endblock %}
+    {% with volunteer=user %}
+    <div id="colorlib-main">
+        <div id="container" style="padding: 0 15%;">
+            <form method="POST" name="update_form" class="form-contact contact_form"
+                  enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="row d-flex mb-5 contact-info">
+                    <div class="col-md-12 mb-4">
+                        <div class="mt-5 ml-5 mr-5 content-section">
+                            <img class="rounded-circle account-image" width="80px" height="80px"
+                                 src="{{ user.image.url }}">
+                                <div class="custom-file col-2">
+                                <input type="file" class="custom-file-input" id="customFile">
+                                <label class="custom-file-label" for="customFile">{%if user.image.url %}Change
+                                    photo{%else%}Upload new photo {%endif%}</label>
+                            </div>
+                            <div class="media-body">
+                                <h2>{{ volunteer.user.username }} </h2>
+                                <p>{{ volunteer.user.email }}</p>
+                            </div>
+                            <div>
+                                {% if not user.volunteer.is_verified %}
+                                <div class="content-section">
+                                    <div class="media-body">
+                                        <h2>Unverified <i class='fas fa-exclamation-circle'></i></h2>
+                                    </div>
+                                </div>
+                                {% else %}
+                                <div class="content-section">
+                                    <div class="media-body">
+                                        <h2>Verified <i class="material-icons">check_circle</i></h2>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                <div class="border-top pt-3">
+
+                                    <div class="row">
+                                        {% for field in user_update_form %}
+                                        {% if field.name in small_fields %}
+                                        <div class="col-4" style="margin-bottom: 30px;">
+                                            <div class="form-group">
+                                                {{field|add_attrib_profile}}
+                                            </div>
+                                        </div>
+                                        {% else %}
+                                        <div class="col-12">
+                                            <div class="form-group">
+                                                {%if field.name == 'image' %}
+                                                {{field|add_attrib_profile:"hidden:true"}}
+                                                {% else %}
+                                                {{field|add_attrib_profile}}
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        {%endif%}
+                                        {%endfor%}
+                                    </div>
+
+                                    <div class="form-group">
+                                        <input type="submit" class="btn btn-large btn-primary" value="Update">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    {%endwith%}
+    {% endblock %}
+</main>
