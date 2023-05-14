@@ -3,6 +3,7 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm
+from django.forms import FileInput, ImageField, Textarea
 
 from user.models import Volunteer
 
@@ -32,10 +33,13 @@ class UserUpdateForm(forms.ModelForm):
 class VolunteerRegistrationForm(forms.ModelForm):
     class Meta:
         model = Volunteer
-        fields = ['state_of_residence', 'phone_number']
+        fields = ['phone_number', 'state_of_residence']
 
 
 class VolunteerUpdateForm(forms.ModelForm):
+    image = ImageField(widget=FileInput)
+    short_bio = forms.CharField(required=False, widget=Textarea)
+
     class Meta:
         model = Volunteer
-        fields = ['state_of_residence', 'short_bio', 'image', 'phone_number', 'ethnicity', 'religion', 'profession']
+        fields = ['image', 'phone_number', 'profession', 'ethnicity', 'religion', 'state_of_residence', 'short_bio', ]
