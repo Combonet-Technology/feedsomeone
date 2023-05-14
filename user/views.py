@@ -56,7 +56,6 @@ def verify_recaptcha(g_captcha):
 # @csrf_exempt
 def register(request, template='registration/register.html'):
     if request.method == 'POST':
-        print(request.POST)
         g_captcha = request.POST.get('g-recaptcha-response')
         user_form = UserRegistrationForm(request.POST)
         volunteer_form = VolunteerRegistrationForm(request.POST)
