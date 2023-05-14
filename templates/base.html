@@ -210,7 +210,7 @@ margin-top:100px
                                 <!--                                    <ul class="contact-now">-->
                                 <!--                                        <li><a href="#subscribenow">Subscribe Now</a></li>-->
                                 <!--                                    </ul>-->
-                                {% if user.is_authenticated %}
+                                {% if request.user.is_authenticated %}
                                 <ul class="contact-now">
                                     <li><a href="{% url 'profile' %}"> Edit Profile</a> <a href="{% url 'logout' %}">Logout</a>
                                     </li>
@@ -385,7 +385,7 @@ margin-top:100px
                     <li><a href="{% url 'volunteer-list' %}">Volunteers</a></li>
                     <li><a href="{% url 'article:all-articles' %}">Blog</a></li>
                     <li><a href="{% url 'contact' %}">Contact</a></li>
-                    {% if user.is_authenticated %}
+                    {% if request.user.is_authenticated %}
                     <li><a href="{% url 'profile' %}"> Edit Profile</a></li>
                     <li><a href="{% url 'logout' %}">Logout</a></li>
                     {% else %}
