@@ -17,3 +17,4 @@ python manage.py migrate
 
 echo "create super user"
 python manage.py create_super_user
+python manage.py create_site_url
