@@ -1,20 +1,8 @@
 import os
 
-from django.contrib.sites.models import Site
 from django.core.management.base import BaseCommand
 
-
-class SiteService:
-    @staticmethod
-    def add_site(name, domain):
-        try:
-            site, created = Site.objects.get_or_create(name=name, domain=domain)
-            if not created:
-                print(f'Site {name} with domain {domain} already exist')
-        except Exception as e:
-            print(f"Error creating site: {str(e)}")
-        else:
-            print(f'Site {name} with domain {domain} created successfully')
+from user.management.services import SiteService
 
 
 class Command(BaseCommand):
