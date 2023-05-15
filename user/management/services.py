@@ -1,8 +1,8 @@
 from django.contrib.sites.models import Site
 
-from user.management.commands.create_super_user import User
+from django.conf.settings import get_user_model
 
-
+User = get_user_model()
 class SiteService:
     @staticmethod
     def add_site(name, domain):
