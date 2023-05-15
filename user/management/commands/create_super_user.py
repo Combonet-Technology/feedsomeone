@@ -3,19 +3,18 @@ import os
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
 
+from user.management.services import CreateSuperUserService
+
 User = get_user_model()
 
 
 class Command(BaseCommand):
     help = 'Creates a superuser.'
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.superuser_email = os.getenv('SUPER_USER_EMAIL')
+        self.superuser_password = os.getenv('SUPER_USER_PASSWORD')
+
     def handle(self, *args, **options):
-        if not User.objects.filter(email=os.getenv('SUPER_USER_EMAIL')).exists():
-            try:
-                User.objects.create_superuser(
-                    email=os.getenv('SUPER_USERNAME'),
-                    password=os.getenv('SUPER_USER_PASSWORD')
-                )
-            except Exception as e:
-                print(f'Super user creation failed with error {str(e)}')
-        print('Superuser has been created.')
+        CreateSuperUserService.create_superuser(self.superuser_email, self.superuser_password)
