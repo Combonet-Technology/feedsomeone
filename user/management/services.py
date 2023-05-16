@@ -1,8 +1,9 @@
+from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
 
-from django.contrib.auth import get_user_model
-
 User = get_user_model()
+
+
 class SiteService:
     @staticmethod
     def add_site(name, domain):
