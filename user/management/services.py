@@ -1,6 +1,6 @@
 from django.contrib.sites.models import Site
 
-from django.conf.settings import get_user_model
+from django.contrib.auth import get_user_model
 
 User = get_user_model()
 class SiteService:
