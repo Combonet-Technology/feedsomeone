@@ -26,6 +26,7 @@ def profile(request):
     if request.method == 'POST':
         update_form_volunteer = VolunteerUpdateForm(
             request.POST, request.FILES, instance=current_user_profile)
+        print(update_form_volunteer.data)
         if update_form_volunteer.is_valid():
             update_form_volunteer.save()
             messages.success(
