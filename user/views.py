@@ -91,12 +91,11 @@ def register(request, template='registration/register.html'):
             return render(request, 'thank-you.html', data)
         else:
             messages.error(request, 'INVALID USER INPUTS')
-            return render(request, template, {'forms': user_form, 'volunteer_form': volunteer_form})
     else:
         user_form = UserRegistrationForm()
         volunteer_form = VolunteerRegistrationForm()
-        return render(request, template,
-                      {'forms': user_form, 'volunteer_form': volunteer_form, 'secret': settings.RECAPTCHA_PUBLIC_KEY})
+    return render(request, template,
+                  {'forms': user_form, 'volunteer_form': volunteer_form, 'secret': settings.RECAPTCHA_PUBLIC_KEY})
 
 
 def activate(request, uidb64, token):
