@@ -139,5 +139,13 @@ def webhooks(request):
     pass
 
 
+def callback(request):
+    pass
+
+
 def services(request):
     pass
+
+
+def privacy(request):
+    return render(request, 'privacy.html')

@@ -28,5 +28,7 @@ urlpatterns = [
     path('thanks-donation/', views.donate_thanks, name='donate-thanks'),
     path('upload/', views.upload_images, name='imageuploader'),
     path('webhooks/', views.webhooks, name='webhooks'),
+    path('callback/', views.callback, name='callback'),
     path('services/', views.services, name='services'),
+    path('privacy-policy/', views.privacy, name='privacy'),
 ]

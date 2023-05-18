@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load static %}
+{% block page_title %}about us{% endblock %}
+{% block content %}
+<main>
+    <!--? Hero Start -->
+    <div class="slider-area2">
+        <div class="slider-height2 d-flex align-items-center">
+            <div class="container">
+                <div class="row">
+                    <div class="col-xl-12">
+                        <div class="hero-cap hero-cap2 pt-20 text-center">
+                            <h2>Privacy policy</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Hero End -->
+
+    <!--? About Law Start-->
+    <section class="about-low-area section-padding2">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12 col-md-10">
+                    <div class="about-caption mb-50">
+                        <!-- Section Title -->
+                        <div class="section-tittle mb-35">
+                            <span>Effective Date: 18/05/2023</span>
+                            <h2>Privacy Policy for Oluwafemi Ebenezer Foundation</h2>
+                        </div>
+
+
+                        <ol>
+                            <li>
+                                <h2><strong>Information We Collect</strong></h2>
+                                <p>1.1 Personal Information:</p>
+                                <p>When you register as a user, volunteer, or donor on our website, we may collect
+                                    personal information such as your name, email address, contact number, and other
+                                    relevant details. This information is collected with your consent and is necessary
+                                    for us to provide you with the requested services.</p>
+
+                                <p>1.2 Usage Data:</p>
+                                <p>We may also collect non-personal information about how you interact with our website.
+                                    This includes your IP address, browser type, operating system, referring URLs, pages
+                                    visited, and other similar data. We collect this information to improve the
+                                    functionality and performance of our website and to analyze user trends.</p>
+                            </li>
+                            <li>
+                                <h2><strong>Use of Information</strong></h2>
+                                <p>2.1 Providing Services:</p>
+                                <p>We use the personal information you provide to register and authenticate users,
+                                    volunteers, and donors, as well as to communicate with you about our programs,
+                                    events, and initiatives. We may also use your information to personalize your
+                                    experience on our website and to improve our services.</p>
+
+                                <p>2.2 Communication:</p>
+                                <p>With your consent, we may send you emails about upcoming programs, events, volunteer
+                                    opportunities, and other relevant information. You have the option to opt out of
+                                    these communications at any time by following the instructions provided in the
+                                    emails or by contacting us directly.</p>
+                            </li>
+                            <li>
+                                <h2><strong>Information Sharing</strong></h2>
+                                <p>3.1 Third-Party Sharing:</p>
+                                <p>We do not sell, trade, or transfer your personal information to third parties without
+                                    your explicit consent. Your information will only be shared with trusted third-party
+                                    service providers who assist us in operating our website and delivering our
+                                    services. These service providers are contractually obligated to keep your
+                                    information confidential and use it solely for the purposes of providing the
+                                    requested services.</p>
+
+                                <p>3.2 Legal Compliance:</p>
+                                <p>We may disclose your personal information if required to do so by law or in response
+                                    to valid legal requests, such as court orders or government regulations.</p>
+                            </li>
+                            <li>
+                                <h2><strong>Data Security</strong></h2>
+                                <p>We implement reasonable security measures to protect the confidentiality and
+                                    integrity of your personal information. However, please note that no data
+                                    transmission over the internet or method of electronic storage is completely secure.
+                                    While we strive to protect your personal information, we cannot guarantee its
+                                    absolute security.</p>
+                            </li>
+                            <li>
+                                <h2><strong>Third-Party Websites</strong></h2>
+                                <p>Our website may contain links to third-party websites. Please note that this Privacy
+                                    Policy does not apply to those websites, and we are not responsible for their
+                                    privacy practices. We encourage you to review the privacy policies of any
+                                    third-party websites you visit.</p>
+                            </li>
+                            <li>
+                                <h2><strong>Updates to the Privacy Policy</strong></h2>
+                                <p>We reserve the right to update or modify this Privacy Policy at any time. Any changes
+                                    we make will be effective immediately upon posting the revised policy on our
+                                    website. We encourage you to review this Privacy Policy periodically to stay
+                                    informed about how we collect, use, and protect your information.</p>
+                            </li>
+                            <li>
+                                <h2><strong>Contact Us</strong></h2>
+                                <p>If you have any questions or concerns about this Privacy Policy or our data
+                                    practices, please contact us at [insert contact information].</p>
+                            </li>
+                        </ol>
+
+
+                        <p><strong>Mission Statement:</strong> To ensure that the marginalized, socially and
+                            economically unstable are being kept in a state of happiness and vitality by a steady source
+                            of meal and shelter</p>
+                        <p><strong>Vision Statement:</strong> Transforming the percentage of disadvantaged and mentally
+                            unstable people into valuable members of the society with the aid of rehabilitating actions
+                            such as free feeding, shelter, counseling, and empowerment.</p>
+                    </div>
+                    <a href="{% url 'mainsite:about-page' %}" class="btn">About US</a>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- About Law End-->
+
+</main>
+{% endblock %}
