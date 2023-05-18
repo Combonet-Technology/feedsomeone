@@ -51,6 +51,8 @@ INSTALLED_APPS = [
     'treebeard',
     'sekizai',
     'taggit',
+    'social_django',
+    'django_extensions',
 ]
 
 MIDDLEWARE = [
