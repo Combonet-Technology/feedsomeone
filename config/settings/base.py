@@ -228,7 +228,11 @@ CMS_TEMPLATES = [
 ]
 
 AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModelBackend'
+    'django.contrib.auth.backends.ModelBackend',
+    'social_core.backends.facebook.FacebookOAuth2',
+    'social_core.backends.twitter.TwitterOAuth',
+    'social_core.backends.google.GoogleOAuth2',
+    'social_core.backends.google.GooglePlusAuth',
 ]
 
 IMAGEFIT_PRESETS = {
@@ -244,3 +248,33 @@ OUTLOOK_EMAIL = config('OUTLOOK_EMAIL')
 
 HONEYPOT_FIELD_NAME = 'phonenumber'
 HONEYPOT_VALUE = '+234812345678'
+
+SOCIAL_AUTH_FACEBOOK_KEY = config('FACEBOOK_KEY')
+SOCIAL_AUTH_FACEBOOK_SECRET = config('FACEBOOK_KEY')
+SOCIAL_AUTH_FACEBOOK_SCOPE = ['email']
+SOCIAL_AUTH_FACEBOOK_PROFILE_EXTRA_PARAMS = {
+    'locale': 'ru_RU',
+    'fields': 'id, name, email, age_range'
+}
+
+SOCIAL_AUTH_TWITTER_KEY = config('TWITTER_API_KEY')
+SOCIAL_AUTH_TWITTER_SECRET = config('TWITTER_API_SECRET')
+SOCIAL_AUTH_TWITTER_OAUTH2_SECRET = config('TWITTER_OAUTH2_CLIENT_ID_KEY')
+SOCIAL_AUTH_TWITTER_OAUTH2_KEY = config('TWITTER_OAUTH2_CLIENT_SECRET')
+
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = config('GOOGLE_OAUTH2_KEY')
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = config('GOOGLE_OAUTH2_SECRET')
+SOCIAL_AUTH_GOOGLE_PLUS_KEY = config('GOOGLE_OAUTH2_KEY')
+SOCIAL_AUTH_GOOGLE_PLUS_SECRET = config('GOOGLE_OAUTH2_SECRET')
+SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = [
+    'https://www.googleapis.com/auth/userinfo.email',
+    'https://www.googleapis.com/auth/userinfo.profile'
+]
+
+SOCIAL_AUTH_LINKEDIN_OAUTH2_KEY = config('LINKEDIN_OAUTH2_KEY')
+SOCIAL_AUTH_LINKEDIN_OAUTH2_SECRET = config('LINKEDIN_OAUTH2_SECRET')
+SOCIAL_AUTH_LINKEDIN_OAUTH2_SCOPE = ['r_liteprofile', 'r_emailaddress']
+SOCIAL_AUTH_LINKEDIN_OAUTH2_EXTRA_DATA = [('id', 'id'),
+                                          ('firstName', 'first_name'),
+                                          ('lastName', 'last_name'),
+                                          ('emailAddress', 'email_address')]
