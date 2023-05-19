@@ -8565,7 +8565,7 @@ del {
   color: #5f646b;
   text-align: center;
   background-color: #FFF;
-  border: 1px solid #e6e6ea;
+  border: 3px solid #e6e6ea;
   -webkit-transition: 0.3s border-color;
   transition: 0.3s border-color;
 }
