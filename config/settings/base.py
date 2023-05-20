@@ -17,6 +17,7 @@ from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
 # Application definition
 SECRET_KEY = config('SECRET_KEY')
 INSTALLED_APPS = [
@@ -228,13 +229,12 @@ CMS_TEMPLATES = [
 ]
 
 AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModelBackend',
     'social_core.backends.facebook.FacebookOAuth2',
     'social_core.backends.twitter.TwitterOAuth',
     'social_core.backends.google.GoogleOAuth2',
     'social_core.backends.google.GooglePlusAuth',
+    'django.contrib.auth.backends.ModelBackend',
 ]
-
 IMAGEFIT_PRESETS = {
     'thumbnail': {'width': 64, 'height': 64, 'crop': True},
     'my_preset1': {'width': 300, 'height': 220},
@@ -256,6 +256,11 @@ SOCIAL_AUTH_FACEBOOK_PROFILE_EXTRA_PARAMS = {
     'locale': 'ru_RU',
     'fields': 'id, name, email, age_range'
 }
+
+SOCIAL_AUTH_PIPELINE = (
+    'social_core.pipeline.social_auth.associate_by_email',
+    'ext_libs.python_social.social_auth_pipeline.create_volunteer',
+)
 
 SOCIAL_AUTH_TWITTER_KEY = config('TWITTER_API_KEY')
 SOCIAL_AUTH_TWITTER_SECRET = config('TWITTER_API_SECRET')
