@@ -10,8 +10,14 @@ from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
+from django.views.decorators.cache import never_cache
+from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import DetailView, ListView
+from social_core.exceptions import AuthCanceled
+from social_django.utils import psa
+from social_django.views import NAMESPACE
 
+from ext_libs.python_social.social_auth_backends import do_complete
 from ext_libs.sendgrid.sengrid import send_email
 
 from .forms import (UserRegistrationForm, VolunteerRegistrationForm,
@@ -127,5 +133,27 @@ class VolunteerListView(ListView):
 class VolunteerDetailView(DetailView):
     model = UserProfile
     context_object_name = 'volunteer'
+
+
+@never_cache
+@csrf_exempt
+@psa(f"{NAMESPACE}:complete")
+def social_auth_complete(request, backend, *args, **kwargs):
+    try:
+        response = do_complete(request.backend, user=request.user, *args, **kwargs)
+
+        if response.status_code == 200 and request.user.is_authenticated:
+            user = request.user
+            if hasattr(user, 'volunteer'):
+                return redirect('volunteer-update')
+
+        return response
+
+    except AuthCanceled:
+        return redirect('login')
+
+    except Exception as e:
+        print(str(e))
+        return redirect('login')
 
 # todo create templates for new subscriber emails
