@@ -262,13 +262,12 @@ SOCIAL_AUTH_PIPELINE = (
     "social_core.pipeline.social_auth.social_uid",
     "social_core.pipeline.social_auth.auth_allowed",
     "social_core.pipeline.social_auth.social_user",
-    "social_core.pipeline.social_auth.load_extra_data",
     "social_core.pipeline.user.get_username",
-    "social_core.pipeline.social_auth.associate_user",
-    "social_core.pipeline.user.user_details",
-    'social_core.pipeline.social_auth.associate_by_email',
     "social_core.pipeline.user.create_user",
-    'ext_libs.python_social.social_auth_pipeline.create_volunteer',
+    "social_core.pipeline.social_auth.associate_user",
+    "social_core.pipeline.social_auth.load_extra_data",
+    "social_core.pipeline.user.user_details",
+    "ext_libs.python_social.social_auth_pipeline.create_volunteer"
 )
 
 SOCIAL_AUTH_TWITTER_KEY = config('TWITTER_API_KEY')
