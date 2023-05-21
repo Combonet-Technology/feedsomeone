@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 
 from .base import *
 
-DEBUG = False
+DEBUG = os.environ.get('DEBUG')
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
