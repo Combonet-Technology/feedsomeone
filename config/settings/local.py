@@ -14,8 +14,7 @@ from decouple import config
 
 from .base import *
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'oluwafemiebenezer.foundation']
-
+ALLOWED_HOSTS = ['*']
 # debug toolbar settings
 INSTALLED_APPS.insert(-1, 'debug_toolbar')
 MIDDLEWARE.insert(5, 'debug_toolbar.middleware.DebugToolbarMiddleware')
