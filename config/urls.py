@@ -41,9 +41,8 @@ urlpatterns = [
          name='django.contrib.sitemaps.views.sitemap'),
     path('admin/', include('admin_honeypot.urls', namespace='admin_honeypot')),
     path('', include('django.contrib.auth.urls')),
-    path(f'auth/<str:backend>/callback', social_auth_complete, name='complete'),
     path(f'social-auth/complete/<str:backend>/', social_auth_complete, name='complete'),
-    path('social-auth/', includelo('social_django.urls', namespace='social')),
+    path('social-auth/', include('social_django.urls', namespace='social')),
     # re_path(r'^', include('cms.urls'))
 ]
 if settings.DEBUG:

@@ -16,8 +16,13 @@ def create_volunteer(user=None, *args, **kwargs):
 
 
 def merge_user(strategy, details, backend, user=None, *args, **kwargs):
-    if user:
-        return {"is_new": False}
-    existing = UserProfile.objects.get(email=kwargs['response'].get('email'))
+    if 'email' in kwargs['response']:
+        email = kwargs['response']['email']
+    elif 'emailAddress' in kwargs['response']:
+        email = kwargs['response']['emailAddress']
+    else:
+        email = None
+
+    existing = UserProfile.objects.get(email=email)
     if existing:
         return {"is_new": False, "user": existing}
