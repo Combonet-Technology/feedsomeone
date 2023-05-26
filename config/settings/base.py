@@ -294,3 +294,5 @@ SOCIAL_AUTH_LINKEDIN_OAUTH2_EXTRA_DATA = [('id', 'id'),
                                           ('lastName', 'last_name'),
                                           ('emailAddress', 'email_address')]
 SOCIAL_AUTH_LINKEDIN_OAUTH2_FIELD_SELECTORS = ['emailAddress']
+
+SOCIAL_AUTH_USER_FIELDS = ['email']

@@ -3,7 +3,8 @@ from django.conf import settings
 from sendgrid import Cc, Mail, Personalization, SendGridAPIClient
 
 
-def send_email(source, destination, subject, content, plain=False):
+def send_email(destination, subject, content, source=None, plain=False):
+    source = source or settings.EMAIL_NO_REPLY
     is_multiple = True if isinstance(destination, list) else False
     if not plain:
         message = Mail(
