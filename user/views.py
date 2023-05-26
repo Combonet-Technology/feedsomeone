@@ -1,7 +1,7 @@
 import requests
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth import get_user_model
+from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.tokens import default_token_generator
@@ -66,7 +66,6 @@ def verify_recaptcha(g_captcha):
     return 'success' in result_json
 
 
-# @csrf_exempt
 def register(request, template='registration/register.html'):
     if request.method == 'POST':
         g_captcha = request.POST.get('g-recaptcha-response')
@@ -185,27 +184,25 @@ def set_password_view(request, uidb64=None, token=None):
 
     else:
         # Perform the necessary actions for unauthenticated user
-        if request.method == 'POST':
-            # Handle the POST request and validate the form
-            if uidb64 and token:
-                user = get_user(uidb64)
-                if user:
-                    if token == reset_url_token:
-                        session_token = request.session.get(INTERNAL_RESET_SESSION_TOKEN)
-                        if default_token_generator.check_token(user, session_token):
-                            form = SetPasswordForm(request.user)
+        if uidb64 and token:
+            user = get_user(uidb64)
+            if user:
+                if token == reset_url_token:
+                    session_token = request.session.get(INTERNAL_RESET_SESSION_TOKEN)
+                    if default_token_generator.check_token(user, session_token):
+                        if request.method == 'POST':
+                            form = SetPasswordForm(user, request.POST)
+                            if form.is_valid():
+                                form.save()
+                                authenticate(user)
+                                return redirect('profile')
+                        else:
+                            form = SetPasswordForm(user)
                     else:
                         request.session[INTERNAL_RESET_SESSION_TOKEN] = token
                         redirect_url = request.path.replace(token, reset_url_token)
                         return HttpResponseRedirect(redirect_url)
-            else:
-                form = SetPasswordForm(request.user, request.POST)
-                if form.is_valid():
-                    form.save()
-                    print(request.__dict__)
-                    return redirect('profile')
-        else:
-            form = SetPasswordForm(request.user)
+
     error = form.errors or None
     return render(request, 'registration/password_change_form.html',
                   context={'form': form, 'motive': 'Create', 'errors': error})
@@ -227,8 +224,9 @@ def create_username(request):
 
 @require_POST
 def check_username_availability(request):
+    print(request.POST)
     username = request.POST.get('username')
+    print(username)
     is_available = not UserProfile.objects.filter(username=username).exists()
+    print(is_available)
     return JsonResponse({'available': is_available})
-
-# todo create templates for new subscriber emails
