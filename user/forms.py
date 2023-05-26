@@ -7,6 +7,7 @@ from django.forms import FileInput, ImageField, Textarea
 from django.template import loader
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
+from django.utils.translation import gettext_lazy as _
 
 from ext_libs.sendgrid.sengrid import send_email
 from user.models import Volunteer
@@ -75,3 +76,8 @@ class CustomPasswordResetForm(PasswordResetForm):
                 'protocol': 'https' if use_https else 'http',
             }
             self.send_mail(context, user_email)
+
+
+class UsernameForm(forms.Form):
+    username = forms.CharField(max_length=255, label='create your username',
+                               help_text=_('Enter a username for your account.'))

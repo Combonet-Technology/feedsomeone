@@ -8,13 +8,14 @@ from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.views import PasswordResetView
 from django.contrib.sites.shortcuts import get_current_site
 from django.db import transaction
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, ListView
 from social_core.exceptions import AuthCanceled
 from social_django.utils import psa
@@ -24,8 +25,9 @@ from ext_libs.python_social.social_auth_backends import do_complete
 from ext_libs.sendgrid.sengrid import send_email
 from utils.objects import get_user
 
-from .forms import (CustomPasswordResetForm, UserRegistrationForm,
-                    VolunteerRegistrationForm, VolunteerUpdateForm)
+from .forms import (CustomPasswordResetForm, UsernameForm,
+                    UserRegistrationForm, VolunteerRegistrationForm,
+                    VolunteerUpdateForm)
 from .models import UserProfile
 from .token import account_activation_token
 
@@ -204,9 +206,29 @@ def set_password_view(request, uidb64=None, token=None):
                     return redirect('profile')
         else:
             form = SetPasswordForm(request.user)
-
     error = form.errors or None
     return render(request, 'registration/password_change_form.html',
                   context={'form': form, 'motive': 'Create', 'errors': error})
+
+
+def create_username(request):
+    if request.method == 'POST':
+        form = UsernameForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data['username']
+            user = request.user
+            user.username = username
+            user.save()
+            return redirect('profile')
+    else:
+        form = UsernameForm()
+    return render(request, 'create_username.html', {'form': form})
+
+
+@require_POST
+def check_username_availability(request):
+    username = request.POST.get('username')
+    is_available = not UserProfile.objects.filter(username=username).exists()
+    return JsonResponse({'available': is_available})
 
 # todo create templates for new subscriber emails
