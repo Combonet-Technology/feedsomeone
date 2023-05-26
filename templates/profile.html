@@ -4,6 +4,24 @@
 {% load contact_tags %}
 {% load crispy_forms_tags %}
 {% block content %}
+<style>
+    .create-username-link {
+    color: #6ec54d;
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.create-username-link:hover {
+    color: #0056b3;
+}
+
+.create-username-link i {
+    margin-left: 5px;
+    font-size: 18px;
+    vertical-align: middle;
+}
+
+</style>
 <main>
     <!--? Hero Start -->
     <div class="slider-area2">
@@ -36,16 +54,29 @@
                         </div>
                         <div>
                             <div class="content-section">
-                                <div class="media-body">
-                                    <div class = "mt-30" style="width:300px"><strong>{{ volunteer.user.username }}'s Profile</strong></div>
-                                    <div style="float:right">{% if not user.volunteer.is_verified %}
-                                    <h2>Unverified <i class='fas fa-exclamation-circle'></i></h2>
-                                    {% else %}
-                                    <h2>Verified <i class="material-icons">check_circle</i></h2>
-                                    {% endif %}
-                                    </div>
-                                </div>
-                            </div>
+    <div class="media-body">
+        <div class="mt-30" style="width: 300px">
+            <strong>
+                {% if volunteer.user.username %}
+                    {{ volunteer.user.username }}'s Profile
+                {% else %}
+                    <a href="{% url 'create_username' %}" class="create-username-link">
+                        Create Username
+                        <i class="fas fa-user-circle"></i>
+                    </a>
+                {% endif %}
+            </strong>
+        </div>
+        <div style="float: right">
+            {% if not user.volunteer.is_verified %}
+                <h2>Unverified <i class="fas fa-exclamation-circle"></i></h2>
+            {% else %}
+                <h2>Verified <i class="material-icons">check_circle</i></h2>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
                             <div class="border-top pt-3">
 
                                 <div class="row">

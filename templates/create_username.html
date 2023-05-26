@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+{% block page_title %}Set username{% endblock %}
+{% block content %}
+<div id="colorlib-main">
+    <div id="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-6">
+                <div class="row d-flex mb-5 contact-info">
+                    <div class="col-sm-12">
+                        <form method="POST" name="login" class="mt-5 ml-5 mr-5" style="padding: 10% 15% !important;
+                        align-content: center !important;">
+                            {% csrf_token %}
+                            <fieldset class="form-group">
+                                <legend class="border-bottom mb-4">Create your custom username</legend>
+                                <div id="contentform">
+                                    {{ form.username|as_crispy_field }}
+                                    <div id="availability-status"></div>
+                                </div>
+                            </fieldset>
+                        </form>
+                        <div class="border-top pt-3">
+                            <small class="text-muted mt-5 ml-5">
+                                Don't have an account? <a href="{% url 'register' %}" style="color: #6ec54d;">check availability</a>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+  // Function to check username availability using AJAX
+  function checkUsernameAvailability() {
+    const usernameInput = document.querySelector('#id_username');
+    const availabilityStatus = document.querySelector('#availability-status');
+
+    const username = usernameInput.value.trim();
+
+    // Send AJAX request to check username availability
+    fetch('/check_username_availability/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}',
+      },
+      body: JSON.stringify({ username: username }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        // Display the availability status
+        if (data.available) {
+          availabilityStatus.textContent = 'Username is available.';
+          availabilityStatus.style.color = 'green';
+        } else {
+          availabilityStatus.textContent = 'Username is already taken. Please choose a different one.';
+          availabilityStatus.style.color = 'red';
+        }
+      });
+  }
+
+  // Add event listener to the username input field
+  const usernameInput = document.querySelector('#id_username');
+  usernameInput.addEventListener('input', checkUsernameAvailability);
+</script>
+
+{% endblock %}
