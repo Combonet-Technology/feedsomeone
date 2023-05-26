@@ -1,11 +1,16 @@
-# from captcha.fields import ReCaptchaField
-# from captcha.widgets import ReCaptchaV2Checkbox
 from django import forms
 from django.contrib.auth import get_user_model
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import PasswordResetForm, UserCreationForm
+from django.contrib.auth.tokens import default_token_generator
+from django.contrib.sites.shortcuts import get_current_site
 from django.forms import FileInput, ImageField, Textarea
+from django.template import loader
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 
+from ext_libs.sendgrid.sengrid import send_email
 from user.models import Volunteer
+from utils.email import clean_email
 
 
 class UserRegistrationForm(UserCreationForm):
@@ -13,10 +18,10 @@ class UserRegistrationForm(UserCreationForm):
         model = get_user_model()
         fields = ['first_name', 'last_name', 'username', 'email']
 
-    # def clean_email(self):
-    #     email = self.cleaned_data.get('email')
-    #     clean_email(email)
-    #     return email
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        clean_email(email)
+        return email
 
 
 class UserUpdateForm(forms.ModelForm):
@@ -24,10 +29,10 @@ class UserUpdateForm(forms.ModelForm):
         model = get_user_model()
         fields = ['first_name', 'last_name', 'email']
 
-    # def clean_email(self):
-    #     email = self.cleaned_data.get('email')
-    #     clean_email(email)
-    #     return email
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        clean_email(email)
+        return email
 
 
 class VolunteerRegistrationForm(forms.ModelForm):
@@ -43,3 +48,30 @@ class VolunteerUpdateForm(forms.ModelForm):
     class Meta:
         model = Volunteer
         fields = ['image', 'phone_number', 'profession', 'ethnicity', 'religion', 'state_of_residence', 'short_bio', ]
+
+
+class CustomPasswordResetForm(PasswordResetForm):
+
+    def send_mail(self, context, to_email, *args, **kwargs):
+        email_template_name = 'registration/password_reset_email.html'
+        body = loader.render_to_string(email_template_name, context)
+        send_email(destination=to_email, subject=f"Password reset on {context['site_name']}", content=body)
+
+    def save(self, use_https=False, request=None, *args, **kwargs):
+        email = self.cleaned_data["email"]
+        current_site = get_current_site(request)
+        site_name = current_site.name
+        domain = current_site.domain
+        email_field_name = get_user_model().get_email_field_name()
+        for user in self.get_users(email):
+            user_email = getattr(user, email_field_name)
+            context = {
+                'email': user_email,
+                'domain': domain,
+                'site_name': site_name,
+                'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+                'user': user,
+                'token': default_token_generator.make_token(user),
+                'protocol': 'https' if use_https else 'http',
+            }
+            self.send_mail(context, user_email)

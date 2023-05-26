@@ -28,8 +28,9 @@ sitemaps = {
 }
 
 urlpatterns = [
-    path('bcx/', admin.site.urls),
+
     path('baton/', include('baton.urls')),
+    path('bcx/', admin.site.urls),
     path('', include('mainsite.urls')),
     path('', include('events.urls')),
     path('contact/', include('contact.urls')),

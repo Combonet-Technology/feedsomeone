@@ -3,9 +3,12 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import SetPasswordForm
+from django.contrib.auth.tokens import default_token_generator
+from django.contrib.auth.views import PasswordResetView
 from django.contrib.sites.shortcuts import get_current_site
 from django.db import transaction
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_str
@@ -19,9 +22,10 @@ from social_django.views import NAMESPACE
 
 from ext_libs.python_social.social_auth_backends import do_complete
 from ext_libs.sendgrid.sengrid import send_email
+from utils.objects import get_user
 
-from .forms import (UserRegistrationForm, VolunteerRegistrationForm,
-                    VolunteerUpdateForm)
+from .forms import (CustomPasswordResetForm, UserRegistrationForm,
+                    VolunteerRegistrationForm, VolunteerUpdateForm)
 from .models import UserProfile
 from .token import account_activation_token
 
@@ -139,21 +143,70 @@ class VolunteerDetailView(DetailView):
 @csrf_exempt
 @psa(f"{NAMESPACE}:complete")
 def social_auth_complete(request, backend, *args, **kwargs):
+    response = do_complete(request.backend, user=request.user, *args, **kwargs)
     try:
-        response = do_complete(request.backend, user=request.user, *args, **kwargs)
-
-        if response.status_code == 200 and request.user.is_authenticated:
-            user = request.user
-            if hasattr(user, 'volunteer'):
-                return redirect('volunteer-update')
-
-        return response
-
+        pass
     except AuthCanceled:
         return redirect('login')
 
     except Exception as e:
         print(str(e))
         return redirect('login')
+    else:
+        if response.status_code == 302 and request.user.is_authenticated:
+            user = request.user
+            if hasattr(user, 'volunteer'):
+                if user.has_usable_password():
+                    return redirect('profile')
+            return redirect(set_password_view)
+
+
+class InitiatePasswordReset(PasswordResetView):
+    form_class = CustomPasswordResetForm
+
+
+def set_password_view(request, uidb64=None, token=None):
+    INTERNAL_RESET_SESSION_TOKEN = '_password_reset_token'
+    reset_url_token = 'set-password'
+    form = None
+
+    # Check if the user is authenticated and skip the token validation
+    if request.user.is_authenticated:
+        # Perform the necessary actions for authenticated user
+        if request.method == 'POST':
+            form = SetPasswordForm(request.user, request.POST)
+            if form.is_valid():
+                form.save()
+                return redirect('profile')
+        else:
+            form = SetPasswordForm(request.user)
+
+    else:
+        # Perform the necessary actions for unauthenticated user
+        if request.method == 'POST':
+            # Handle the POST request and validate the form
+            if uidb64 and token:
+                user = get_user(uidb64)
+                if user:
+                    if token == reset_url_token:
+                        session_token = request.session.get(INTERNAL_RESET_SESSION_TOKEN)
+                        if default_token_generator.check_token(user, session_token):
+                            form = SetPasswordForm(request.user)
+                    else:
+                        request.session[INTERNAL_RESET_SESSION_TOKEN] = token
+                        redirect_url = request.path.replace(token, reset_url_token)
+                        return HttpResponseRedirect(redirect_url)
+            else:
+                form = SetPasswordForm(request.user, request.POST)
+                if form.is_valid():
+                    form.save()
+                    print(request.__dict__)
+                    return redirect('profile')
+        else:
+            form = SetPasswordForm(request.user)
+
+    error = form.errors or None
+    return render(request, 'registration/password_change_form.html',
+                  context={'form': form, 'motive': 'Create', 'errors': error})
 
 # todo create templates for new subscriber emails
