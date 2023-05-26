@@ -19,6 +19,9 @@
                                     <div id="availability-status"></div>
                                 </div>
                             </fieldset>
+                            <div class="form-group">
+                                <input type="submit" class="btn btn-secondary" value="Create username">
+                            </div>
                         </form>
                         <div class="border-top pt-3">
                             <small class="text-muted mt-5 ml-5">
@@ -40,25 +43,35 @@
 
     const username = usernameInput.value.trim();
 
+    if (username.length < 4) {
+          pass_len = false
+          availabilityStatus.textContent = 'Username is too short';
+          availabilityStatus.style.color = 'red';
+    }
+    else{pass_len = true}
+
+    const formData = new FormData();
+    formData.append('username', username);
+
     // Send AJAX request to check username availability
-    fetch('/check_username_availability/', {
+    fetch("{% url 'check_username_availability' %}", {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
         'X-CSRFToken': '{{ csrf_token }}',
       },
-      body: JSON.stringify({ username: username }),
+      body: formData,
     })
       .then((response) => response.json())
       .then((data) => {
         // Display the availability status
+        if (pass_len == true){
         if (data.available) {
           availabilityStatus.textContent = 'Username is available.';
           availabilityStatus.style.color = 'green';
         } else {
           availabilityStatus.textContent = 'Username is already taken. Please choose a different one.';
           availabilityStatus.style.color = 'red';
-        }
+        }}
       });
   }
 
