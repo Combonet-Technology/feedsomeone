@@ -13,11 +13,10 @@ class CommentForm(forms.ModelForm):
 
 
 class ArticleForm(forms.ModelForm):
-    article_slug = forms.CharField(required=False)
 
     class Meta:
         model = Article
-        fields = ('article_title', 'article_excerpt', 'article_slug',
+        fields = ('article_title', 'article_excerpt',
                   'article_content', 'category', 'feature_img')
         widgets = {
             'article_content': SummernoteWidget(
