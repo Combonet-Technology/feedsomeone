@@ -270,7 +270,7 @@ div#total_sum h2.number{font-size:1rem !important}
       country: "NG",
       payment_options: "card, ussd",
       redirect_url: // specified redirect URL
-        "{% url 'donate-thanks' %}",
+        "{% url 'mainsite:donate-thanks' %}",
       meta: {
         cause: document.getElementById("paymentfor").value,
       },
