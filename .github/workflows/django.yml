@@ -8,7 +8,6 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     strategy:
       max-parallel: 1
@@ -16,15 +15,24 @@ jobs:
         python-version: [3.11.1]
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install Dependencies
-      run: |
-        python -m pip install pipenv
-        pipenv install
-    - name: Run Tests
-      run: |
-        python manage.py test
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install Dependencies
+        run: |
+          python -m pip install pipenv
+          pipenv install
+      - name: Run Tests
+        run: |
+          python manage.py test
+
+      # Add the Slack notification action
+      - name: Slack Notification
+        uses: slack/github-action@4.2.0
+        env:
+          SLACK_WEBHOOK_URL: https://hooks.slack.com/services/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
+        with:
+          status_text: "Django CI - ${{ job.status }}"
+          fields: repo,message,commit,author,action,eventName
