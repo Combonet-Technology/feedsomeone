@@ -172,9 +172,11 @@ def set_password_view(request, uidb64=None, token=None):
         if not check_validity_token(request, user, token):
             # return 400 page with the error
             return HttpResponse('Invalid Token, Request for another with valid credentials')
-    form, done = set_password_and_login(user, request, SetPasswordForm, authenticated=already_logged)
+    form, done = set_password_and_login(user, request, SetPasswordForm,
+                                        authenticated=already_logged)
     if done:
-        return redirect(settings.LOGIN_REDIRECT_URL)
+        return profile(request)
+        # return redirect('profile')
     return render(request, 'registration/password_change_form.html',
                   context={'form': form, 'motive': motive})
 

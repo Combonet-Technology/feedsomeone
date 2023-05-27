@@ -1,4 +1,4 @@
-from django.contrib.auth import get_user_model, login
+from django.contrib.auth import authenticate, get_user_model, login
 from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ValidationError
 from django.http import HttpResponseRedirect
@@ -23,9 +23,10 @@ def set_password_and_login(user, request, form, authenticated=None):
         filled_form = form(user, request.POST)
         if filled_form.is_valid():
             filled_form.save()
-            if not authenticated:
-                print('From password RESET initiated by user')
-                login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+            authenticated_user = authenticate(request, username=user.email,
+                                              password=filled_form.cleaned_data['new_password1'])
+            if authenticated_user is not None:
+                login(request, authenticated_user, backend='django.contrib.auth.backends.ModelBackend')
             return None, True
     form = form(user)
     return form, False
