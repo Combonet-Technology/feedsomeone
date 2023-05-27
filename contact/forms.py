@@ -5,7 +5,7 @@ from django.forms import ModelForm
 
 from contact.models import Contact
 from user.models import Lead
-from utils.email import clean_email
+from utils.forms import clean_email
 
 
 class ContactForm(ModelForm):

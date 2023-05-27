@@ -25,6 +25,7 @@ def send_email(destination, subject, content, source=None, plain=False):
         message.add_personalization(personalization)
     try:
         sg = SendGridAPIClient(config('SENDGRID_API_KEY'))
+        print(message)
         sg.send(message)
     except Exception as e:
         raise Exception(str(e))

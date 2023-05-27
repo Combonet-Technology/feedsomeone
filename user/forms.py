@@ -11,7 +11,7 @@ from django.utils.translation import gettext_lazy as _
 
 from ext_libs.sendgrid.sengrid import send_email
 from user.models import Volunteer
-from utils.email import clean_email
+from utils.forms import clean_email
 
 
 class UserRegistrationForm(UserCreationForm):
