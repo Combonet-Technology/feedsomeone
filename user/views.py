@@ -1,14 +1,13 @@
 import requests
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth import authenticate, get_user_model
+from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import SetPasswordForm
-from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.views import PasswordResetView
 from django.contrib.sites.shortcuts import get_current_site
 from django.db import transaction
-from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_str
@@ -23,7 +22,7 @@ from social_django.views import NAMESPACE
 
 from ext_libs.python_social.social_auth_backends import do_complete
 from ext_libs.sendgrid.sengrid import send_email
-from utils.objects import get_user
+from utils.auth import check_validity_token, get_user, set_password_and_login
 
 from .forms import (CustomPasswordResetForm, UsernameForm,
                     UserRegistrationForm, VolunteerRegistrationForm,
@@ -122,7 +121,7 @@ def activate(request, uidb64, token):
         user.save()
         return redirect('login')
     else:
-        return HttpResponse('Activation link is invalid!')
+        return HttpResponse('Activation link is invalid or expired!')
 
 
 class VolunteerListView(ListView):
@@ -167,45 +166,31 @@ class InitiatePasswordReset(PasswordResetView):
 
 
 def set_password_view(request, uidb64=None, token=None):
-    INTERNAL_RESET_SESSION_TOKEN = '_password_reset_token'
-    reset_url_token = 'set-password'
-    form = None
+    already_logged, motive, user = reset_from_source(request, token, uidb64)
 
-    # Check if the user is authenticated and skip the token validation
-    if request.user.is_authenticated:
-        # Perform the necessary actions for authenticated user
-        if request.method == 'POST':
-            form = SetPasswordForm(request.user, request.POST)
-            if form.is_valid():
-                form.save()
-                return redirect('profile')
-        else:
-            form = SetPasswordForm(request.user)
-
-    else:
-        # Perform the necessary actions for unauthenticated user
-        if uidb64 and token:
-            user = get_user(uidb64)
-            if user:
-                if token == reset_url_token:
-                    session_token = request.session.get(INTERNAL_RESET_SESSION_TOKEN)
-                    if default_token_generator.check_token(user, session_token):
-                        if request.method == 'POST':
-                            form = SetPasswordForm(user, request.POST)
-                            if form.is_valid():
-                                form.save()
-                                authenticate(user)
-                                return redirect('profile')
-                        else:
-                            form = SetPasswordForm(user)
-                    else:
-                        request.session[INTERNAL_RESET_SESSION_TOKEN] = token
-                        redirect_url = request.path.replace(token, reset_url_token)
-                        return HttpResponseRedirect(redirect_url)
-
-    error = form.errors or None
+    if user and not already_logged:
+        if not check_validity_token(request, user, token):
+            # return 400 page with the error
+            return HttpResponse('Invalid Token, Request for another with valid credentials')
+    form, done = set_password_and_login(user, request, SetPasswordForm, authenticated=already_logged)
+    if done:
+        return redirect(settings.LOGIN_REDIRECT_URL)
     return render(request, 'registration/password_change_form.html',
-                  context={'form': form, 'motive': 'Create', 'errors': error})
+                  context={'form': form, 'motive': motive})
+
+
+def reset_from_source(request, token, uidb64):
+    motive = ''
+    already_logged = False
+    user = None
+    if uidb64 and token:
+        user = get_user(uidb64=uidb64)
+        motive = 'Change'
+    elif request.user.is_authenticated:
+        user = request.user
+        motive = 'Set'
+        already_logged = True
+    return already_logged, motive, user
 
 
 def create_username(request):
@@ -224,9 +209,8 @@ def create_username(request):
 
 @require_POST
 def check_username_availability(request):
-    print(request.POST)
     username = request.POST.get('username')
-    print(username)
     is_available = not UserProfile.objects.filter(username=username).exists()
-    print(is_available)
     return JsonResponse({'available': is_available})
+
+# todo create templates for new subscriber emails
