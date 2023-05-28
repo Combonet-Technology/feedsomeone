@@ -35,7 +35,7 @@
                                 <a href="{{ article.get_absolute_url }}">
                                     <div id="yes"
                                          style="background:transparent no-repeat center;background-size: cover;
-                            background-image: url('{% if article.feature_img %}{{ article.feature_img.url| resize:'385770'}}{%endif%}');
+                            background-image: url('{% if article.feature_img %}{{ article.feature_img.url| resize:'800x420,C'}}{%endif%}');
                             transition: all .5s;"></div>
                                 </a><img class="card-img rounded-0" src="
                                     {% if article.feature_img %}{{ article.feature_img.url|resize:'320x240,C'}}{%endif%}"
