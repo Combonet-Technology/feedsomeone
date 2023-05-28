@@ -3,7 +3,7 @@ from django.forms.widgets import HiddenInput
 from django.template.defaultfilters import slugify
 from django_summernote.widgets import SummernoteWidget
 
-from .models import Article, Comments
+from .models import Article, Categories, Comments
 
 
 class CommentForm(forms.ModelForm):
@@ -13,6 +13,7 @@ class CommentForm(forms.ModelForm):
 
 
 class ArticleForm(forms.ModelForm):
+    article_slug = forms.SlugField()
 
     class Meta:
         model = Article
@@ -50,18 +51,23 @@ class EmailShareForm(forms.Form):
 class SearchForm(forms.Form):
     query = forms.CharField()
 
-# class CategoryForm(forms.ModelForm):
-#     class Meta:
-#         model = Categories
-#         # fields = ('title',)
-#         CHOICES = {}
-#         categories = Categories.objects.all()
-#         for category in categories:
-#             CHOICES[category] = category.id
-#         widgets = {
-#             'name': Select(attrs={'cols': 50, 'rows': 20}),
-#             'choices': CHOICES,
-#         }
-#         # exit(CHOICES)
-#         fields = forms.ChoiceField(choices=CHOICES)
-#         select = forms.CharField(widget=forms.Select(choices=CHOICES))
+
+class CategoryForm(forms.ModelForm):
+    new_category = forms.CharField(max_length=100, required=False)
+
+    class Meta:
+        model = Categories
+        fields = ('title',)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['name'].widget = forms.CheckboxSelectMultiple()
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        new_category = self.cleaned_data.get('new_category')
+        if new_category:
+            instance.name = new_category
+            if commit:
+                instance.save()
+        return instance
