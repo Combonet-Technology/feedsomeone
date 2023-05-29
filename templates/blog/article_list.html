@@ -35,7 +35,7 @@
                                 <a href="{{ article.get_absolute_url }}">
                                     <div id="yes"
                                          style="background:transparent no-repeat center;background-size: cover;
-                            background-image: url('{% if article.feature_img %}{{ article.feature_img.url| resize:'385770'}}{%endif%}');
+                            background-image: url('{% if article.feature_img %}{{ article.feature_img.url| resize:'800x420,C'}}{%endif%}');
                             transition: all .5s;"></div>
                                 </a><img class="card-img rounded-0" src="
                                     {% if article.feature_img %}{{ article.feature_img.url|resize:'320x240,C'}}{%endif%}"
@@ -54,7 +54,7 @@
                                     <li>
                                         <a href="{% url 'article:article-by-user' article.article_author.username %}">Written
                                             by
-                                            <i class="fa fa-user"></i> {{article.article_author}}</a>
+                                            <i class="fa fa-user"></i> {{article.article_author.get_full_name}}</a>
                                     </li>
                                     <li class="tags">
                                         Tags:

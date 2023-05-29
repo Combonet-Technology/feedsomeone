@@ -10,7 +10,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
-from decouple import config
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from .base import *
 
@@ -27,11 +29,11 @@ DEBUG = True
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('POSTGRES_DB_NAME'),
-        'USER': config('POSTGRES_DB_USER'),
-        'PASSWORD': config('POSTGRES_DB_PASS'),
+        'NAME': os.environ.get('POSTGRES_DB_NAME'),
+        'USER': os.environ.get('POSTGRES_DB_USER'),
+        'PASSWORD': os.environ.get('POSTGRES_DB_PASS'),
         'HOST': 'localhost',
-        'PORT': config('POSTGRES_PORT')
+        'PORT': os.environ.get('POSTGRES_PORT')
     }
 }
 # for custom error handler

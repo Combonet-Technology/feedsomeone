@@ -13,13 +13,15 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 import os
 from pathlib import Path
 
-from decouple import config
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # Application definition
-SECRET_KEY = config('SECRET_KEY')
+SECRET_KEY = os.environ.get('SECRET_KEY')
 INSTALLED_APPS = [
     'user.apps.UserConfig',
     'baton',
@@ -161,8 +163,8 @@ SUMMERNOTE_THEME = 'bs4'
 AUTH_USER_MODEL = 'user.UserProfile'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-RECAPTCHA_PUBLIC_KEY = config('RECAPTCHA_PUBLIC_KEY_v3')
-RECAPTCHA_PRIVATE_KEY = config('RECAPTCHA_PRIVATE_KEY_v3')
+RECAPTCHA_PUBLIC_KEY = str(os.environ.get('RECAPTCHA_PUBLIC_KEY_v3'))
+RECAPTCHA_PRIVATE_KEY = str(os.environ.get('RECAPTCHA_PRIVATE_KEY_v3'))
 
 BATON = {
     'SITE_HEADER': 'Oluwafemi Ebenezer Foundation',
@@ -242,16 +244,16 @@ IMAGEFIT_PRESETS = {
     'my_preset2': {'width': 100},
 }
 
-EMAIL_HOST_USER = config('EMAIL_HOST_USER')
-EMAIL_NO_REPLY = config('EMAIL_NO_REPLY')
-GMAIL_EMAIL = config('GMAIL_EMAIL')
-OUTLOOK_EMAIL = config('OUTLOOK_EMAIL')
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+EMAIL_NO_REPLY = os.environ.get('EMAIL_NO_REPLY')
+GMAIL_EMAIL = os.environ.get('GMAIL_EMAIL')
+OUTLOOK_EMAIL = os.environ.get('OUTLOOK_EMAIL')
 
-HONEYPOT_FIELD_NAME = 'phonenumber'
-HONEYPOT_VALUE = '+234812345678'
+HONEYPOT_FIELD_NAME = os.environ.get('HONEYPOT_FIELD_NAME')
+HONEYPOT_VALUE = os.environ.get('HONEYPOT_VALUE')
 
-SOCIAL_AUTH_FACEBOOK_KEY = config('FACEBOOK_KEY')
-SOCIAL_AUTH_FACEBOOK_SECRET = config('FACEBOOK_KEY')
+SOCIAL_AUTH_FACEBOOK_KEY = os.environ.get('FACEBOOK_KEY')
+SOCIAL_AUTH_FACEBOOK_SECRET = os.environ.get('FACEBOOK_KEY')
 SOCIAL_AUTH_FACEBOOK_SCOPE = ['email']
 SOCIAL_AUTH_FACEBOOK_PROFILE_EXTRA_PARAMS = {
     'locale': 'ru_RU',
@@ -272,22 +274,22 @@ SOCIAL_AUTH_PIPELINE = (
     "ext_libs.python_social.social_auth_pipeline.create_volunteer"
 )
 
-SOCIAL_AUTH_TWITTER_KEY = config('TWITTER_API_KEY')
-SOCIAL_AUTH_TWITTER_SECRET = config('TWITTER_API_SECRET')
-SOCIAL_AUTH_TWITTER_OAUTH2_SECRET = config('TWITTER_OAUTH2_CLIENT_ID_KEY')
-SOCIAL_AUTH_TWITTER_OAUTH2_KEY = config('TWITTER_OAUTH2_CLIENT_SECRET')
+SOCIAL_AUTH_TWITTER_KEY = os.environ.get('TWITTER_API_KEY')
+SOCIAL_AUTH_TWITTER_SECRET = os.environ.get('TWITTER_API_SECRET')
+SOCIAL_AUTH_TWITTER_OAUTH2_SECRET = os.environ.get('TWITTER_OAUTH2_CLIENT_ID_KEY')
+SOCIAL_AUTH_TWITTER_OAUTH2_KEY = os.environ.get('TWITTER_OAUTH2_CLIENT_SECRET')
 
-SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = config('GOOGLE_OAUTH2_KEY')
-SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = config('GOOGLE_OAUTH2_SECRET')
-SOCIAL_AUTH_GOOGLE_PLUS_KEY = config('GOOGLE_OAUTH2_KEY')
-SOCIAL_AUTH_GOOGLE_PLUS_SECRET = config('GOOGLE_OAUTH2_SECRET')
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get('GOOGLE_OAUTH2_KEY')
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.environ.get('GOOGLE_OAUTH2_SECRET')
+SOCIAL_AUTH_GOOGLE_PLUS_KEY = os.environ.get('GOOGLE_OAUTH2_KEY')
+SOCIAL_AUTH_GOOGLE_PLUS_SECRET = os.environ.get('GOOGLE_OAUTH2_SECRET')
 SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = [
     'https://www.googleapis.com/auth/userinfo.email',
     'https://www.googleapis.com/auth/userinfo.profile'
 ]
 
-SOCIAL_AUTH_LINKEDIN_OAUTH2_KEY = config('LINKEDIN_OAUTH2_KEY')
-SOCIAL_AUTH_LINKEDIN_OAUTH2_SECRET = config('LINKEDIN_OAUTH2_SECRET')
+SOCIAL_AUTH_LINKEDIN_OAUTH2_KEY = os.environ.get('LINKEDIN_OAUTH2_KEY')
+SOCIAL_AUTH_LINKEDIN_OAUTH2_SECRET = os.environ.get('LINKEDIN_OAUTH2_SECRET')
 SOCIAL_AUTH_LINKEDIN_OAUTH2_SCOPE = ['r_liteprofile', 'r_emailaddress']
 SOCIAL_AUTH_LINKEDIN_OAUTH2_EXTRA_DATA = [('id', 'id'),
                                           ('firstName', 'first_name'),
@@ -296,3 +298,5 @@ SOCIAL_AUTH_LINKEDIN_OAUTH2_EXTRA_DATA = [('id', 'id'),
 SOCIAL_AUTH_LINKEDIN_OAUTH2_FIELD_SELECTORS = ['emailAddress']
 
 SOCIAL_AUTH_USER_FIELDS = ['email']
+
+SENDGRID_API_KEY = os.environ.get('SENDGRID_API_KEY')
