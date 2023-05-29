@@ -27,7 +27,7 @@ from utils.auth import check_validity_token, get_user, set_password_and_login
 from .forms import (CustomPasswordResetForm, UsernameForm,
                     UserRegistrationForm, VolunteerRegistrationForm,
                     VolunteerUpdateForm)
-from .models import UserProfile
+from .models import UserProfile, Volunteer
 from .token import account_activation_token
 
 
@@ -125,13 +125,10 @@ def activate(request, uidb64, token):
 
 
 class VolunteerListView(ListView):
-    model = UserProfile
+    model = Volunteer
     context_object_name = 'volunteers'
-    #    ordering = ['?']
+    template_name = 'user/userprofile_list.html'
     paginate_by = 8
-
-    def get_queryset(self):
-        return UserProfile.objects.all().order_by('date_joined')
 
 
 class VolunteerDetailView(DetailView):
@@ -210,6 +207,7 @@ def create_username(request):
 
 
 @require_POST
+@login_required()
 def check_username_availability(request):
     username = request.POST.get('username')
     is_available = not UserProfile.objects.filter(username=username).exists()
