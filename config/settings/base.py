@@ -164,7 +164,7 @@ AUTH_USER_MODEL = 'user.UserProfile'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 RECAPTCHA_PUBLIC_KEY = str(os.environ.get('RECAPTCHA_PUBLIC_KEY_v3'))
-RECAPTCHA_PRIVATE_KEY = os.environ.get('RECAPTCHA_PRIVATE_KEY_v3')
+RECAPTCHA_PRIVATE_KEY = str(os.environ.get('RECAPTCHA_PRIVATE_KEY_v3'))
 print(type(RECAPTCHA_PRIVATE_KEY))
 print(type(RECAPTCHA_PUBLIC_KEY))
 print(RECAPTCHA_PUBLIC_KEY)
