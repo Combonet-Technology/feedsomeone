@@ -34,7 +34,7 @@ env:
   SOCIAL_AUTH_GOOGLE_PLUS_SECRET: ${{ secrets.GOOGLE_OAUTH2_SECRET }}
   SOCIAL_AUTH_LINKEDIN_OAUTH2_KEY: ${{ secrets.LINKEDIN_OAUTH2_KEY }}
   SOCIAL_AUTH_LINKEDIN_OAUTH2_SECRET: ${{ secrets.LINKEDIN_OAUTH2_SECRET }}
-  SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
 
 
 jobs:
@@ -76,5 +76,5 @@ jobs:
               ]
             }
         env:
-          SLACK_WEBHOOK_URL: https://hooks.slack.com/services/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
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
