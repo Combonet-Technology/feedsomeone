@@ -23,6 +23,7 @@ from social_django.views import NAMESPACE
 from ext_libs.python_social.social_auth_backends import do_complete
 from ext_libs.sendgrid.sengrid import send_email
 from utils.auth import check_validity_token, get_user, set_password_and_login
+from utils.decorators import ajax_required
 
 from .forms import (CustomPasswordResetForm, UsernameForm,
                     UserRegistrationForm, VolunteerRegistrationForm,
@@ -206,6 +207,7 @@ def create_username(request):
     return render(request, 'create_username.html', {'form': form})
 
 
+@ajax_required
 @require_POST
 @login_required()
 def check_username_availability(request):
