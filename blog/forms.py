@@ -1,7 +1,7 @@
 from django import forms
-from django.forms.widgets import HiddenInput
 from django.template.defaultfilters import slugify
 from django_summernote.widgets import SummernoteWidget
+from taggit.forms import TagWidget
 
 from .models import Article, Categories, Comments
 
@@ -13,12 +13,20 @@ class CommentForm(forms.ModelForm):
 
 
 class ArticleForm(forms.ModelForm):
-    article_slug = forms.SlugField()
+    tags = forms.CharField(widget=TagWidget())
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['category'].widget = forms.CheckboxSelectMultiple()
+        self.fields['category'].queryset = Categories.objects.all()
+
+        if self.instance.pk:
+            self.initial['tags'] = ', '.join(self.instance.tags.names())
+            self.initial['category'] = self.instance.category.values_list('id', flat=True)
 
     class Meta:
         model = Article
-        fields = ('article_title', 'article_excerpt',
-                  'article_content', 'category', 'feature_img')
+        fields = ('feature_img', 'article_title', 'article_content', 'tags', 'category')
         widgets = {
             'article_content': SummernoteWidget(
                 attrs={'width': '100%',
@@ -27,17 +35,23 @@ class ArticleForm(forms.ModelForm):
                        'placeholder': 'Type in your content here, you can format like Ms word'}),
         }
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['article_slug'].widget = HiddenInput()
-
     def clean(self):
         cleaned_data = super().clean()
-        title = cleaned_data.get("article_title")
 
-        if title:
-            cleaned_data['article_slug'] = slugify(title)
-            return self.cleaned_data
+        selected_categories = cleaned_data.get("category")
+        if selected_categories:
+            if selected_categories and len(selected_categories) > 4:
+                self.add_error('category', "You can select a maximum of 4 categories.")
+
+        return cleaned_data
+
+    def save(self, commit=True):
+        article = super().save(commit=False)
+        slug = slugify(article.article_title)
+        article.article_slug = slug
+        if commit:
+            article.save()
+        return article
 
 
 class EmailShareForm(forms.Form):
@@ -50,24 +64,3 @@ class EmailShareForm(forms.Form):
 
 class SearchForm(forms.Form):
     query = forms.CharField()
-
-
-class CategoryForm(forms.ModelForm):
-    new_category = forms.CharField(max_length=100, required=False)
-
-    class Meta:
-        model = Categories
-        fields = ('title',)
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['name'].widget = forms.CheckboxSelectMultiple()
-
-    def save(self, commit=True):
-        instance = super().save(commit=False)
-        new_category = self.cleaned_data.get('new_category')
-        if new_category:
-            instance.name = new_category
-            if commit:
-                instance.save()
-        return instance

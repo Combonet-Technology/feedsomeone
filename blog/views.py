@@ -7,6 +7,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.postgres.search import (SearchQuery, SearchRank,
                                             SearchVector)
+from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db.models import Count
 from django.http import HttpResponseRedirect
@@ -16,7 +17,7 @@ from django.views.generic import DeleteView, ListView, UpdateView
 from taggit.models import Tag
 
 from blog.forms import ArticleForm, CommentForm, EmailShareForm, SearchForm
-from blog.models import Article
+from blog.models import Article, Categories
 # Get an instance of a logger
 from ext_libs.sendgrid.sengrid import send_email
 
@@ -35,6 +36,7 @@ class ArticleListView(ListView):
 
     def get_queryset(self):
         queryset = Article.published.all()
+        print(queryset)
         if self.kwargs.get('tag'):
             self.tag = get_object_or_404(Tag, slug=self.kwargs.get('tag'))
             queryset = queryset.filter(tags__in=[self.tag])
@@ -183,19 +185,28 @@ def search_article(request):
 @login_required
 def create_article(request):
     template_name = 'blog/article_form.html'
-    form = None
+
     if request.method == 'POST':
-        pass
-        form = ArticleForm(request.POST, request.FILES)
-        if form.is_valid():
-            data = form.save(commit=False)
-            data.article_author = request.user
-            data.save()
-            return redirect('all-articles')
-        # return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-        errors = form.errors
-        logger.error(errors)
-    article_form = form if form else ArticleForm()
+        article_form = ArticleForm(request.POST, request.FILES)
+
+        if article_form.is_valid():
+            article = article_form.save(commit=False)
+            print(article_form.data)
+            article.article_author = request.user
+            article.save()
+
+            for category in article_form.cleaned_data['category']:
+                new_category_instance, _ = Categories.objects.get_or_create(title=category)
+                article.category.add(new_category_instance)
+
+            article_form.save_m2m()
+            return redirect('article:all-articles')
+
+        article_errors = article_form.errors
+        logger.error(article_errors)
+    else:
+        article_form = ArticleForm()
+
     context = {
         'form': article_form,
         'action_to_perform': "create new"
@@ -207,9 +218,19 @@ class UpdateArticleView(UserPassesTestMixin, UpdateView):
     model = Article
     form_class = ArticleForm
     template_name = 'blog/article_form.html'
+    slug_url_kwarg = 'slug'
+    slug_field = 'article_slug'
 
     def form_valid(self, form):
         form.instance.article_author = self.request.user
+        image_field = form.cleaned_data.get('image_field')
+        if isinstance(image_field, InMemoryUploadedFile):
+            form.instance.image_field.save(
+                image_field.name,
+                image_field,
+                save=False
+            )
+
         return super().form_valid(form)
 
     def test_func(self):
@@ -219,8 +240,14 @@ class UpdateArticleView(UserPassesTestMixin, UpdateView):
         return False
 
     def get_success_url(self):
-        slug = self.get_object().article_slug
-        return reverse('article-detail', kwargs={'pk': self.kwargs["pk"], 'slug': slug})
+        article = self.get_object()
+        slug = article.article_slug
+        date = article.publish_date
+
+        return reverse('article:article_detail', kwargs={'year': date.year,
+                                                         'month': date.month,
+                                                         'day': date.day,
+                                                         'slug': slug})
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

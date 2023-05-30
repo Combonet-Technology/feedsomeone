@@ -4,6 +4,7 @@
 {% load crispy_forms_tags %}
 {% block content %}
 
+
     <div id = "container">
         <div class="row d-flex mb-5 h-100">
 	          <div class="col-md-12 mb-4 align-self-center">
@@ -11,9 +12,11 @@
                         class="mt-5 ml-5 mr-5">
                       {% csrf_token %}
                       <fieldset>
-                          <legend class="border-bottom mb-4"><h1>Create New Post</h1></legend>
+                          <legend class="border-bottom mb-4"><h1>{%if action_to_perform == 'update'%}
+                                 Update
+                                 {%else%}Create{%endif%} Article</h1></legend>
                           <div class="form-group">
-                          {{form | crispy}}
+                              {{ form | crispy }}
                           </div>
                           <div class="form-group col-lg-5 ml-5">
                           {{ p_form | safe}}
@@ -21,7 +24,10 @@
 
                       </fieldset>
                       <div class="form-group">
-                          <input type="submit" class="btn btn-primary ml-2 mt-5" value="Create">
+                          <input type="submit" class="btn btn-primary ml-2 mt-5"
+                                 value="{%if action_to_perform == 'update'%}
+                                 Update
+                                 {%else%}Create{%endif%}">
                       </div>
                   </form>
             </div>
@@ -36,4 +42,3 @@ $('.summernote').summernote({
 });
 </script>
 {% endblock %}
-
