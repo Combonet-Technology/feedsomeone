@@ -257,15 +257,22 @@ class UpdateArticleView(UserPassesTestMixin, UpdateView):
 
 class ArticleDeleteView(UserPassesTestMixin, DeleteView):
     model = Article
-    # template_name = 'article_detail.html'
+    template_name = 'blog/article_confirm_delete.html'
     context_object_name = 'post'
-    success_url = '/'
+    success_url = 'article:all-articles'
+    slug_field = 'article_slug'
 
     def test_func(self):
         post = self.get_object()
         if self.request.user == post.article_author:
             return True
         return False
+
+    def delete(self, request, *args, **kwargs):
+        article = self.get_object()
+        article.is_deleted = True
+        article.save()
+        return redirect(self.success_url)
 
 
 # Create your views here.

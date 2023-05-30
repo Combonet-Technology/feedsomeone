@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+
+<div id="colorlib-main">
+    <div id="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-6">
+                <div class="row d-flex mb-100 mt-100 contact-info">
+                    <div class="col-sm-12">
+                        <h2>Confirm Delete</h2>
+                        <p>Are you sure you want to delete the article "{{ post.article_title }}"?</p>
+                        <form method="post">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <div class="d-flex align-items-center mb-50">
+                                    <input type="submit" class="btn btn-danger ml-5" value="Delete">
+                                    <a class="btn btn-outline-secondary ml-2" href="{% url 'article:article_detail' year=post.publish_date.year month=post.publish_date.month day=post.publish_date.day slug=post.article_slug %}">Cancel</a>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
