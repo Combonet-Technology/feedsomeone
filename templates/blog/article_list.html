@@ -1,7 +1,6 @@
 {% extends 'base.html' %}
 {% block page_title %}our articles{% endblock %}
 {% load static %}
-{% load imagefit %}
 {% load blog_tags %}
 {% block content %}
 <main>
@@ -35,10 +34,10 @@
                                 <a href="{{ article.get_absolute_url }}">
                                     <div id="yes"
                                          style="background:transparent no-repeat center;background-size: cover;
-                            background-image: url('{% if article.feature_img %}{{ article.feature_img.url| resize:'800x420,C'}}{%endif%}');
+                            background-image: url('{% if article.feature_img %}{{ article.feature_img.url }}{%endif%}');
                             transition: all .5s;"></div>
                                 </a><img class="card-img rounded-0" src="
-                                    {% if article.feature_img %}{{ article.feature_img.url|resize:'320x240,C'}}{%endif%}"
+                                    {% if article.feature_img %}{{ article.feature_img.url }}{%endif%}"
                                          alt="">
                                 <a href="{{ article.get_absolute_url }}" class="blog_item_date">
                                     <h3>{{ article.date_created | date:"d" }}</h3>
