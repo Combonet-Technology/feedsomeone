@@ -25,7 +25,7 @@ class Categories(models.Model):
 
 class PublishedManager(BaseUserManager):
     def get_queryset(self):
-        return super().get_queryset().filter(is_published=True).order_by('-publish_date')
+        return super().get_queryset().filter(is_published=True, is_deleted=False).order_by('-publish_date')
 
 
 class Article(models.Model):
@@ -42,6 +42,7 @@ class Article(models.Model):
                                        related_name="user_article")
     category = models.ManyToManyField(Categories, blank=True, verbose_name="Category", related_name="article")
     is_published = models.BooleanField(default=False)
+    is_deleted = models.BooleanField(default=False)
     publish_date = models.DateTimeField(default=timezone.now)
     date_created = models.DateTimeField(auto_now_add=True, verbose_name="Created_at")
     date_updated = models.DateTimeField(auto_now=True, verbose_name="Updated_at")
