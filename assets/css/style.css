@@ -8700,3 +8700,7 @@ button.search_form_button {
     background-color: #09cc7f;
     width: 55px;
 }
+
+#div_id_feature_img a, button {
+    color: #121212;
+}

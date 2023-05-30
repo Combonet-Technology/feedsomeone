@@ -40,12 +40,7 @@ class Article(models.Model):
                                        null=True,
                                        blank=True,
                                        related_name="user_article")
-    category = models.ForeignKey(Categories,
-                                 null=True,
-                                 blank=True,
-                                 verbose_name="Category",
-                                 related_name="article",
-                                 on_delete=models.DO_NOTHING)
+    category = models.ManyToManyField(Categories, blank=True, verbose_name="Category", related_name="article")
     is_published = models.BooleanField(default=False)
     publish_date = models.DateTimeField(default=timezone.now)
     date_created = models.DateTimeField(auto_now_add=True, verbose_name="Created_at")
