@@ -191,7 +191,6 @@ def create_article(request):
 
         if article_form.is_valid():
             article = article_form.save(commit=False)
-            print(article_form.data)
             article.article_author = request.user
             article.save()
 
