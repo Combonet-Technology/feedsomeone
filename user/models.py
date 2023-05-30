@@ -81,7 +81,7 @@ class Volunteer(models.Model):
 
 class VolunteerManager(BaseUserManager):
     def get_queryset(self):
-        return super().get_queryset().filter(is_verified=True)
+        return super().get_queryset().filter(is_verified=True, user__is_superuser=False)
 
 
 class Donor(models.Model):
