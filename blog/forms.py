@@ -1,7 +1,6 @@
+from ckeditor.widgets import CKEditorWidget
 from django import forms
 from django.template.defaultfilters import slugify
-from django_summernote.widgets import SummernoteWidget
-from taggit.forms import TagWidget
 
 from .models import Article, Categories, Comments
 
@@ -13,7 +12,6 @@ class CommentForm(forms.ModelForm):
 
 
 class ArticleForm(forms.ModelForm):
-    tags = forms.CharField(widget=TagWidget())
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -28,11 +26,7 @@ class ArticleForm(forms.ModelForm):
         model = Article
         fields = ('feature_img', 'article_title', 'article_content', 'tags', 'category')
         widgets = {
-            'article_content': SummernoteWidget(
-                attrs={'width': '100%',
-                       'height': '480px',
-                       'required': True,
-                       'placeholder': 'Type in your content here, you can format like Ms word'}),
+            'article_content': CKEditorWidget(config_name='article'),
         }
 
     def clean(self):
@@ -42,7 +36,6 @@ class ArticleForm(forms.ModelForm):
         if selected_categories:
             if selected_categories and len(selected_categories) > 4:
                 self.add_error('category', "You can select a maximum of 4 categories.")
-
         return cleaned_data
 
     def save(self, commit=True):
@@ -51,6 +44,7 @@ class ArticleForm(forms.ModelForm):
         article.article_slug = slug
         if commit:
             article.save()
+            self.save_m2m()
         return article
 
 

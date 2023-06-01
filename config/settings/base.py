@@ -15,6 +15,8 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+from ext_libs.ckeditor.config import base
+
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -41,7 +43,6 @@ INSTALLED_APPS = [
     'django.contrib.postgres',
     'crispy_forms',
     'imagefit',
-    'django_summernote',
     'import_export',
     'django.contrib.humanize',
     'errors.apps.ErrorsConfig',
@@ -56,6 +57,8 @@ INSTALLED_APPS = [
     'taggit',
     'social_django',
     'django_extensions',
+    'ckeditor',
+    'ckeditor_uploader',
 ]
 
 MIDDLEWARE = [
@@ -154,11 +157,6 @@ LOGIN_REDIRECT_URL = 'profile'
 LOGIN_URL = 'login'
 
 IMAGEFIT_ROOT = BASE_DIR
-
-# summernote config
-X_FRAME_OPTIONS = 'SAMEORIGIN'
-SUMMERNOTE_THEME = 'bs4'
-# SUMMERNOTE_CONFIG['disable_attachment'] = True
 
 AUTH_USER_MODEL = 'user.UserProfile'
 
@@ -300,3 +298,28 @@ SOCIAL_AUTH_LINKEDIN_OAUTH2_FIELD_SELECTORS = ['emailAddress']
 SOCIAL_AUTH_USER_FIELDS = ['email']
 
 SENDGRID_API_KEY = os.environ.get('SENDGRID_API_KEY')
+
+CKEDITOR_BASEPATH = "/static/ckeditor/ckeditor/"
+CKEDITOR_UPLOAD_PATH = 'uploads/'
+CKEDITOR_FILENAME_GENERATOR = 'utils.file.get_filename'
+CKEDITOR_IMAGE_BACKEND = 'ckeditor_uploader.backends.PillowBackend'
+CKEDITOR_FORCE_JPEG_COMPRESSION = True
+CKEDITOR_IMAGE_QUALITY = 90
+CKEDITOR_RESTRICT_BY_USER = True
+CKEDITOR_BROWSE_SHOW_DIRS = True
+CKEDITOR_RESTRICT_BY_DATE = True
+CKEDITOR_CONFIGS = {
+    'default': {
+        'toolbar': 'Custom',
+        'toolbar_Custom': [
+            ['Bold', 'Italic', 'Underline'],
+            ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'JustifyLeft', 'JustifyCenter',
+             'JustifyRight', 'JustifyBlock'],
+            ['Link', 'Unlink'],
+            ['RemoveFormat', 'Source']
+        ],
+        'height': 300,
+        'width': 750,
+    },
+    'article': base
+}
