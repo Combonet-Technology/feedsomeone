@@ -57,9 +57,8 @@
                                     <li class="tags">
                                         Tags:
                                         {% for tag in article.tags.all %}
-
                                         <a href="{% url 'article:articles-by-slug' tag.slug %}">
-                                            {{ tag.name }}
+                                        {{tag.slug}}
                                         </a>
                                         {% if not forloop.last %}, {% endif %}
                                         {% endfor %}

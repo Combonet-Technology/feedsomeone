@@ -61,6 +61,23 @@ class Article(models.Model):
                              self.publish_date.day,
                              self.article_slug])
 
+    def to_dict(self):
+        return {
+            'uuid': str(self.uuid),
+            # 'article_title': self.article_title,
+            'article_slug': self.article_slug,
+            # 'article_content': self.article_content,
+            'feature_img': self.feature_img.url if self.feature_img else None,
+            'article_author': self.article_author.get_full_name() if self.article_author else None,
+            'category': [category.title for category in self.category.all()],
+            'is_published': self.is_published,
+            'is_deleted': self.is_deleted,
+            # 'publish_date': self.publish_date.isoformat(),
+            # 'date_created': self.date_created.isoformat(),
+            # 'date_updated': self.date_updated.isoformat(),
+            'tags': list(self.tags.names()),
+        }
+
 
 #     override save method to autogenerate slug
 
