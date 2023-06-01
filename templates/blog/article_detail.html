@@ -189,6 +189,7 @@
                 <div class="col-lg-4">
                     <div class="blog_right_sidebar">
 
+                        {% if similar %}
                         <aside class="single_sidebar_widget popular_post_widget">
                             <h3 class="widget_title" style="color: #2d2d2d;">You may also like</h3>
                             {% for post in similar %}
@@ -205,6 +206,7 @@
                             There are no similar posts yet.
                             {% endfor %}
                         </aside>
+                        {% endif %}
                         {% show_top_categories 6 %}
                         {% show_most_used_tags 5 %}
                         <aside class="single_sidebar_widget search_widget">
