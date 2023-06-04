@@ -3,6 +3,7 @@ import os
 from datetime import datetime
 
 from django.contrib import messages
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
@@ -50,16 +51,45 @@ def about(request):
 # Post Page Fxn recreated into a class
 class AllGalleryImagesListView(ListView):
     model = GalleryImage
-    template_name = 'gallery.html'
-    context_object_name = 'event_imgs'
-    ordering = ['?', '-date_posted']
-    paginate_by = 12
+    context_object_name = 'objects'
+    ordering = ['-date_posted']
+    paginate_by = 8
+
+    def get_template_names(self):
+        if self.request.is_ajax():
+            return ['mainsite/gallery_ajax.html']
+        else:
+            return ['mainsite/gallery_list.html']
+
+    def paginate_queryset(self, queryset, page_size):
+        paginator = Paginator(queryset, page_size)
+        page = self.request.GET.get('page')
+        print(f'page gotten is {page} and of type {type(page)}')
+        try:
+            results = paginator.page(page)
+        except PageNotAnInteger:
+            print('got first page')
+            results = paginator.page(1)
+        except EmptyPage:
+            print('AJAX request')
+            if self.request.is_ajax():
+                print('No more pics')
+                return HttpResponse('')
+            results = paginator.page(paginator.num_pages)
+
+        is_paginated = len(results) > 0
+
+        return paginator, page, results, is_paginated,
+
+    # def get_context_data(self, *, object_list=None, **kwargs):
+    #     context = super().get_context_data(**kwargs)
 
 
 # Post Page Fxn recreated into a class
+# convert into an inclusion tag and dynamically generate the images
 class FooterGalleryImages(ListView):
     model = GalleryImage
-    template_name = 'gallery.html'
+    template_name = 'gallery_list.html'
     context_object_name = 'event_imgs'
     ordering = ['?', '-date_posted']
     paginate_by = 6
@@ -86,28 +116,30 @@ def donate(request):
 @csrf_exempt
 def upload_images(request):
     if request.method == 'POST':
-        response = {'files': []}
-        # Loop through our files in the files list uploaded
-        for image in request.FILES.getlist('files[]'):
-            # Create a new entry in our database
-            new_image = GalleryImage()
-            # Save the image using the model's ImageField settings
-            filename, ext = os.path.splitext(image.name)
-            new_image.image.save(f"{image.name}-{datetime.now()}{ext}", image)
-            new_image.image_title = filename
-            new_image.event_id = request.POST['event']
-            new_image.save()
-            # Save output for return as JSON
-            response['files'].append({
-                'name': '%s' % image.name,
-                'size': '%d' % image.size,
-                'url': '%s' % new_image.image.url,
-                'thumbnailUrl': '%s' % new_image.image.url,
-                'deleteUrl': r'\/image\/delete\/%s' % image.name,
-                "deleteType": 'DELETE'
-            })
+        event = request.POST['event']
+        if event:
+            response = {'files': []}
+            # Loop through our files in the files list uploaded
+            for image in request.FILES.getlist('files[]'):
+                # Create a new entry in our database
+                new_image = GalleryImage()
+                # Save the image using the model's ImageField settings
+                filename, ext = os.path.splitext(image.name)
+                new_image.image.save(f"{image.name}-{datetime.now()}{ext}", image)
+                new_image.image_title = filename
+                new_image.event_id = event
+                new_image.save()
+                # Save output for return as JSON
+                response['files'].append({
+                    'name': '%s' % image.name,
+                    'size': '%d' % image.size,
+                    'url': '%s' % new_image.image.url,
+                    'thumbnailUrl': '%s' % new_image.image.url,
+                    'deleteUrl': r'\/image\/delete\/%s' % image.name,
+                    "deleteType": 'DELETE'
+                })
 
-        return HttpResponse(json.dumps(response), content_type='application/json')
+            return HttpResponse(json.dumps(response), content_type='application/json')
     else:
         event = Events.objects.all()
         return render(request, 'file_upload.html', {'event': event})
