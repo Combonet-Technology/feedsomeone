@@ -20,14 +20,9 @@
     </div>
 <div class="container">
     <div class="section-top-border">
-					<div class="row gallery-item">
-						{% for img in event_imgs %}
-						<div class="col-md-4">
-							<a href="{{ img.image.url }}" class="img-pop-up">
-								<div class="single-gallery-image" style="background: url({{ img.image.url }});"></div>
-							</a>
-						</div>
-						{% endfor %}
+					<div id="search-results" class="row gallery-item">
+						    {% include "mainsite/gallery_ajax.html" %}
+
                     </div>
     </div>
 <!--    <nav class="blog-pagination justify-content-center d-flex">-->

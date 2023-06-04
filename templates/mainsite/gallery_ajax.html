@@ -1,0 +1,7 @@
+{% for img in objects %}
+<div class="col-md-3">
+    <a href="{{ img.image.url }}" class="img-pop-up">
+        <div class="single-gallery-image" style="background: url({{ img.image.url }});"></div>
+    </a>
+</div>
+{% endfor %}

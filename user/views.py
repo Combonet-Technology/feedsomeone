@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.views import PasswordResetView
 from django.contrib.sites.shortcuts import get_current_site
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db import transaction
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
@@ -126,9 +127,31 @@ def activate(request, uidb64, token):
 
 class VolunteerListView(ListView):
     model = Volunteer
-    context_object_name = 'volunteers'
+    context_object_name = 'objects'
     template_name = 'user/userprofile_list.html'
     paginate_by = 8
+
+    def paginate_queryset(self, queryset, page_size):
+        paginator = Paginator(queryset, page_size)
+        page = self.request.GET.get('page')
+        try:
+            results = paginator.page(page)
+        except PageNotAnInteger:
+            results = paginator.page(1)
+        except EmptyPage:
+            if self.request.is_ajax():
+                return HttpResponse('')
+            results = paginator.page(paginator.num_pages)
+
+        is_paginated = len(results) > 0
+
+        return paginator, page, results, is_paginated
+
+    def get_template_names(self):
+        if self.request.is_ajax():
+            return ['user/userprofile_ajax.html']
+        else:
+            return ['user/userprofile_list.html']
 
 
 class VolunteerDetailView(DetailView):

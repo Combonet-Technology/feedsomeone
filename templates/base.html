@@ -466,6 +466,33 @@ margin-top:100px
 <script src="{% static 'menususcribe/js/function.js' %}"></script>
 <!--    <script src='https://kit.fontawesome.com/a076d05399.js'></script>-->
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<script>
+var page = 1;
+var empty_page = false;
+var block_request = false;
+var page_limit = {{objects.paginator.num_pages}}
+console.log(page_limit)
+$(window).scroll(function() {
+console.log('Scrolling')
+    var margin = $(document).height() - $(window).height() - 200;
+    if ($(window).scrollTop() > margin && empty_page == false &&
+        block_request == false && page < page_limit) {
+        block_request = true;
+        page += 1;
+        console.log(page)
+        $.get('?{%if query%}query={{query}}&{%endif%}page=' + page, function(data) {
+            if (data == '') {
+                empty_page = true;
+            } else {
+            console.log(data)
+                block_request = false;
+                $('#search-results').append(data);
+            }
+        });
+
+    }
+});
+</script>
 {% block extra_script %}
 {% endblock %}
 </body>
