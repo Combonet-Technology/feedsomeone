@@ -10,7 +10,7 @@ from django.contrib.postgres.search import (SearchQuery, SearchRank,
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db.models import Count
-from django.http import HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.generic import DeleteView, ListView, UpdateView
@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 # Post Page Fxn recreated into a class
 class ArticleListView(ListView):
     model = Article
-    context_object_name = 'articles'
+    context_object_name = 'objects'
     ordering = ['-date_created']
     paginate_by = 3
     template_name = 'blog/article_list.html'
@@ -36,7 +36,6 @@ class ArticleListView(ListView):
 
     def get_queryset(self):
         queryset = Article.published.all()
-        print(queryset)
         if self.kwargs.get('tag'):
             self.tag = get_object_or_404(Tag, slug=self.kwargs.get('tag'))
             queryset = queryset.filter(tags__in=[self.tag])
@@ -51,44 +50,39 @@ class ArticleListView(ListView):
         context['recent_posts'] = self.get_queryset().order_by("-date_created")[:8]
         return context
 
+    def paginate_queryset(self, queryset, page_size):
+        paginator = Paginator(queryset, page_size)
+        page = self.request.GET.get('page')
+        try:
+            results = paginator.page(page)
+        except PageNotAnInteger:
+            results = paginator.page(1)
+        except EmptyPage:
+            if self.request.is_ajax():
+                return HttpResponse('')
+            results = paginator.page(paginator.num_pages)
+
+        is_paginated = len(results) > 0
+
+        return paginator, page, results, is_paginated
+
+    def get_template_names(self):
+        if self.request.is_ajax():
+            return ['blog/article_ajax.html']
+        else:
+            return ['blog/article_list.html']
+
 
 class UserArticleListView(LoginRequiredMixin, ListView):
     model = Article
     template_name = 'blog/article_list.html'
-    context_object_name = 'articles'
+    context_object_name = 'objects'
     paginate_by = 3
 
     def get_queryset(self):
         user = get_object_or_404(get_user_model(), username=self.kwargs.get('username'))
         articles = Article.objects.filter(article_author=user).order_by('-date_created')
         return articles
-
-
-# class ArticleDetailView(LoginRequiredMixin, DetailView):
-#     model = Article, Comment
-#     # template_name = 'article_detail.html'
-#     # context_object_name = 'post'
-#     paginate_by = 1
-#
-#     def get_context_data(self, **kwargs):
-#          # Comment posted
-#         if request.method == 'POST':
-#             comment_form = CommentForm(data=request.POST)
-#             if comment_form.is_valid():
-#                 # Create Comment object but don't save to database yet
-#                 new_comment = comment_form.save(commit=False)
-#                 # Assign the current post to the comment
-#                 new_comment.post = post
-#                 # Save the comment to the database
-#                 new_comment.save()
-#         else:
-#             comment_form = CommentForm()
-#
-#         context = super(ArticleDeleteView, self).get_context_data(**kwargs)
-#         context['post'] = Article.objects.all()
-#         context['comment'] = Article.comments.filter(active=True)
-#         return context
-#         new_comment = None
 
 
 def get_similar_articles(article, limit=3):
@@ -135,10 +129,14 @@ def article_detail(request, year, month, day, slug):
 
 def search_article(request):
     form = SearchForm()
-    query = None
+    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+    query = request.GET.get('query')
     results = []
     page = request.GET.get('page')
-    if 'query' in request.GET:
+    context = {'form': form,
+               'page': page,
+               'query': query}
+    if query:
         form = SearchForm(request.GET)
         if form.is_valid():
             query = form.cleaned_data['query']
@@ -157,29 +155,16 @@ def search_article(request):
         except PageNotAnInteger:
             results = paginator.page(1)
         except EmptyPage:
+            if is_ajax:
+                return HttpResponse('')
             results = paginator.page(paginator.num_pages)
-
-    return render(request, 'blog/search_page.html',
-                  {'form': form,
-                   'page': page,
-                   'query': query,
-                   'results': results})
-
-
-# class ArticleDetailView(LoginRequiredMixin, DetailView):
-#     model = Article
-#     # template_name = 'article_detail.html'
-#     context_object_name = 'post'
-
-
-# class CreateArticleView(LoginRequiredMixin, CreateView):
-#     model = ['Post', 'Category']
-#     fields = ['post_title', 'post_excerpt', 'post_content', 'feature_img']
-#     # success_url = ''
-#
-#     def form_valid(self, form):
-#         form.instance.article_author = self.request.user
-#         return super(CreateArticleView, self).form_valid(form)
+        if is_ajax:
+            context['objects'] = results
+            context['query'] = query
+            context['pager'] = False
+            return render(request, 'blog/search_result_ajax.html', context)
+    context['objects'] = results
+    return render(request, 'blog/search_page.html', context)
 
 
 @login_required

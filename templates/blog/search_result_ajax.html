@@ -1,0 +1,28 @@
+{% for article in objects %}
+<article class="blog_item">
+    <div class="blog_details">
+        <a class="d-inline-block" href="{{ article.get_absolute_url  }}">
+            <h2 class="blog-head" style="color: #2d2d2d;">{{article.article_title}}</h2>
+        </a>
+        <p>{{article.article_content|safe|truncatewords_html:30|linebreaks}}</p>
+        <ul class="blog-info-link">
+            <li>
+                <a href="{% url 'article:article-by-user' article.article_author.username %}">Written
+                    by
+                    <i class="fa fa-user"></i> {{article.article_author}}</a>
+            </li>
+            <li class="tags">
+                Tags:
+                {% for tag in article.tags.all %}
+                <a href="{% url 'article:articles-by-slug' tag.slug %}">
+                    {{ tag.name }}
+                </a>
+                {% if not forloop.last %}, {% endif %}
+                {% endfor %}
+            </li>
+            <!--                                        <li><a href="#"><i class="fa fa-comments"></i> 03 Comments</a></li>-->
+        </ul>
+
+    </div>
+</article>
+{% endfor %}

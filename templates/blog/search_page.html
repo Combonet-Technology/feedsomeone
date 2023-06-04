@@ -22,92 +22,65 @@
     <!-- Hero End -->
     <!--? Blog Area Start-->
     <section class="blog_area section-padding">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-8 mb-5 mb-lg-0">
-                    <div class="blog_left_sidebar">
-                        {% if results.has_previous %}
-                        <h2>More matching results</h2>
-                        {% elif results %}
-                        <h2>{% with results.count as total_results %}
-                            Found {{ total_results }} result{{ total_results|pluralize }} containing "{{query}}"
-                            {% endwith %}</h2>
-                        {%else%}
-                        <h2>No result found matching "{{query}}"</h2>
-                        {% endif %}
-                        {% for article in results %}
-                        <article class="blog_item">
-                            <div class="blog_details">
-                                <a class="d-inline-block" href="{{ article.get_absolute_url  }}">
-                                    <h2 class="blog-head" style="color: #2d2d2d;">{{article.article_title}}</h2>
-                                </a>
-                                <p>{{article.article_excerpt|truncatewords_html:30|linebreaks}}</p>
-                                <ul class="blog-info-link">
-                                    <li>
-                                        <a href="{% url 'article:article-by-user' article.article_author.username %}">Written
-                                            by
-                                            <i class="fa fa-user"></i> {{article.article_author}}</a>
-                                    </li>
-                                    <li class="tags">
-                                        Tags:
-                                        {% for tag in article.tags.all %}
-
-                                        <a href="{% url 'article:articles-by-slug' tag.slug %}">
-                                            {{ tag.name }}
-                                        </a>
-                                        {% if not forloop.last %}, {% endif %}
-                                        {% endfor %}
-                                    </li>
-                                    <!--                                        <li><a href="#"><i class="fa fa-comments"></i> 03 Comments</a></li>-->
-                                </ul>
-
-                            </div>
-                        </article>
-                        {% endfor %}
-                        {% if results %}
-                        <h2>Search another term ?</h2>
-                        {%endif%}
-
-
-                        <form action="{%url 'article:search_articles' %}">
-                            <div class="form-group">
-                                <div class="input-group mb-3">
-                                    <input type="text" class="form-control search_form_input"
-                                           placeholder='Search Keyword'
-                                           onfocus="this.placeholder = ''"
-                                           onblur="this.placeholder = 'Search Keyword'" name="query">
-                                    <div class="input-group-append">
-                                        <button class="btns" type="button"><i class="ti-search search_form_button"></i>
-                                        </button>
-                                    </div>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mb-5 mb-lg-0">
+                <div class="blog_left_sidebar">
+                    {% if objects.has_previous %}
+                    <h2>More matching results</h2>
+                    {% elif objects %}
+                    <h2>{% with objects.count as total_results %}
+                        Found {{ total_results }} result{{ total_results|pluralize }} containing "{{query}}"
+                        {% endwith %}</h2>
+                    {%else%}
+                    <h2>No result found matching "{{query}}"</h2>
+                    {% endif %}
+                    <div id="search-results">
+                    {% include "blog/search_result_ajax.html" %}
+                    </div>
+                    {% if results %}
+                    <h2>Search another term ?</h2>
+                    {%endif%}
+                    <form action="{%url 'article:search_articles' %}">
+                        <div class="form-group">
+                            <div class="input-group mb-3">
+                                <input type="text" class="form-control search_form_input"
+                                       placeholder='Search Keyword'
+                                       onfocus="this.placeholder = ''"
+                                       onblur="this.placeholder = 'Search Keyword'" name="query">
+                                <div class="input-group-append">
+                                    <button class="btns" type="button"><i class="ti-search search_form_button"></i>
+                                    </button>
                                 </div>
                             </div>
-                            <button class="button rounded-0 primary-bg text-white w-100 btn_1 boxed-btn"
-                                    type="submit">Search
-                            </button>
-                        </form>
-                        {% include "pagination.html" with page_obj=results query_term=query %}
-
-                    </div>
+                        </div>
+                        <button class="button rounded-0 primary-bg text-white w-100 btn_1 boxed-btn"
+                                type="submit">Search
+                        </button>
+                    </form>
+                    {% if pager %}
+                    {% include "pagination.html" with page_obj=objects query_term=query %}
+                    {% endif %}
                 </div>
-                <div class="col-lg-4">
-                    <div class="blog_right_sidebar">
-                        <aside class="single_sidebar_widget search_widget">
-                            <h4 class="widget_title" style="color: #2d2d2d;">Published Articles Statistics</h4>
-                            <p>All time: {%total_articles_count%}</p>
-                            <p>Today: {%total_articles_today%}</p>
-                            <p>This week: {%total_articles_week%}</p>
-                            <p>This month: {%total_articles_month%}</p>
-                            <p>This year: {%total_articles_year%}</p>
+            </div>
+            <div class="col-lg-4">
+                <div class="blog_right_sidebar">
+                    <aside class="single_sidebar_widget search_widget">
+                        <h4 class="widget_title" style="color: #2d2d2d;">Published Articles Statistics</h4>
+                        <p>All time: {%total_articles_count%}</p>
+                        <p>Today: {%total_articles_today%}</p>
+                        <p>This week: {%total_articles_week%}</p>
+                        <p>This month: {%total_articles_month%}</p>
+                        <p>This year: {%total_articles_year%}</p>
 
-                        </aside>
-                        {% show_top_categories 6 %}
-                        {% show_most_used_tags 5 %}
-                    </div>
+                    </aside>
+                    {% show_top_categories 6 %}
+                    {% show_most_used_tags 5 %}
                 </div>
             </div>
         </div>
-    </section>
+    </div>
+</section>
     <!-- Blog Area End -->
 </main>
-{% endblock %}
+{%endblock%}

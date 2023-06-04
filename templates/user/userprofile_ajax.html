@@ -1,0 +1,22 @@
+{% for member in volunteers %}
+<div class="col-lg-3 col-md-6 col-sm-6">
+    <div class="single-team mb-30 active">
+        <div class="team-img">
+            <div id="yes" style="height: 330px;
+                            background:transparent no-repeat center;background-size: cover;
+                            background-image: url('{{member.image.url}}');
+                            transition: all .5s;"></div>
+            <!-- Blog Social -->
+            <ul class="team-social">
+                <li><a href="http://facebook.com/{{member.facebook}}"><i class="fab fa-facebook-f"></i></a></li>
+                <li><a href="http://twitter.com/{{member.twitter}}"><i class="fab fa-twitter"></i></a></li>
+                <li><a href="http://instagram.com/{{member.instagram}}"><i class="fab fa-instagram"></i></a></li>
+            </ul>
+        </div>
+        <div class="team-caption">
+            <h3><a href="#" style="font-size: 20px !important;">{{member.user.get_full_name}}</a></h3>
+            <!--                            <p>Volunteer</p>-->
+        </div>
+    </div>
+</div>
+{% endfor %}
