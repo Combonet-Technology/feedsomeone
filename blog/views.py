@@ -20,6 +20,7 @@ from blog.forms import ArticleForm, CommentForm, EmailShareForm, SearchForm
 from blog.models import Article, Categories
 # Get an instance of a logger
 from ext_libs.sendgrid.sengrid import send_email
+from utils.views import custom_paginator, get_actual_template
 
 logger = logging.getLogger(__name__)
 
@@ -50,27 +51,12 @@ class ArticleListView(ListView):
         context['recent_posts'] = self.get_queryset().order_by("-date_created")[:8]
         return context
 
-    def paginate_queryset(self, queryset, page_size):
-        paginator = Paginator(queryset, page_size)
-        page = self.request.GET.get('page')
-        try:
-            results = paginator.page(page)
-        except PageNotAnInteger:
-            results = paginator.page(1)
-        except EmptyPage:
-            if self.request.is_ajax():
-                return HttpResponse('')
-            results = paginator.page(paginator.num_pages)
-
-        is_paginated = len(results) > 0
-
-        return paginator, page, results, is_paginated
-
     def get_template_names(self):
-        if self.request.is_ajax():
-            return ['blog/article_ajax.html']
-        else:
-            return ['blog/article_list.html']
+        template_names = super().get_template_names()
+        return get_actual_template(self, 'blog/article_ajax.html') + template_names
+
+    def paginate_queryset(self, queryset, page_size):
+        return custom_paginator(self.request, page_size, queryset)
 
 
 class UserArticleListView(LoginRequiredMixin, ListView):

@@ -6,7 +6,6 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.views import PasswordResetView
 from django.contrib.sites.shortcuts import get_current_site
-from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db import transaction
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
@@ -25,6 +24,7 @@ from ext_libs.python_social.social_auth_backends import do_complete
 from ext_libs.sendgrid.sengrid import send_email
 from utils.auth import check_validity_token, get_user, set_password_and_login
 from utils.decorators import ajax_required
+from utils.views import custom_paginator, get_actual_template
 
 from .forms import (CustomPasswordResetForm, UsernameForm,
                     UserRegistrationForm, VolunteerRegistrationForm,
@@ -110,7 +110,7 @@ def register(request, template='registration/register.html'):
                   {'forms': user_form, 'volunteer_form': volunteer_form, 'secret': settings.RECAPTCHA_PUBLIC_KEY})
 
 
-def activate(request, uidb64, token):
+def activate(uidb64, token):
     User = get_user_model()
     try:
         uid = force_str(urlsafe_base64_decode(uidb64))
@@ -131,27 +131,12 @@ class VolunteerListView(ListView):
     template_name = 'user/userprofile_list.html'
     paginate_by = 8
 
-    def paginate_queryset(self, queryset, page_size):
-        paginator = Paginator(queryset, page_size)
-        page = self.request.GET.get('page')
-        try:
-            results = paginator.page(page)
-        except PageNotAnInteger:
-            results = paginator.page(1)
-        except EmptyPage:
-            if self.request.is_ajax():
-                return HttpResponse('')
-            results = paginator.page(paginator.num_pages)
-
-        is_paginated = len(results) > 0
-
-        return paginator, page, results, is_paginated
-
     def get_template_names(self):
-        if self.request.is_ajax():
-            return ['user/userprofile_ajax.html']
-        else:
-            return ['user/userprofile_list.html']
+        template_names = super().get_template_names()
+        return get_actual_template(self, 'user/userprofile_ajax.html') + template_names
+
+    def paginate_queryset(self, queryset, page_size):
+        return custom_paginator(self.request, page_size, queryset)
 
 
 class VolunteerDetailView(DetailView):

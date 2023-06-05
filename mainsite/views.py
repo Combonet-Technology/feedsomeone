@@ -3,7 +3,6 @@ import os
 from datetime import datetime
 
 from django.contrib import messages
-from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
@@ -14,6 +13,7 @@ from events.models import Events, Volunteer
 from mainsite.models import GalleryImage, TransactionHistory
 from rave_python import Rave
 from user.models import UserProfile
+from utils.views import custom_paginator, get_actual_template
 
 
 def home(request):
@@ -44,45 +44,20 @@ def about(request):
     return render(request, 'about.html', context)
 
 
-# def contact(request):
-#     return render(request, 'contact.html')
-
-
 # Post Page Fxn recreated into a class
 class AllGalleryImagesListView(ListView):
     model = GalleryImage
+    template_name = 'mainsite/gallery_list.html'
     context_object_name = 'objects'
     ordering = ['-date_posted']
     paginate_by = 8
 
     def get_template_names(self):
-        if self.request.is_ajax():
-            return ['mainsite/gallery_ajax.html']
-        else:
-            return ['mainsite/gallery_list.html']
+        template_names = super().get_template_names()
+        return get_actual_template(self, 'mainsite/gallery_ajax.html') + template_names
 
     def paginate_queryset(self, queryset, page_size):
-        paginator = Paginator(queryset, page_size)
-        page = self.request.GET.get('page')
-        print(f'page gotten is {page} and of type {type(page)}')
-        try:
-            results = paginator.page(page)
-        except PageNotAnInteger:
-            print('got first page')
-            results = paginator.page(1)
-        except EmptyPage:
-            print('AJAX request')
-            if self.request.is_ajax():
-                print('No more pics')
-                return HttpResponse('')
-            results = paginator.page(paginator.num_pages)
-
-        is_paginated = len(results) > 0
-
-        return paginator, page, results, is_paginated,
-
-    # def get_context_data(self, *, object_list=None, **kwargs):
-    #     context = super().get_context_data(**kwargs)
+        return custom_paginator(self.request, page_size, queryset)
 
 
 # Post Page Fxn recreated into a class
@@ -93,12 +68,6 @@ class FooterGalleryImages(ListView):
     context_object_name = 'event_imgs'
     ordering = ['?', '-date_posted']
     paginate_by = 6
-
-
-# class SinglePostDetailView(DetailView):
-#     model = GalleryImage
-#     # template_name = 'article_detail.html'
-#     context_object_name = 'event_imgs'
 
 
 def donate(request):
