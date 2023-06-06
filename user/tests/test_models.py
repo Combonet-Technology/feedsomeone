@@ -1,10 +1,12 @@
+import traceback
 import unittest
 
 from django.contrib.auth import get_user_model
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
+from django.test import TestCase
 
 
-class CustomUserManagerTests(unittest.TestCase):
+class CustomUserManagerTests(TestCase):
 
     def setUp(self):
         self.model = get_user_model()
@@ -36,24 +38,28 @@ class CustomUserManagerTests(unittest.TestCase):
 
     def test_create_user_existing_email(self):
         self.user_manager.create_user(**self.user_data)
-        with self.assertRaises(IntegrityError):
-            self.user_manager.create_user(**self.user_data)
+        with transaction.atomic():
+            self.assertRaises(IntegrityError, self.user_manager.create_user, **self.user_data)
 
     def test_create_user_invalid_data(self):
-        with self.assertRaises(ValueError):
-            self.user_manager.create_user(email='', password='password123')
+        with transaction.atomic():
+            self.assertRaises(ValueError, self.user_manager.create_user, email='', password='password123')
 
     def test_create_superuser_existing_email(self):
         self.user_manager.create_superuser(**self.superuser_data)
-        with self.assertRaises(IntegrityError):
-            self.user_manager.create_superuser(**self.superuser_data)
+        with transaction.atomic():
+            self.assertRaises(IntegrityError, self.user_manager.create_superuser, **self.superuser_data)
 
     def test_create_superuser_invalid_data(self):
-        with self.assertRaises(ValueError):
-            self.user_manager.create_superuser(email='', password='admin123')
+        with transaction.atomic():
+            self.assertRaises(ValueError, self.user_manager.create_superuser, email='', password='admin123')
 
     def tearDown(self):
-        self.user_manager.all().delete()
+        try:
+            self.user_manager.all().delete()
+        except Exception as e:
+            print("Exception occurred during tearDown: ", str(e))
+            traceback.print_exc()
 
 
 if __name__ == '__main__':
