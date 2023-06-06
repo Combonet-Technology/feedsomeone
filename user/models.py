@@ -2,10 +2,12 @@ import uuid
 
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.models import PermissionsMixin
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from user.enums import EthnicityEnum, ReligionEnum, StateEnum
+from utils.forms import clean_email
 
 
 class CustomUserManager(BaseUserManager):
@@ -59,6 +61,11 @@ class UserProfile(AbstractBaseUser, PermissionsMixin):
         full_name = f'{self.first_name} {self.last_name}'
         return full_name.strip()
 
+    def save(self, *args, **kwargs):
+        if not clean_email(str(self.email)):
+            raise ValidationError("Invalid email")
+        super().save(*args, **kwargs)
+
 
 class Volunteer(models.Model):
     uuid = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
@@ -111,10 +118,14 @@ class Lead(models.Model):
     converted = models.BooleanField(default=False, blank=False, null=False)
     date_created = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     date_updated = models.DateTimeField(auto_now=True, null=True, blank=True)
-    objects = VolunteerManager()
 
     class Meta:
         ordering = ["-date_created"]
 
     def __str__(self):
         return f'{self.stage} {self.email} from {self.source}'
+
+    def save(self, *args, **kwargs):
+        if not clean_email(str(self.email)):
+            raise ValidationError("Invalid email")
+        super().save(*args, **kwargs)
