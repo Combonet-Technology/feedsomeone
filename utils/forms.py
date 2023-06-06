@@ -2,7 +2,7 @@ import requests
 from django.core.exceptions import ValidationError
 
 
-def clean_email(email: str) -> None:
+def clean_email(email: str) -> bool:
     domain = 'https://' + email.split('@')[-1]
     ext = email.split('.')[-1]
     if ext not in ['org', 'com', 'ng', 'gov', 'ca', 'us']:
@@ -18,3 +18,5 @@ def clean_email(email: str) -> None:
         print("Timeout Error:", errt)
     except requests.exceptions.RequestException as err:
         print("OOps: Something Else", err)
+
+    return True
