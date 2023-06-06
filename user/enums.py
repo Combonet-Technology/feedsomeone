@@ -6,8 +6,7 @@ from enum import Enum
 class StateEnum(Enum):
     ABIA = 'ABIA'
     ADAMAWA = 'ADAMAWA'
-    AKWA = 'AKWA'
-    IBOM = 'IBOM'
+    AKWAIBOM = 'AKWAIBOM'
     ANAMBRA = 'ANAMBRA'
     BAUCHI = 'BAUCHI'
     BAYELSA = 'BAYELSA'
