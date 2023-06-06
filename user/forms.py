@@ -21,7 +21,7 @@ class UserRegistrationForm(UserCreationForm):
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
-        clean_email(email)
+        clean_email(email, domain_check=True)
         return email
 
 
@@ -32,7 +32,7 @@ class UserUpdateForm(forms.ModelForm):
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
-        clean_email(email)
+        clean_email(email, domain_check=True)
         return email
 
 
