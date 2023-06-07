@@ -32,7 +32,7 @@ DATABASES = {
         'NAME': os.environ.get('POSTGRES_DB_NAME'),
         'USER': os.environ.get('POSTGRES_DB_USER'),
         'PASSWORD': os.environ.get('POSTGRES_DB_PASS'),
-        'HOST': 'localhost',
+        'HOST': os.environ.get('POSTGRES_HOST'),
         'PORT': os.environ.get('POSTGRES_PORT')
     }
 }
@@ -45,3 +45,4 @@ INTERNAL_IPS = (
 )
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+print(DATABASES)
