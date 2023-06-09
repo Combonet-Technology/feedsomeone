@@ -49,6 +49,9 @@ class ProfileViewTestCase(TestCase):
             'short_bio': 'I am a volunteer.',
         }
         response = self.client.post(self.url, data=form_data, files=image_file, follow=True)
+        msg = response.context['messages']
+        for m in msg:
+            print(m)
         self.assertEqual(len(response.context['messages']), 1)
         messages = get_messages(response.wsgi_request)
         self.assertEqual(len(messages), 1)
