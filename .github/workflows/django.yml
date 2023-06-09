@@ -53,7 +53,8 @@ jobs:
           export SOCIAL_AUTH_LINKEDIN_OAUTH2_KEY="${{ secrets.LINKEDIN_OAUTH2_KEY }}"
           export SOCIAL_AUTH_LINKEDIN_OAUTH2_SECRET="${{ secrets.LINKEDIN_OAUTH2_SECRET }}"
 
-          python manage.py test
+          python manage.py makemigrations --noinput
+          python manage.py test --noinput
 
       - name: Slack Notification
         uses: slackapi/slack-github-action@v1.24.0
