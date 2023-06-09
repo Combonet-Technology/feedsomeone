@@ -12,9 +12,7 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-        ('taggit', '0004_auto_20230501_1835')
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
