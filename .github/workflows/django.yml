@@ -42,6 +42,7 @@ jobs:
       SOCIAL_AUTH_GOOGLE_PLUS_SECRET: ${{ secrets.GOOGLE_OAUTH2_SECRET }}
       SOCIAL_AUTH_LINKEDIN_OAUTH2_KEY: ${{ secrets.LINKEDIN_OAUTH2_KEY }}
       SOCIAL_AUTH_LINKEDIN_OAUTH2_SECRET: ${{ secrets.LINKEDIN_OAUTH2_SECRET }}
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
     steps:
       - uses: actions/checkout@v3
@@ -70,8 +71,8 @@ jobs:
         run: |
           ls -R htmlcov
 
-      - name: Upload Coverage Report
-        uses: actions/upload-artifact@v2
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
         with:
           name: coverage-report
           path: htmlcov
