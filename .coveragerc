@@ -1,3 +1,6 @@
 [run]
-source = .
+source =
+    user/tests,
+    .
+
 omit = */venv/*, */migrations/*, */env/*, */rave_python/*, */tests/*
