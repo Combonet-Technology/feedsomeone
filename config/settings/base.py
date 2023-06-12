@@ -324,5 +324,5 @@ CKEDITOR_CONFIGS = {
     'article': base
 }
 
-TEST_RUNNER = 'xmlrunner.extra.djangotestrunner.XMLTestRunner'
+TEST_RUNNER = 'django.test.runner.DiscoverRunner'
 TEST_OUTPUT_DIR = 'test-reports'
