@@ -11,6 +11,7 @@ charset-normalizer==2.0.12
 click==8.1.3
 cloudinary==1.29.0
 colorama==0.4.6
+coverage==7.2.7
 cryptography==40.0.2
 defusedxml==0.6.0
 diff-match-patch==20200713
@@ -31,6 +32,7 @@ django-formtools==2.4
 django-honeypot==1.0.3
 django-imagefit==0.6.2
 django-import-export==2.4.0
+django-js-asset==2.0.0
 django-money==2.1.1
 django-recaptcha==3.0.0
 django-sekizai==4.0.0

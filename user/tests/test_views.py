@@ -4,20 +4,22 @@ from unittest import mock
 from django.contrib.auth import get_user_model
 from django.contrib.messages import get_messages
 from django.forms import ImageField
-from django.test import RequestFactory, TestCase
+from django.test import TestCase
 from django.test.client import Client
 from django.urls import reverse
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 
 from user.enums import EthnicityEnum, ReligionEnum, StateEnum
 from user.management.services import SiteService
 from user.models import Volunteer
+from user.token import account_activation_token
 
 User = get_user_model()
 
 
 class ProfileViewTestCase(TestCase):
     def setUp(self):
-        self.factory = RequestFactory()
         self.host = 'example.com'
         self.site = SiteService.add_site(domain=self.host, name='Example Site')
         self.client = Client()
@@ -49,9 +51,6 @@ class ProfileViewTestCase(TestCase):
             'short_bio': 'I am a volunteer.',
         }
         response = self.client.post(self.url, data=form_data, files=image_file, follow=True)
-        msg = response.context['messages']
-        for m in msg:
-            print(m)
         self.assertEqual(len(response.context['messages']), 1)
         messages = get_messages(response.wsgi_request)
         self.assertEqual(len(messages), 1)
@@ -69,7 +68,7 @@ class ProfileViewTestCase(TestCase):
 
     def test_get_request_other_user(self):
         self.client.logout()
-        response = self.client.get(self.url, HTTP_HOST='example.com')
+        response = self.client.get(self.url, HTTP_HOST=self.host)
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, '/login/?next=/volunteers/profile/')
 
@@ -79,3 +78,43 @@ class ProfileViewTestCase(TestCase):
         response = self.client.post(self.url, HTTP_HOST='example.com', data=form_data)
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, '/login/?next=/volunteers/profile/')
+
+
+class ActivateTestCase(TestCase):
+    def setUp(self):
+        self.host = 'example.com'
+        self.site = SiteService.add_site(domain=self.host, name='Example Site')
+        self.user_model = get_user_model()
+        self.user = self.user_model.objects.create_user(username='testuser', email='test@example.com')
+        self.user.is_active = False
+        self.user.save()
+        self.token = account_activation_token.make_token(self.user)
+
+    def test_valid_activation(self):
+        uidb64 = urlsafe_base64_encode(force_bytes(self.user.pk))
+        response = self.client.get(reverse('activate', kwargs={'uidb64': uidb64, 'token': self.token}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse('login'))
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.is_active)
+
+    def test_invalid_uidb(self):
+        response = self.client.get(reverse('activate', args=('invalid_uidb64', self.token)))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Activation link is invalid or expired!')
+
+    def test_invalid_token(self):
+        uidb64 = urlsafe_base64_encode(force_bytes(self.user.pk))
+        response = self.client.get(reverse('activate', args=(uidb64, 'invalid_token')))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Activation link is invalid or expired!')
+
+    def test_active_user(self):
+        self.user.is_active = False
+        self.user.save()
+        uidb64 = urlsafe_base64_encode(force_bytes(self.user.pk))
+        response = self.client.get(reverse('activate', args=(uidb64, self.token)), follow=True, HTTP_HOST=self.host)
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'Activation link is invalid or expired!')
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.is_active)
