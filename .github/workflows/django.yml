@@ -55,16 +55,26 @@ jobs:
 
           coverage run manage.py test --verbosity=2 --noinput
           coverage report -m
+          coverage html
 
       - name: Generate Failed Tests Report
         run: |
-          python manage.py test --noinput --testrunner=user.tests.CustomTestRunner
+          python manage.py test --testrunner=django.test.runner.DiscoverRunner \
+                                --noinput --verbosity=2 --parallel --tag=junitxml \
+                                --tag=django
 
       - name: Upload Coverage Report
         uses: actions/upload-artifact@v2
         with:
           name: coverage-report
           path: htmlcov
+
+      - name: Parse Test Results
+        id: parse-test-results
+        run: |
+          python parse_test_results.py test-reports/test_results.xml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload Failed Tests Report
         uses: actions/upload-artifact@v2
