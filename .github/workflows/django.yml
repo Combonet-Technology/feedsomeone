@@ -63,6 +63,10 @@ jobs:
           export SECRET_KEY="${{ secrets.SECRET_KEY }}"
           python manage.py test --noinput --verbosity=2 --parallel --tag=junitxml --tag=django
 
+      - name: Print HTML Coverage Directory
+        run: |
+          ls -R htmlcov
+
       - name: Upload Coverage Report
         uses: actions/upload-artifact@v2
         with:
