@@ -60,6 +60,7 @@ jobs:
 
       - name: Generate Failed Tests Report
         run: |
+          export SECRET_KEY="${{ secrets.SECRET_KEY }}"
           python manage.py test --noinput --verbosity=2 --parallel --tag=junitxml --tag=django
 
       - name: Upload Coverage Report
