@@ -58,37 +58,31 @@ jobs:
 
       - name: Run Tests and Coverage
         run: |
+          python manage.py test --noinput --verbosity=2 --parallel
           coverage run manage.py test --verbosity=2 --noinput
           coverage report -m
           coverage html
-          coverage xml
-
-      - name: Generate Failed Tests Report
-        run: |
-          python manage.py test --noinput --verbosity=2 --parallel --tag=junitxml --tag=django
-
-      - name: Print HTML Coverage Directory
-        run: |
           ls -R htmlcov
+
+      - name: Parse Test Results
+        id: parse-test-results
+        run: |
+          python parse_test_results.py test-reports
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
         with:
           name: coverage-report
-          path: htmlcov
+          directory: htmlcov
 
-      - name: Parse Test Results
-        id: parse-test-results
-        run: |
-          python parse_test_results.py coverage.xml
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload Failed Tests Report
-        uses: actions/upload-artifact@v2
+      - name: Upload coverage.xml to Codecov
+        uses: codecov/codecov-action@v3
         with:
-          name: failed-tests-report
-          path: test-reports
+          name: coverage-xml
+          flags: unit-test
+          file: coverage.xml
 
       - name: Slack Notification
         uses: slackapi/slack-github-action@v1.24.0
