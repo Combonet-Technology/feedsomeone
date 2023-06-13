@@ -173,13 +173,13 @@ venv
 **/migrations/**
 !**/migrations
 !**/migrations/__init__.py
- .settings.ini
+.settings.ini
 *.ini
 **.ini
 .idea/*
 .idea
 .env
- .idea/
+.idea/
 settings.ini
 db
 config/settings/cli.py
@@ -190,3 +190,5 @@ keywords.txt
 /cert.key
 test-reports/
 htmlcov
+output.txt
+test_results.txt
