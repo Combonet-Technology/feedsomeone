@@ -56,20 +56,10 @@ jobs:
         run: |
           python -m pip install -r requirements.txt
 
-      - name: Run Tests and Coverage
+      - name: Run and Parse Tests
         run: |
-          python manage.py test --noinput --verbosity=2
-          coverage run manage.py test --verbosity=2 --noinput
-          coverage report -m
-          coverage html
-          ls -R htmlcov
-
-      - name: Parse Test Results
-        id: parse-test-results
-        run: |
+          python manage.py test --noinput --verbosity=2 --parallel
           python parse_test_results.py test-reports
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3

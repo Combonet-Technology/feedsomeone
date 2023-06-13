@@ -1,6 +1,7 @@
 import os
 
 import xmlrunner
+from coverage import Coverage
 from django.conf import settings
 from django.test.runner import (DiscoverRunner, filter_tests_by_tags,
                                 is_discoverable, reorder_suite)
@@ -70,11 +71,11 @@ class TestRunner(DiscoverRunner):
         return suite
 
     def run_tests(self, test_labels, extra_tests=None, **kwargs):
-        print(test_labels, extra_tests)
+        cov = Coverage()
+        cov.start()
         xml_result = []
         self.setup_test_environment()
         suite = self.build_suite(test_labels, extra_tests)
-        print(suite)
         databases = self.get_databases(suite)
         verbosity = getattr(settings, 'TEST_OUTPUT_VERBOSE', 1)
         if isinstance(verbosity, bool):
@@ -100,5 +101,9 @@ class TestRunner(DiscoverRunner):
             except Exception:
                 if not run_failed:
                     raise
+        cov.stop()
+        cov.save()
+        cov.html_report(directory='htmlcov')
+
         self.time_keeper.print_results()
         return self.suite_result(suite, xml_result)
