@@ -49,6 +49,7 @@ identify==2.5.22
 idna==3.3
 jdcal==1.4.1
 jmespath==1.0.0
+lxml==4.9.2
 Markdown==3.2.1
 MarkupPy==1.14
 marshmallow==3.19.0
@@ -86,6 +87,7 @@ sqlparse==0.4.2
 starkbank-ecdsa==2.2.0
 tablib==2.0.0
 tzdata==2022.1
+unittest-xml-reporting==3.2.0
 urllib3==1.26.9
 virtualenv==20.23.0
 webencodings==0.5.1
