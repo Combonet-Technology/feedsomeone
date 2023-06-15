@@ -60,19 +60,16 @@ jobs:
         run: |
           python manage.py test --noinput --verbosity=2 --parallel
           python parse_test_results.py test-reports
+          coverage report
 
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v3
-        with:
-          name: coverage-report
-          directory: htmlcov
 
-      - name: Upload coverage.xml to Codecov
+      - name: Upload coverage report
         uses: codecov/codecov-action@v3
         with:
           name: coverage-xml
           flags: unit-test
           file: coverage.xml
+          fail_ci_if_error: false
 
       - name: Slack Notification
         uses: slackapi/slack-github-action@v1.24.0
@@ -92,23 +89,28 @@ jobs:
               ],
               "attachments": [
                 {
-                  "color": "#36a64f",
                   "title": "Coverage Report",
                   "title_link": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
                   "fields": [
                     {
                       "title": "Coverage",
-                      "value": "$(curl https://codecov.io/gh/${{ github.repository }}/branch/${{ github.ref }}/graphs/badge.svg)",
+                      "value": "$(curl https://app.codecov.io/github/${{ github.repository }}/branch/${{ github.ref }}/graphs/badge.svg)",
                       "short": false
                     }
                   ]
                 },
                 {
-                  "color": "#d62828",
-                  "title": "Failed Tests Report",
+                  "title": "Tests Report",
                   "title_link": "${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref }}/test-reports/test_results.xml",
                   "fields": [
                     {
+                      "color": "#36a64f",
+                      "title": "Passed Tests",
+                      "value": "View [Failed Tests Report](${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref }}/test-reports/test_results.xml)",
+                      "short": false
+                    },
+                    {
+                      "color": "#d62828",
                       "title": "Failed Tests",
                       "value": "View [Failed Tests Report](${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref }}/test-reports/test_results.xml)",
                       "short": false

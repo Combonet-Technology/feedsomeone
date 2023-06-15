@@ -103,7 +103,6 @@ class TestRunner(DiscoverRunner):
                     raise
         cov.stop()
         cov.save()
-        cov.html_report(directory='htmlcov')
 
         self.time_keeper.print_results()
         return self.suite_result(suite, xml_result)
