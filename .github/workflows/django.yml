@@ -61,6 +61,7 @@ jobs:
           python manage.py test --noinput --verbosity=2 --parallel
           python parse_test_results.py test-reports
           coverage report
+          cat coverage.xml
 
 
       - name: Upload coverage report
