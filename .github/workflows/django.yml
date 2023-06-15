@@ -77,7 +77,7 @@ jobs:
         with:
           payload: |
             {
-              "text": "GitHub Action build result: ${{ job.status }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}",
+              "text": "GitHub Action build result: ${{ job.status }} by ${{ github.actor }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}",
               "blocks": [
                 {
                   "type": "section",
@@ -102,15 +102,20 @@ jobs:
                 {
                   "title": "Tests Report",
                   "title_link": "${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref }}/test-reports/test_results.xml",
+                  "color": "#36a64f",
                   "fields": [
                     {
-                      "color": "#36a64f",
                       "title": "Passed Tests",
                       "value": "View [Failed Tests Report](${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref }}/test-reports/test_results.xml)",
                       "short": false
-                    },
+                    }
+                  ]
+                {
+                  "title": "Failed Tests",
+                  "title_link": "${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref }}/test-reports/test_results.xml",
+                  "color": "#d62828",
+                  "fields": [
                     {
-                      "color": "#d62828",
                       "title": "Failed Tests",
                       "value": "View [Failed Tests Report](${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref }}/test-reports/test_results.xml)",
                       "short": false
