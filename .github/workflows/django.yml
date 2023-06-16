@@ -56,11 +56,14 @@ jobs:
         run: |
           python -m pip install -r requirements.txt
 
-      - name: Run and Parse Tests
+      - name: Run Tests
         run: |
           python manage.py test --noinput --verbosity=2 --parallel
-          python parse_test_results.py test-reports
           coverage report
+          
+      - name: Parse Tests to single file
+        run:  |
+          python parse_test_results.py test-report
           cat coverage.xml
 
 
