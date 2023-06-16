@@ -64,6 +64,7 @@ class FormsTestCase(TestCase):
             'email': 'johndoe@example.com',
         }
         form = CustomPasswordResetForm(data=form_data)
+        form.send_mail()
         self.assertTrue(form.is_valid())
 
     def test_username_form(self):
