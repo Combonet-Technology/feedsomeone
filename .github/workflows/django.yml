@@ -60,10 +60,12 @@ jobs:
         run: |
           python manage.py test --noinput --verbosity=2 --parallel
           coverage report
-          
+
       - name: Parse Tests to single file
         run:  |
+          ls -R test-report
           python parse_test_results.py test-report
+          ls -a
           cat coverage.xml
 
 
