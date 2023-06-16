@@ -2,7 +2,6 @@ import os
 import shutil
 
 import xmlrunner
-from coverage import Coverage
 from django.conf import settings
 from django.test.runner import DiscoverRunner
 
@@ -13,8 +12,6 @@ from parse_test_results import build_xml_report, combine_xml
 class TestRunner(DiscoverRunner):
 
     def run_tests(self, test_labels, extra_tests=None, **kwargs):
-        cov = Coverage()
-        cov.start()
         xml_result = []
         self.setup_test_environment()
         suite = self.build_suite(test_labels, extra_tests)
@@ -49,9 +46,6 @@ class TestRunner(DiscoverRunner):
             except Exception:
                 if not run_failed:
                     raise
-        cov.stop()
-        cov.save()
-
         self.time_keeper.print_results()
 
         file_results = combine_xml(output)

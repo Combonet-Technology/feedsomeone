@@ -8,6 +8,7 @@ from user.enums import EthnicityEnum, ReligionEnum, StateEnum
 
 class EnumTests(TestCase):
     def test_state_enum(self):
+        """test"""
         for enum_value in StateEnum:
             self.assertTrue(isinstance(enum_value, Enum))
             self.assertIn(enum_value.value, [choice.value for choice in StateEnum])
