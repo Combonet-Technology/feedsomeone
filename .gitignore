@@ -192,3 +192,4 @@ test-reports/
 htmlcov
 output.txt
 test_results.txt
+coverage.xml
