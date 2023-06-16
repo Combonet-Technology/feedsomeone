@@ -107,10 +107,11 @@ jobs:
                   "fields": [
                     {
                       "title": "Passed Tests",
-                      "value": "View [Failed Tests Report](${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref }}/test-reports/test_results.xml)",
+                      "value": "View [Passed Tests Report](${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref }}/test-reports/test_results.xml)",
                       "short": false
                     }
                   ]
+                },
                 {
                   "title": "Failed Tests",
                   "title_link": "${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref }}/test-reports/test_results.xml",
