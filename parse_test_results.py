@@ -1,14 +1,12 @@
 import glob
 import os
-import sys
 import xml.etree.ElementTree as ET
 
 
-def parse_test_results(xml_file):
+def parse_results(xml_file):
     tree = ET.parse(xml_file)
     root = tree.getroot()
-    test_results = {}
-    reason = None
+    successes, failures, errors, logs = [], [], [], []
     for testcase in root.iter('testcase'):
         classname = testcase.get('classname')
         test_name = testcase.get('name')
@@ -17,84 +15,122 @@ def parse_test_results(xml_file):
         # Get failure information if available
         failure_elem = testcase.find('failure')
         error_elem = testcase.find('error')
+        debug_logs = testcase.find('system-err')
         result = 'passed'
         if failure_elem is not None:
             result = 'failed'
             reason = failure_elem.text
+            failures.append({
+                'result': result,
+                'classname': classname,
+                'name': test_name,
+                'time': time,
+                'details': reason
+            })
         elif error_elem is not None:
             result = 'error'
             reason = error_elem.text
-
-        # Group results by classname or test name
-        group_key = classname if group_by_app else test_name
-
-        if group_key not in test_results:
-            test_results[group_key] = {
-                'tests': [],
-                'total_time': 0,
-                'passed': 0,
-                'failed': 0,
-                'errors': 0
-            }
-
-        # Add test result to the corresponding group
-        output = {
-            'name': test_name,
-            'classname': classname,
-            'result': result,
-            'time': time,
-        }
-
-        if reason:
-            output.update({'details': reason})
-
-        system_out_elem = testcase.find('system-err')
-
-        if system_out_elem is not None:
-            system_out = system_out_elem.text.strip()
-            output.update({'system_out': system_out})
-        test_results[group_key]['tests'].append(output)
-
-        # Update overall statistics
-        test_results[group_key]['total_time'] += time
-        if result == 'passed':
-            test_results[group_key]['passed'] += 1
-        elif result == 'failed':
-            test_results[group_key]['failed'] += 1
-        elif result == 'error':
-            test_results[group_key]['errors'] += 1
-    return test_results
+            errors.append({
+                'result': result,
+                'classname': classname,
+                'name': test_name,
+                'time': time,
+                'details': reason
+            })
+        elif debug_logs is not None:
+            result = 'logs'
+            reason = debug_logs.text
+            logs.append({
+                'result': result,
+                'classname': classname,
+                'name': test_name,
+                'time': time,
+                'details': reason
+            })
+        else:
+            successes.append({
+                'result': result,
+                'classname': classname,
+                'name': test_name,
+                'time': time
+            })
+    return successes, failures, errors, logs
 
 
-def generate_xml_report(test_results):
+def build_xml_report(test_results):
     root = ET.Element('coverage')
     packages_elem = ET.SubElement(root, 'packages')
-    for test_result in test_results:
-        classnames = test_result.keys()
-        for classname in classnames:
-            class_data = test_result[classname]
+    successes, failures, errors, logs = test_results
 
-            package_elem = ET.SubElement(packages_elem, 'package', name=classname)
-            classes_elem = ET.SubElement(package_elem, 'classes')
-            class_elem = ET.SubElement(classes_elem, 'class', name=classname)
-            methods_elem = ET.SubElement(class_elem, 'methods')
-            for test in class_data['tests']:
-                test_name = test['name']
-                test_classname = test['classname']
-                test_result = test['result']
-                test_time = str(test['time'])
-                test_system_out = test.get('system_out')
+    for success in successes:
+        result = success['result']
+        classname = success['classname']
+        test_name = success['name']
+        time = str(success['time'])
 
-                test_elem = ET.SubElement(methods_elem, 'test', name=test_name)
-                test_elem.set('classname', test_classname)
-                test_elem.set('result', test_result)
-                test_elem.set('time', test_time)
-                if test_result == 'error':
-                    test_elem.set('error_details', test.get('details'))
-                elif test_result == 'failed':
-                    test_elem.set('failure_details', test.get('details'))
-                if test_system_out is not None:
-                    test_elem.set('system-out', test_system_out)
+        package_elem = ET.SubElement(packages_elem, 'package', name=classname)
+        classes_elem = ET.SubElement(package_elem, 'classes')
+        class_elem = ET.SubElement(classes_elem, 'class', name=classname)
+        methods_elem = ET.SubElement(class_elem, 'methods')
+
+        test_elem = ET.SubElement(methods_elem, 'test', name=test_name)
+        test_elem.set('classname', classname)
+        test_elem.set('result', result)
+        test_elem.set('time', time)
+
+    for failure in failures:
+        result = failure['result']
+        classname = failure['classname']
+        test_name = failure['name']
+        time = str(failure['time'])
+        details = failure['details']
+
+        package_elem = ET.SubElement(packages_elem, 'package', name=classname)
+        classes_elem = ET.SubElement(package_elem, 'classes')
+        class_elem = ET.SubElement(classes_elem, 'class', name=classname)
+        methods_elem = ET.SubElement(class_elem, 'methods')
+
+        test_elem = ET.SubElement(methods_elem, 'test', name=test_name)
+        test_elem.set('classname', classname)
+        test_elem.set('result', result)
+        test_elem.set('time', time)
+        test_elem.set('failure_details', details)
+
+    for error in errors:
+        result = error['result']
+        classname = error['classname']
+        test_name = error['name']
+        time = str(error['time'])
+        details = error['details']
+
+        package_elem = ET.SubElement(packages_elem, 'package', name=classname)
+        classes_elem = ET.SubElement(package_elem, 'classes')
+        class_elem = ET.SubElement(classes_elem, 'class', name=classname)
+        methods_elem = ET.SubElement(class_elem, 'methods')
+
+        test_elem = ET.SubElement(methods_elem, 'test', name=test_name)
+        test_elem.set('classname', classname)
+        test_elem.set('result', result)
+        test_elem.set('time', time)
+        test_elem.set('error_details', details)
+
+    for log in logs:
+        result = log['result']
+        classname = log['classname']
+        test_name = log['name']
+        time = str(log['time'])
+        details = log['details']
+
+        package_elem = ET.SubElement(packages_elem, 'package', name=classname)
+        classes_elem = ET.SubElement(package_elem, 'classes')
+        class_elem = ET.SubElement(classes_elem, 'class', name=classname)
+        methods_elem = ET.SubElement(class_elem, 'methods')
+
+        test_elem = ET.SubElement(methods_elem, 'test', name=test_name)
+        test_elem.set('classname', classname)
+        test_elem.set('result', result)
+        test_elem.set('time', time)
+        test_elem.text = details
 
     tree = ET.ElementTree(root)
     report_file = 'coverage.xml'
@@ -102,13 +138,22 @@ def generate_xml_report(test_results):
     print(f"Report generated: {report_file}")
 
 
-if __name__ == '__main__':
-    folder_path = sys.argv[1]
-    group_by_app = True
-    xml_files = glob.glob(os.path.join(folder_path, '*.xml'))
+def combine_xml(output):
+    parsed_result = None
+    xml_files = glob.glob(os.path.join(output, '*.xml'))
+    success, failure, error, logs = [], [], [], []
 
-    test_results = []
     for xml_file in xml_files:
-        file_results = parse_test_results(xml_file)
-        test_results.append(file_results)
-    generate_xml_report(test_results)
+        parsed_result = parse_results(xml_file)
+        successes, failures, errors, debug_logs = parsed_result
+        # file_results = parse_test_results(xml_file, group_by_app)
+        if successes is not None:
+            success.extend(successes)
+        if failures is not None:
+            failure.extend(failures)
+        if errors is not None:
+            error.extend(errors)
+        if debug_logs is not None:
+            logs.extend(debug_logs)
+
+    return success, failure, error, logs

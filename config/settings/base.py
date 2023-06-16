@@ -326,3 +326,5 @@ CKEDITOR_CONFIGS = {
 
 TEST_RUNNER = 'custom_test_runner.TestRunner'
 TEST_OUTPUT_DIR = 'test-reports'
+SLACK_WEBHOOK_URL = os.environ.get('SLACK_WEBHOOK_URL')
+STAGE = 'bcx'
