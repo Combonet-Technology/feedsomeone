@@ -63,9 +63,11 @@ jobs:
 
       - name: Parse Tests to single file
         run:  |
-          ls -R test-report
-          python parse_test_results.py test-report
+          ls -R test-reports
+          python parse_test_results.py test-reports
           ls -a
+          # passed_tests=$(some_command_to_get_passed_tests)
+          # failed_tests=$(some_command_to_get_failed_tests)
           cat coverage.xml
 
 
