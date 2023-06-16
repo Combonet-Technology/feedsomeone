@@ -188,5 +188,5 @@ broken.txt
 keywords.txt
 /cert.crt
 /cert.key
-.\test-reports\
-.\output.txt
+test-reports
+output.txt
