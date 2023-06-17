@@ -145,7 +145,7 @@ def callback(request):
 
 
 def services(request):
-    pass
+    return HttpResponse()
 
 
 def privacy(request):

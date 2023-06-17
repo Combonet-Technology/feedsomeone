@@ -323,3 +323,6 @@ CKEDITOR_CONFIGS = {
     },
     'article': base
 }
+
+SITE_NAME = os.environ.get('SITE_NAME')
+SITE_URL = os.environ.get('SITE_URL')
