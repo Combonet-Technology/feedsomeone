@@ -19,7 +19,7 @@ class HomePage(TestCase):
     def test_homepage_returns_valid_data(self):
         request = HttpRequest()
         response = home(request)
-        html_content = response.content.decode('utf-8')
-        self.assertTrue(html_content.startswith('\n\n\n<!doctype html>'))
+        html_content = response.content.decode('utf-8').strip()
+        self.assertTrue(html_content.startswith('<!doctype html>'))
         self.assertTrue(html_content.endswith('</html>'))
         self.assertIn('<title>FEEDSOMEONE | eradicating hunger and poverty</title>', html_content)
