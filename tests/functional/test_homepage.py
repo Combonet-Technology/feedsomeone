@@ -41,7 +41,7 @@ class HomePageTest(unittest.TestCase):
                 if url.startswith('http'):
                     try:
                         response = requests.head(url)
-                        self.assertIn(response.status_code, [200, 301, 999, 404])
+                        self.assertIn(response.status_code, [200, 301, 999])
                     except requests.exceptions.ConnectionError:
                         print("Can't connect to external URL")
                     # print(f'text: {link.text} url: {url} parent tag: {pare.tag_name} parent value: {pare.text}')
