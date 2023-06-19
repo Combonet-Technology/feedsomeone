@@ -2,7 +2,7 @@
 
 from django.db import migrations, models
 
-import user.enums
+import utils.enums
 
 
 class Migration(migrations.Migration):
@@ -35,6 +35,41 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='volunteer',
             name='state_of_residence',
-            field=models.CharField(blank=True, choices=[(user.enums.StateEnum['ABIA'], 'ABIA'), (user.enums.StateEnum['ADAMAWA'], 'ADAMAWA'), (user.enums.StateEnum['AKWAIBOM'], 'AKWAIBOM'), (user.enums.StateEnum['ANAMBRA'], 'ANAMBRA'), (user.enums.StateEnum['BAUCHI'], 'BAUCHI'), (user.enums.StateEnum['BAYELSA'], 'BAYELSA'), (user.enums.StateEnum['BENUE'], 'BENUE'), (user.enums.StateEnum['BORNO'], 'BORNO'), (user.enums.StateEnum['CROSSRIVER'], 'CROSS RIVER'), (user.enums.StateEnum['DELTA'], 'DELTA'), (user.enums.StateEnum['EBONYI'], 'EBONYI'), (user.enums.StateEnum['EDO'], 'EDO'), (user.enums.StateEnum['EKITI'], 'EKITI'), (user.enums.StateEnum['ENUGU'], 'ENUGU'), (user.enums.StateEnum['GOMBE'], 'GOMBE'), (user.enums.StateEnum['IMO'], 'IMO'), (user.enums.StateEnum['JIGAWA'], 'JIGAWA'), (user.enums.StateEnum['KADUNA'], 'KADUNA'), (user.enums.StateEnum['KANO'], 'KANO'), (user.enums.StateEnum['KATSINA'], 'KATSINA'), (user.enums.StateEnum['KEBBI'], 'KEBBI'), (user.enums.StateEnum['KOGI'], 'KOGI'), (user.enums.StateEnum['KWARA'], 'KWARA'), (user.enums.StateEnum['LAGOS'], 'LAGOS'), (user.enums.StateEnum['NASARAWA'], 'NASARAWA'), (user.enums.StateEnum['NIGER'], 'NIGER'), (user.enums.StateEnum['OGUN'], 'OGUN'), (user.enums.StateEnum['ONDO'], 'ONDO'), (user.enums.StateEnum['OSUN'], 'OSUN'), (user.enums.StateEnum['OYO'], 'OYO'), (user.enums.StateEnum['PLATEAU'], 'PLATEAU'), (user.enums.StateEnum['RIVERS'], 'RIVERS'), (user.enums.StateEnum['SOKOTO'], 'SOKOTO'), (user.enums.StateEnum['TARABA'], 'TARABA'), (user.enums.StateEnum['YOBE'], 'YOBE'), (user.enums.StateEnum['ZAMFARA'], 'ZAMFARA'), (user.enums.StateEnum['FCT'], 'FCT-ABUJA')], max_length=30, null=True, verbose_name='select state'),
+            field=models.CharField(blank=True, choices=[(utils.enums.StateEnum['ABIA'], 'ABIA'), (
+            utils.enums.StateEnum['ADAMAWA'], 'ADAMAWA'), (utils.enums.StateEnum['AKWAIBOM'], 'AKWAIBOM'), (
+                                                        utils.enums.StateEnum['ANAMBRA'], 'ANAMBRA'), (
+                                                        utils.enums.StateEnum['BAUCHI'], 'BAUCHI'), (
+                                                        utils.enums.StateEnum['BAYELSA'], 'BAYELSA'), (
+                                                        utils.enums.StateEnum['BENUE'], 'BENUE'), (
+                                                        utils.enums.StateEnum['BORNO'], 'BORNO'), (
+                                                        utils.enums.StateEnum['CROSSRIVER'], 'CROSS RIVER'), (
+                                                        utils.enums.StateEnum['DELTA'], 'DELTA'), (
+                                                        utils.enums.StateEnum['EBONYI'], 'EBONYI'), (
+                                                        utils.enums.StateEnum['EDO'], 'EDO'), (
+                                                        utils.enums.StateEnum['EKITI'], 'EKITI'), (
+                                                        utils.enums.StateEnum['ENUGU'], 'ENUGU'), (
+                                                        utils.enums.StateEnum['GOMBE'], 'GOMBE'), (
+                                                        utils.enums.StateEnum['IMO'], 'IMO'), (
+                                                        utils.enums.StateEnum['JIGAWA'], 'JIGAWA'), (
+                                                        utils.enums.StateEnum['KADUNA'], 'KADUNA'), (
+                                                        utils.enums.StateEnum['KANO'], 'KANO'), (
+                                                        utils.enums.StateEnum['KATSINA'], 'KATSINA'), (
+                                                        utils.enums.StateEnum['KEBBI'], 'KEBBI'), (
+                                                        utils.enums.StateEnum['KOGI'], 'KOGI'), (
+                                                        utils.enums.StateEnum['KWARA'], 'KWARA'), (
+                                                        utils.enums.StateEnum['LAGOS'], 'LAGOS'), (
+                                                        utils.enums.StateEnum['NASARAWA'], 'NASARAWA'), (
+                                                        utils.enums.StateEnum['NIGER'], 'NIGER'), (
+                                                        utils.enums.StateEnum['OGUN'], 'OGUN'), (
+                                                        utils.enums.StateEnum['ONDO'], 'ONDO'), (
+                                                        utils.enums.StateEnum['OSUN'], 'OSUN'), (
+                                                        utils.enums.StateEnum['OYO'], 'OYO'), (
+                                                        utils.enums.StateEnum['PLATEAU'], 'PLATEAU'), (
+                                                        utils.enums.StateEnum['RIVERS'], 'RIVERS'), (
+                                                        utils.enums.StateEnum['SOKOTO'], 'SOKOTO'), (
+                                                        utils.enums.StateEnum['TARABA'], 'TARABA'), (
+                                                        utils.enums.StateEnum['YOBE'], 'YOBE'), (
+                                                        utils.enums.StateEnum['ZAMFARA'], 'ZAMFARA'), (
+                                                        utils.enums.StateEnum['FCT'], 'FCT-ABUJA')], max_length=30, null=True, verbose_name='select state'),
         ),
     ]

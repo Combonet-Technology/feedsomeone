@@ -1,8 +1,7 @@
-import os
+from git import Repo
 
 
 def get_current_branch():
-    ref = os.environ.get('GITHUB_REF')
-    if ref and ref.startswith('refs/heads/'):
-        return ref[len('refs/heads/'):]
-    return None
+    repo = Repo(search_parent_directories=True)
+    branch = repo.active_branch
+    return branch.name

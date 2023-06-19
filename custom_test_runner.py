@@ -50,9 +50,5 @@ class TestRunner(DiscoverRunner):
 
         file_results = combine_xml(output)
         build_xml_report(file_results)
-        send_slack_message(f"Test Results:\n\n"
-                           f"Success: {len(file_results[0])}\n"
-                           f"Failure: {len(file_results[1])}\n"
-                           f"Errors: {len(file_results[2])}\n"
-                           f"Logs: {len(file_results[3])}")
+        send_slack_message(file_results)
         return self.suite_result(suite, xml_result)

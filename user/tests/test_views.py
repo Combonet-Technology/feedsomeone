@@ -10,10 +10,10 @@ from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 
-from user.enums import EthnicityEnum, ReligionEnum, StateEnum
 from user.management.services import SiteService
 from user.models import Volunteer
 from user.token import account_activation_token
+from utils.enums import EthnicityEnum, ReligionEnum, StateEnum
 
 User = get_user_model()
 

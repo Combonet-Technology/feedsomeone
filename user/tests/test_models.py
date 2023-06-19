@@ -6,8 +6,8 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.test import TestCase
 
-from user.enums import EthnicityEnum, ReligionEnum, StateEnum
 from user.models import Donor, Lead, Volunteer
+from utils.enums import EthnicityEnum, ReligionEnum, StateEnum
 
 
 class CustomUserManagerTests(TestCase):

@@ -37,7 +37,14 @@ def parse_results(xml_file):
                 'time': time,
                 'details': reason
             })
-        elif debug_logs is not None:
+        else:
+            successes.append({
+                'result': result,
+                'classname': classname,
+                'name': test_name,
+                'time': time
+            })
+        if debug_logs is not None:
             result = 'logs'
             reason = debug_logs.text
             logs.append({
@@ -46,13 +53,6 @@ def parse_results(xml_file):
                 'name': test_name,
                 'time': time,
                 'details': reason
-            })
-        else:
-            successes.append({
-                'result': result,
-                'classname': classname,
-                'name': test_name,
-                'time': time
             })
     return successes, failures, errors, logs
 

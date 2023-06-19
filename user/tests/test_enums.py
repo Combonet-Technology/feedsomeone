@@ -3,7 +3,7 @@ from enum import Enum
 
 from django.test import TestCase
 
-from user.enums import EthnicityEnum, ReligionEnum, StateEnum
+from utils.enums import EthnicityEnum, ReligionEnum, StateEnum
 
 
 class EnumTests(TestCase):
