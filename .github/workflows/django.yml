@@ -89,7 +89,7 @@ jobs:
                 {
                   "title": "Coverage Report",
                   "title_link": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
-                  "color": "#36a64f",
+                  "color": "#964B00",
                   "fields": [
                     {
                       "title": "Coverage",
