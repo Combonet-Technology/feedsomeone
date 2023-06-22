@@ -1,16 +1,31 @@
 import random
+from unittest.mock import patch
 
-# from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase
+from django.test import RequestFactory, TestCase
 
 from user.forms import (CustomPasswordResetForm, UsernameForm,
                         UserRegistrationForm, UserUpdateForm,
                         VolunteerRegistrationForm, VolunteerUpdateForm)
+from user.management.services import SiteService
 from utils.enums import EthnicityEnum, ReligionEnum, StateEnum
 
 
+class MockObjects:
+
+    def render_to_string(self):
+        return 'This is an email'
+
+
 class FormsTestCase(TestCase):
+    mock = MockObjects()
+
+    def setUp(self):
+        self.host = 'randomexample.com'
+        self.name = 'Example Site'
+        self.site = SiteService.add_site(domain=self.host, name=self.name)
+        self.factory = RequestFactory()
+
     def test_user_registration_form(self):
         form_data = {
             'first_name': 'John',
@@ -60,39 +75,34 @@ class FormsTestCase(TestCase):
         form.is_valid()
         self.assertTrue(form.is_valid())
 
-    def test_custom_password_reset_form(self):
-        # User = get_user_model()
-        # user = User.objects.create_user(username='testuser', email='testuser@example.com')
+    @patch('django.contrib.sites.shortcuts.get_current_site')
+    @patch('django.template.loader.render_to_string')
+    @patch('ext_libs.sendgrid.sengrid.send_email')
+    def test_custom_password_reset_form(self, mock_send_email, mock_render_to_string, mock_get_current_site):
         form_data = {
             'email': 'testuser@example.com',
         }
+        mock_get_current_site.get_current_site.return_value = self.host
         form = CustomPasswordResetForm(data=form_data)
         self.assertTrue(form.is_valid())
-        # assert form.cleaned_data["email"] == form_data['email']
-        # form.save()
-        #
-        # # Generate a password reset token for the user
-        # token = default_token_generator.make_token(user)
-        #
-        # # Build the password reset URL
-        # reset_url = reverse('password_reset_confirm', args=[urlsafe_base64_encode(force_bytes(user.pk)), token])
-        #
-        # # Make a GET request to the password reset URL
-        # response = self.client.get(reset_url)
-        #
-        # # Check that the response status code is 200 (OK)
-        # self.assertEqual(response.status_code, 200)
-        #
-        # # Check that the password reset form is rendered
-        # self.assertTemplateUsed(response, 'password_reset_confirm.html')
-        #
-        # # Extract the context from the response
-        # context = response.context
-        #
-        # # Check the values in the context
-        # self.assertEqual(context['email'], user.email)
-        # self.assertEqual(context['uid'], urlsafe_base64_encode(force_bytes(user.pk)))
-        # self.assertEqual(context['token'], token)
+        form.save()
+
+        context = {'site_name': 'Example Site'}
+        to_email = 'testuser@example.com'
+
+        mock_render_to_string.return_value = self.mock.render_to_string()
+        mock_send_email.return_value = True
+        form.send_mail(context, to_email)
+
+        mock_get_current_site.assert_called_once()
+        mock_render_to_string.assert_called_once_with(
+            'registration/password_reset_email.html', context
+        )
+        mock_send_email.assert_called_once_with(
+            destination=to_email,
+            subject=f"Password reset on {self.name}",
+            content=mock_render_to_string.return_value
+        )
 
     def test_username_form(self):
         form_data = {
