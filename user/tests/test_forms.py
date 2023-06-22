@@ -21,7 +21,7 @@ class FormsTestCase(TestCase):
     mock = MockObjects()
 
     def setUp(self):
-        self.host = 'randomexample.com'
+        self.host = 'google.com'
         self.name = 'Example Site'
         self.site = SiteService.add_site(domain=self.host, name=self.name)
         self.factory = RequestFactory()

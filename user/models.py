@@ -67,6 +67,12 @@ class UserProfile(AbstractBaseUser, PermissionsMixin):
         super().save(*args, **kwargs)
 
 
+class VolunteerManager(BaseUserManager):
+    def get_queryset(self):
+        super().get_queryset()
+        return super().get_queryset().filter(is_verified=True, user__is_superuser=False)
+
+
 class Volunteer(models.Model):
     uuid = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
     user = models.OneToOneField(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name='volunteer')
@@ -84,11 +90,10 @@ class Volunteer(models.Model):
     image = models.ImageField(default='default.png', upload_to='profile_pics')
     phone_number = models.CharField(max_length=15, null=True)
     is_verified = models.BooleanField(default=False)
+    objects = VolunteerManager()
 
-
-class VolunteerManager(BaseUserManager):
-    def get_queryset(self):
-        return super().get_queryset().filter(is_verified=True, user__is_superuser=False)
+    def __str__(self):
+        return self.user.email + "'s profile"
 
 
 class Donor(models.Model):

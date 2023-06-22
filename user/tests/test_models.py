@@ -23,25 +23,24 @@ class CustomUserManagerTests(TestCase):
             'email': 'admin@mail.com',
             'password': 'admin123'
         }
+        self.user = self.user_manager.create_user(**self.user_data)
+        self.superuser = self.user_manager.create_superuser(**self.superuser_data)
 
     def test_create_user(self):
-        user = self.user_manager.create_user(**self.user_data)
-        self.assertEqual(user.email, self.user_data['email'])
-        self.assertTrue(user.check_password(self.user_data['password']))
-        self.assertTrue(user.is_active)
-        self.assertFalse(user.is_staff)
-        self.assertFalse(user.is_superuser)
+        self.assertEqual(self.user.email, self.user_data['email'])
+        self.assertTrue(self.user.check_password(self.user_data['password']))
+        self.assertTrue(self.user.is_active)
+        self.assertFalse(self.user.is_staff)
+        self.assertFalse(self.user.is_superuser)
 
     def test_create_superuser(self):
-        user = self.user_manager.create_superuser(**self.superuser_data)
-        self.assertEqual(user.email, self.superuser_data['email'])
-        self.assertTrue(user.check_password(self.superuser_data['password']))
-        self.assertTrue(user.is_active)
-        self.assertTrue(user.is_staff)
-        self.assertTrue(user.is_superuser)
+        self.assertEqual(self.superuser.email, self.superuser_data['email'])
+        self.assertTrue(self.superuser.check_password(self.superuser_data['password']))
+        self.assertTrue(self.superuser.is_active)
+        self.assertTrue(self.superuser.is_staff)
+        self.assertTrue(self.superuser.is_superuser)
 
     def test_create_user_existing_email(self):
-        self.user_manager.create_user(**self.user_data)
         with transaction.atomic():
             self.assertRaises(IntegrityError, self.user_manager.create_user, **self.user_data)
 
@@ -50,13 +49,25 @@ class CustomUserManagerTests(TestCase):
             self.assertRaises(ValueError, self.user_manager.create_user, email='', password='password123')
 
     def test_create_superuser_existing_email(self):
-        self.user_manager.create_superuser(**self.superuser_data)
         with transaction.atomic():
             self.assertRaises(IntegrityError, self.user_manager.create_superuser, **self.superuser_data)
 
-    def test_create_superuser_invalid_data(self):
+    def test_create_superuser_no_email(self):
         with transaction.atomic():
             self.assertRaises(ValueError, self.user_manager.create_superuser, email='', password='admin123')
+
+    def test_full_name(self):
+        self.user.first_name = 'Richard'
+        self.user.last_name = 'Rahl'
+        self.user.save()
+        self.assertEqual(self.user.get_full_name(), 'Richard Rahl')
+
+    def test_invalid_email(self):
+        email = ['tdts@keio34.com', 'tss@mail.cd']
+        for mail in email:
+            self.user.email = mail
+            with self.assertRaises(ValidationError):
+                self.user.save()
 
     def tearDown(self):
         try:
@@ -76,19 +87,17 @@ class UserProfileModelTests(TestCase):
             'first_name': 'John',
             'last_name': 'Doe',
         }
+        self.profile = self.user_manager.create_user(**self.user_data)
 
     def test_create_user_profile(self):
-        profile = self.user_manager.create_user(**self.user_data)
-
-        self.assertEqual(profile.email, self.user_data['email'])
-        self.assertEqual(profile.first_name, self.user_data['first_name'])
-        self.assertEqual(profile.last_name, self.user_data['last_name'])
-        self.assertTrue(profile.is_active)
-        self.assertFalse(profile.is_staff)
-        self.assertFalse(profile.is_superuser)
+        self.assertEqual(self.profile.email, self.user_data['email'])
+        self.assertEqual(self.profile.first_name, self.user_data['first_name'])
+        self.assertEqual(self.profile.last_name, self.user_data['last_name'])
+        self.assertTrue(self.profile.is_active)
+        self.assertFalse(self.profile.is_staff)
+        self.assertFalse(self.profile.is_superuser)
 
     def test_create_user_profile_existing_email(self):
-        self.user_manager.create_user(**self.user_data)
         with transaction.atomic():
             self.assertRaises(IntegrityError,
                               self.user_manager.create_user,
@@ -122,18 +131,24 @@ class VolunteerModelTests(TestCase):
             'short_bio': 'Passionate about giving back.',
             'phone_number': '1234567890',
         }
+        self.user = self.user_manager.create_user(**self.user_data)
+        self.volunteer = self.model.objects.create(user=self.user, **self.volunteer_data)
 
     def test_create_volunteer(self):
-        user = self.user_manager.create_user(**self.user_data)
-        volunteer = self.model.objects.create(user=user, **self.volunteer_data)
+        self.assertEqual(str(self.volunteer), f"{self.user.email}'s profile")
+        self.assertEqual(self.volunteer.user, self.user)
+        self.assertEqual(self.volunteer.state_of_residence, self.volunteer_data['state_of_residence'])
+        self.assertEqual(self.volunteer.ethnicity, self.volunteer_data['ethnicity'])
+        self.assertEqual(self.volunteer.religion, self.volunteer_data['religion'])
+        self.assertEqual(self.volunteer.profession, self.volunteer_data['profession'])
+        self.assertEqual(self.volunteer.short_bio, self.volunteer_data['short_bio'])
+        self.assertEqual(self.volunteer.phone_number, self.volunteer_data['phone_number'])
 
-        self.assertEqual(volunteer.user, user)
-        self.assertEqual(volunteer.state_of_residence, self.volunteer_data['state_of_residence'])
-        self.assertEqual(volunteer.ethnicity, self.volunteer_data['ethnicity'])
-        self.assertEqual(volunteer.religion, self.volunteer_data['religion'])
-        self.assertEqual(volunteer.profession, self.volunteer_data['profession'])
-        self.assertEqual(volunteer.short_bio, self.volunteer_data['short_bio'])
-        self.assertEqual(volunteer.phone_number, self.volunteer_data['phone_number'])
+    def test_verified_volunteer(self):
+        self.volunteer.is_verified = True
+        self.volunteer.save()
+        volunteer = self.model.objects.get(user__email='test@example.com')
+        self.assertTrue(volunteer.is_verified)
 
     def tearDown(self):
         self.user_manager.all().delete()
@@ -170,17 +185,17 @@ class LeadModelTests(TestCase):
             'stage': 'New',
             'converted': False,
         }
+        self.lead = self.model.objects.create(**self.lead_data)
 
     def test_create_lead(self):
-        lead = self.model.objects.create(**self.lead_data)
-
-        self.assertEqual(lead.email, self.lead_data['email'])
-        self.assertEqual(lead.source, self.lead_data['source'])
-        self.assertEqual(lead.stage, self.lead_data['stage'])
-        self.assertEqual(lead.converted, self.lead_data['converted'])
+        self.assertEqual(str(self.lead),
+                         f"{self.lead_data['stage']} {self.lead_data['email']} from {self.lead_data['source']}")
+        self.assertEqual(self.lead.email, self.lead_data['email'])
+        self.assertEqual(self.lead.source, self.lead_data['source'])
+        self.assertEqual(self.lead.stage, self.lead_data['stage'])
+        self.assertEqual(self.lead.converted, self.lead_data['converted'])
 
     def test_create_lead_duplicate_email(self):
-        self.model.objects.create(**self.lead_data)
         with transaction.atomic():
             self.assertRaises(IntegrityError, self.model.objects.create, **self.lead_data)
 

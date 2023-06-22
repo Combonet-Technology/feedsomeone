@@ -11,7 +11,7 @@ User = get_user_model()
 class SiteServiceTestCase(TestCase):
     def setUp(self):
         self.site_name = 'Random Example Site'
-        self.site_domain = 'randomexample.com'
+        self.site_domain = 'google.com'
 
     def test_add_site(self):
         SiteService.add_site(name=self.site_name, domain=self.site_domain)

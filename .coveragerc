@@ -1,5 +1,5 @@
 [run]
 source =
-    user/tests
+    user/*
     .
 omit = */venv/*, */migrations/*, */env/*, */rave_python/*, */tests/*, parse_test_results.py

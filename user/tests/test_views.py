@@ -20,7 +20,7 @@ User = get_user_model()
 
 class ProfileViewTestCase(TestCase):
     def setUp(self):
-        self.host = 'randomexample.com'
+        self.host = 'google.com'
         self.site = SiteService.add_site(domain=self.host, name='Example Site')
         self.client = Client()
         self.user = User.objects.create_user(email='test@mail.com', password='testpassword')
@@ -75,17 +75,17 @@ class ProfileViewTestCase(TestCase):
     def test_post_request_unauthenticated(self):
         self.client.logout()
         form_data = {}
-        response = self.client.post(self.url, HTTP_HOST='randomexample.com', data=form_data)
+        response = self.client.post(self.url, HTTP_HOST='google.com', data=form_data)
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, '/login/?next=/volunteers/profile/')
 
 
 class ActivateTestCase(TestCase):
     def setUp(self):
-        self.host = 'randomexample.com'
+        self.host = 'google.com'
         self.site = SiteService.add_site(domain=self.host, name='Example Site')
         self.user_model = get_user_model()
-        self.user = self.user_model.objects.create_user(username='testuser', email='test@randomexample.com')
+        self.user = self.user_model.objects.create_user(username='testuser', email='test@google.com')
         self.user.is_active = False
         self.user.save()
         self.token = account_activation_token.make_token(self.user)
