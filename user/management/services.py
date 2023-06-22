@@ -13,12 +13,11 @@ class SiteService:
     def add_site(name, domain):
         try:
             site, created = Site.objects.get_or_create(name=name, domain=domain)
-            if not created:
-                logger.info(f'Site {name} with domain {domain} already exists')
+            if created:
+                logger.info(f'Site {name} with domain {domain} created successfully')
+            return site
         except Exception as e:
-            logger.error(f"Error creating site: {str(e)}")
-        else:
-            logger.info(f'Site {name} with domain {domain} created successfully')
+            logger.error(f'Site {name} with domain {domain} was not created because {str(e)}')
 
     @staticmethod
     def remove_site(domain):
