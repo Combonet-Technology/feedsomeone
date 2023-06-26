@@ -2,7 +2,6 @@ import logging
 
 from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
-from django.core.exceptions import ObjectDoesNotExist
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -21,10 +20,7 @@ class SiteService:
 
     @staticmethod
     def remove_site(domain):
-        try:
-            Site.objects.filter(domain=domain).delete()
-        except ObjectDoesNotExist:
-            logger.warning('Non-existent domain does not exist')
+        Site.objects.filter(domain=domain).delete()
 
 
 class CreateSuperUserService:
