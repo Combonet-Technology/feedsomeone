@@ -1,6 +1,8 @@
 import random
 from unittest import mock
+from unittest.mock import patch
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.messages import get_messages
 from django.forms import ImageField
@@ -10,7 +12,9 @@ from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 
+from user.forms import UserRegistrationForm, VolunteerRegistrationForm
 from user.management.services import SiteService
+from user.mocks import MockUser
 from user.models import Volunteer
 from user.token import account_activation_token
 from utils.enums import EthnicityEnum, ReligionEnum, StateEnum
@@ -118,3 +122,86 @@ class ActivateTestCase(TestCase):
         self.assertNotContains(response, 'Activation link is invalid or expired!')
         self.user.refresh_from_db()
         self.assertTrue(self.user.is_active)
+
+    def test_activate_non_existent_user(self):
+        pass
+
+
+@patch('user.views.verify_recaptcha')
+@patch('user.views.get_current_site')
+@patch('ext_libs.sendgrid.sengrid.send_email')
+class RegisterTestCase(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = MockUser()
+
+    def test_post_request(self, mock_send_email, mock_get_current_site, mock_verify_recaptcha):
+        mock_verify_recaptcha.return_value = True
+        mock_send_email.return_value = True
+        mock_get_current_site.return_value.domain = 'example.com'
+        data = self.user.spawn
+        data.update({'g-recaptcha-response': 'valid_captcha'})
+        response = self.client.post(reverse('register'), data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'thank-you.html')
+        self.assertTrue(all(True if key in response.context else False for key in ['subject', 'msg', 'title']))
+
+    def test_get_request(self, mock_send_email, mock_get_current_site, mock_verify_recaptcha):
+        response = self.client.get(reverse('register'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'registration/register.html')
+        self.assertIsInstance(response.context['forms'], UserRegistrationForm)
+        self.assertIsInstance(response.context['volunteer_form'], VolunteerRegistrationForm)
+        self.assertFalse(response.context['forms'].is_bound)
+        self.assertFalse(response.context['volunteer_form'].is_bound)
+        self.assertEqual(response.context['secret'], f'{settings.RECAPTCHA_PUBLIC_KEY}')  # why assertContains fail here
+
+    def test_unverified_recaptcha(self, mock_send_email, mock_get_current_site, mock_verify_recaptcha):
+        mock_verify_recaptcha.return_value = False
+        data = self.user.spawn
+        data.update({'g-recaptcha-response': 'invalid_captcha'})
+        response = self.client.post(reverse('register'), data)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'robot_response.html')
+
+    def test_invalid_post_forms(self, *args):
+        response = self.client.post(reverse('register'), {})
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'registration/register.html')
+        self.assertIsInstance(response.context['forms'], UserRegistrationForm)
+        self.assertIsInstance(response.context['volunteer_form'], VolunteerRegistrationForm)
+        self.assertTrue(response.context['forms'].is_bound)
+        self.assertTrue(response.context['volunteer_form'].is_bound)
+        self.assertFalse(response.context['forms'].is_valid())
+        self.assertFalse(response.context['volunteer_form'].is_valid())
+        messages = get_messages(response.wsgi_request)
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(str(list(messages)[0]), 'INVALID USER INPUTS')
+
+    class VolunteerTestCase(TestCase):
+        def test_get_template_names(self):
+            pass
+
+        def test_paginate_queryset(self):
+            pass
+
+    class OtherUserTestCase(TestCase):
+
+        def test_check_username_availability(self):
+            pass
+
+        def test_create_username(self):
+            pass
+
+        def test_reset_from_source(self):
+            pass
+
+        def test_set_password_view(self):
+            pass
+
+        def test_social_auth_complete(self):
+            pass
+
+        def test_verify_recaptcha(self):
+            pass

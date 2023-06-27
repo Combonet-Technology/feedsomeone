@@ -24,7 +24,7 @@ from social_django.utils import psa
 from social_django.views import NAMESPACE
 
 from ext_libs.python_social.social_auth_backends import do_complete
-from ext_libs.sendgrid.sengrid import send_email
+from ext_libs.sendgrid import sengrid
 from utils.auth import check_validity_token, get_user, set_password_and_login
 from utils.decorators import ajax_required
 from utils.views import custom_paginator, get_actual_template
@@ -85,15 +85,12 @@ def register(request, template='registration/register.html'):
             with transaction.atomic():
                 user = user_form.save(commit=False)
                 current_site = get_current_site(request)
-                send_email(settings.EMAIL_NO_REPLY,
-                           user_form.cleaned_data.get('email'),
-                           'Activation link has been sent to your email id',
-                           render_to_string('acc_activation_email.html', {
-                               'username': user.username,
-                               'domain': current_site.domain,
-                               'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-                               'token': account_activation_token.make_token(user),
-                           }))
+                sengrid.send_email(settings.EMAIL_NO_REPLY, user_form.cleaned_data.get('email'),
+                                   'Activation link has been sent to your email id',
+                                   render_to_string('acc_activation_email.html',
+                                                    {'username': user.username, 'domain': current_site.domain,
+                                                     'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+                                                     'token': account_activation_token.make_token(user)}))
                 username = user_form.cleaned_data.get('username')
                 volunteer = volunteer_form.save(commit=False)
                 volunteer.user = user
@@ -105,6 +102,7 @@ def register(request, template='registration/register.html'):
                 'subject': f'Account creation for {username} started!',
                 'title': 'Feedsomeone - registration next step',
             }
+            print('got here')
             return render(request, 'thank-you.html', data)
         else:
             messages.error(request, 'INVALID USER INPUTS')
