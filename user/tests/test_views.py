@@ -1,30 +1,37 @@
 import random
 from unittest import mock
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.messages import get_messages
+from django.core.paginator import Paginator
 from django.forms import ImageField
 from django.test import TestCase
-from django.test.client import Client
+from django.test.client import Client, RequestFactory
 from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
+from social_core.exceptions import AuthCanceled
 
 from user.forms import UserRegistrationForm, VolunteerRegistrationForm
 from user.management.services import SiteService
-from user.mocks import MockUser
+from user.mocks import MockUser, RegisterUser, mock_decorator
 from user.models import Volunteer
 from user.token import account_activation_token
+from user.views import VolunteerDetailView, VolunteerListView
 from utils.enums import EthnicityEnum, ReligionEnum, StateEnum
 
 User = get_user_model()
 
 
+patch('social_django.utils.psa', mock_decorator).start()
+from user.views import social_auth_complete  # noqa
+
+
 class ProfileViewTestCase(TestCase):
     def setUp(self):
-        self.host = 'google.com'
+        self.host = 'example.com'
         self.site = SiteService.add_site(domain=self.host, name='Example Site')
         self.client = Client()
         self.user = User.objects.create_user(email='test@mail.com', password='testpassword')
@@ -124,7 +131,10 @@ class ActivateTestCase(TestCase):
         self.assertTrue(self.user.is_active)
 
     def test_activate_non_existent_user(self):
-        pass
+        uidb64 = urlsafe_base64_encode(force_bytes(self.user.pk))
+        self.user.delete()
+        response = self.client.get(reverse('activate', kwargs={'uidb64': uidb64, 'token': self.token}))
+        self.assertContains(response, 'Activation link is invalid or expired!')
 
 
 @patch('user.views.verify_recaptcha')
@@ -133,7 +143,7 @@ class ActivateTestCase(TestCase):
 class RegisterTestCase(TestCase):
     def setUp(self):
         self.client = Client()
-        self.user = MockUser()
+        self.user = RegisterUser()
 
     def test_post_request(self, mock_send_email, mock_get_current_site, mock_verify_recaptcha):
         mock_verify_recaptcha.return_value = True
@@ -179,29 +189,114 @@ class RegisterTestCase(TestCase):
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(list(messages)[0]), 'INVALID USER INPUTS')
 
-    class VolunteerTestCase(TestCase):
-        def test_get_template_names(self):
-            pass
 
-        def test_paginate_queryset(self):
-            pass
+class VolunteerTestCase(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = MockUser()
+        self.user_model = get_user_model()
+        self.user = self.user_model.objects.create_user(username='testuser', email='test@google.com')
+        self.url = reverse('volunteer-list')
+        self.factory = RequestFactory()
+        self.view = VolunteerListView
 
-    class OtherUserTestCase(TestCase):
+    def test_get_template_names_normal(self):
+        view = self.view(request=self.factory.get('/volunteer/'))
+        # view.queryset = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        template_names = view.get_template_names()
+        self.assertIsInstance(template_names, list)
+        self.assertIn('user/userprofile_list.html', template_names)
 
-        def test_check_username_availability(self):
-            pass
+    def test_get_template_names_ajax(self):
+        view = self.view(request=self.factory.get('/volunteer/', HTTP_X_REQUESTED_WITH='XMLHttpRequest'))
+        view.queryset = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        template_names = view.get_template_names()
+        self.assertIsInstance(template_names, list)
+        self.assertIn('user/userprofile_ajax.html', template_names)
 
-        def test_create_username(self):
-            pass
+    def test_volunteer_detail_context_object_name(self):
+        user_profile = self.user_model.objects.create(**self.user.spawn)
+        id = user_profile.pk
+        request = RequestFactory().get(f'/volunteer/{id}')
+        view = VolunteerDetailView(request=request, kwargs={'pk': id})
+        context_object_name = view.get_context_object_name(view.get_object())
+        self.assertEqual(context_object_name, 'volunteer')
 
-        def test_reset_from_source(self):
-            pass
+    def test_paginate_queryset(self):
+        queryset = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        request = RequestFactory().get('/volunteers/', {'page': 1})
+        view = VolunteerListView(request=request)
+        paginated_queryset, page, results, is_paginated = view.paginate_queryset(queryset, view.paginate_by)
+        self.assertEqual(len(results), view.paginate_by)
+        self.assertIsInstance(paginated_queryset, Paginator)
 
-        def test_set_password_view(self):
-            pass
+    def test_get_queryset(self):
+        Volunteer.objects.create(user=self.user, is_verified=True)
+        view = self.view(request=self.client.get(self.url))
+        expected_queryset = list(Volunteer.objects.all())
+        actual_queryset = list(view.get_queryset())
 
-        def test_social_auth_complete(self):
-            pass
+        self.assertEqual(actual_queryset, expected_queryset)
 
-        def test_verify_recaptcha(self):
-            pass
+
+class OtherUserTestCase(TestCase):
+
+    def test_check_username_availability(self):
+        pass
+
+    def test_create_username(self):
+        pass
+
+    def test_reset_from_source(self):
+        pass
+
+    def test_set_password_view(self):
+        pass
+
+
+@patch('ext_libs.python_social.social_auth_backends.do_complete')
+class SocialAuthCompleteTestCase(TestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.user_model = get_user_model()
+        self.user = self.user_model.objects.create_user(username='testuser', email='test@google.com')
+
+    def test_social_auth_complete_auth_canceled(self, mock_do_complete):
+        mock_do_complete.side_effect = AuthCanceled()
+        request = self.factory.get(reverse('complete', kwargs={'backend': 'test'}))
+        response = social_auth_complete(request, backend='backend')
+        self.assertRedirects(response, reverse('login'))
+
+    def test_social_auth_complete_other_exception(self, mock_do_complete):
+        mock_do_complete.side_effect = Exception('Some error')
+        request = self.factory.get(reverse('complete', kwargs={'backend': 'test'}))
+        response = social_auth_complete(request, backend='backend')
+        self.assertRedirects(response, reverse('login'))
+
+    def test_social_auth_complete_successful_unauntheticated_user(self, mock_do_complete):
+        mock_do_complete.return_value.status_code = 302
+        request = self.factory.get(reverse('complete', kwargs={'backend': 'test'}))
+        request.user = self.user
+        request.backend = MagicMock()
+        response = social_auth_complete(request, backend='backend')
+        mock_do_complete.assert_called_once()
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse('create_private_pass'))
+
+    def test_social_auth_complete_successful_auntheticated_user(self, mock_do_complete):
+        mock_do_complete.return_value.status_code = 302
+        request = self.factory.get(reverse('complete', kwargs={'backend': 'test'}))
+        request.user = self.user
+        Volunteer.objects.create(user=self.user, is_verified=True)
+        request.user.set_password('Password123.')
+        request.backend = MagicMock()
+        response = social_auth_complete(request, backend='backend')
+        mock_do_complete.assert_called_once()
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse('profile'))
+
+    # def test_recaptcha_success(self):
+    #     request = RequestFactory()
+    #
+    # def test_recaptcha_failure(self):
+    #     pass
