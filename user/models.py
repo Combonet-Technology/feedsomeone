@@ -69,8 +69,7 @@ class UserProfile(AbstractBaseUser, PermissionsMixin):
 
 class VolunteerManager(BaseUserManager):
     def get_queryset(self):
-        super().get_queryset()
-        return super().get_queryset().filter(is_verified=True, user__is_superuser=False)
+        return super().get_queryset().filter(is_verified=True, user__is_superuser=False).order_by('user__date_joined')
 
 
 class Volunteer(models.Model):

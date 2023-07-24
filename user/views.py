@@ -1,6 +1,5 @@
 import logging
 
-import requests
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model
@@ -23,11 +22,11 @@ from social_core.exceptions import AuthCanceled
 from social_django.utils import psa
 from social_django.views import NAMESPACE
 
-from ext_libs.python_social.social_auth_backends import do_complete
+from ext_libs.python_social import social_auth_backends
 from ext_libs.sendgrid import sengrid
 from utils.auth import check_validity_token, get_user, set_password_and_login
 from utils.decorators import ajax_required
-from utils.views import custom_paginator, get_actual_template
+from utils.views import custom_paginator, get_actual_template, verify_recaptcha
 
 from .forms import (CustomPasswordResetForm, UsernameForm,
                     UserRegistrationForm, VolunteerRegistrationForm,
@@ -59,16 +58,6 @@ def profile(request):
         'small_fields': ['state_of_residence', 'ethnicity', 'religion']
     }
     return render(request, 'profile.html', context)
-
-
-def verify_recaptcha(g_captcha):
-    data = {
-        'secret': settings.RECAPTCHA_PRIVATE_KEY,
-        'response': g_captcha
-    }
-    resp = requests.post('https://www.google.com/recaptcha/api/siteverify', data=data)
-    result_json = resp.json()
-    return 'success' in result_json
 
 
 def register(request, template='registration/register.html'):
@@ -137,7 +126,10 @@ class VolunteerListView(ListView):
     template_name = 'user/userprofile_list.html'
     paginate_by = 8
 
-    def get_template_names(self):
+    def get_template_names(self, **kwargs):
+        queryset = kwargs.pop('object_list', None)
+        if queryset is None:
+            self.object_list = self.model.objects.all()
         template_names = super().get_template_names()
         return get_actual_template(self, 'user/userprofile_ajax.html') + template_names
 
@@ -154,7 +146,7 @@ class VolunteerDetailView(DetailView):
 @csrf_exempt
 @psa(f"{NAMESPACE}:complete")
 def social_auth_complete(request, backend, *args, **kwargs):
-    response = do_complete(request.backend, user=request.user, *args, **kwargs)
+    response = social_auth_backends.do_complete(request.backend, user=request.user, *args, **kwargs)
     try:
         pass
     except AuthCanceled:
