@@ -1,3 +1,4 @@
+import importlib
 import json
 import random
 from unittest import mock
@@ -16,6 +17,7 @@ from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from social_core.exceptions import AuthCanceled
 
+from user import views
 from user.forms import (UsernameForm, UserRegistrationForm,
                         VolunteerRegistrationForm)
 from user.management.services import SiteService
@@ -23,13 +25,12 @@ from user.mocks import MockUser, RegisterUser, mock_decorator
 from user.models import Volunteer
 from user.token import account_activation_token
 from user.views import (VolunteerDetailView, VolunteerListView,
-                        check_username_availability)
+                        check_username_availability, reset_from_source)
+from utils.auth import get_user
 from utils.enums import EthnicityEnum, ReligionEnum, StateEnum
+from utils.views import generate_uidb64
 
 User = get_user_model()
-
-patch('social_django.utils.psa', mock_decorator).start()
-from user.views import social_auth_complete  # noqa
 
 
 class ProfileViewTestCase(TestCase):
@@ -307,8 +308,49 @@ class CreateUsernameTestCase(TestCase):
         self.assertFalse(response.context['form'].is_valid())
 
 
-def test_reset_from_source(self):
-    pass
+class ResetFromSourceTestCase(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(username='testuser', email='test@example.com', password='testpassword')
+        self.uidb64 = generate_uidb64(self.user)
+
+    def test_reset_from_source_with_token_and_uidb64(self):
+        token = 'fake_token'
+        user = get_user(uidb64=self.uidb64)
+        response = self.client.get(reverse('create_private_pass', args=[token, self.uidb64]))
+        self.client.force_login(user=user)
+
+        # Call the function
+        already_logged, motive, found_user = reset_from_source(response.wsgi_request, token, self.uidb64)
+
+        # Assert the results
+        self.assertFalse(already_logged)
+        self.assertEqual(motive, 'Change')
+        self.assertEqual(found_user, user)
+
+    def test_reset_from_source_with_authenticated_user(self):
+        self.client.force_login(user=self.user)
+        response = self.client.get(reverse('create_private_pass'))
+
+        # Call the function
+        already_logged, motive, found_user = reset_from_source(response.wsgi_request, None, None)
+
+        # Assert the results
+        self.assertTrue(already_logged)
+        self.assertEqual(motive, 'Set')
+        self.assertEqual(found_user, self.user)
+
+    def test_reset_from_source_without_token_and_uidb64_and_unauthenticated_user(self):
+        # Set up the test data
+        response = self.client.get(reverse('create_private_pass'))
+
+        # Call the function
+        already_logged, motive, found_user = reset_from_source(response.wsgi_request, None, None)
+
+        # Assert the results
+        self.assertFalse(already_logged)
+        self.assertEqual(motive, '')
+        self.assertIsNone(found_user)
 
 
 def test_set_password_view(self):
@@ -323,23 +365,32 @@ class SocialAuthCompleteTestCase(TestCase):
         self.user = self.user_model.objects.create_user(username='testuser', email='test@google.com')
         self.request = self.factory.get(reverse('complete', kwargs={'backend': 'test'}))
         self.request.session = {}
-        self.request.user = self.user
         self.request.backend = MagicMock()
+        self.request.user = self.user
+
+        def kill_patches():  # Create a cleanup callback that undoes our patches
+            patch.stopall()  # Stops all patches started with start()
+            importlib.reload(views)  # Reload our UUT module which restores the original decorator
+
+        self.addCleanup(kill_patches)
+        patch('social_django.utils.psa', mock_decorator).start()
+        importlib.reload(views)
 
     def test_social_auth_complete_auth_canceled(self, mock_do_complete):
         mock_do_complete.side_effect = AuthCanceled(self.request.backend)
         with self.assertRaises(social_core.exceptions.AuthCanceled):
-            social_auth_complete(self.request, backend='backend')
+            response = views.social_auth_complete(self.request, backend='backend')
+            self.assertRedirects(response, reverse('login'))
 
     def test_social_auth_complete_other_exception(self, mock_do_complete):
         mock_do_complete.side_effect = Exception('Some error')
         with self.assertRaises(Exception):
-            response = social_auth_complete(self.request, backend='backend')
+            response = views.social_auth_complete(self.request, backend='backend')
             self.assertRedirects(response, reverse('login'))
 
     def test_social_auth_complete_successful_unauntheticated_user(self, mock_do_complete):
         mock_do_complete.return_value.status_code = 302
-        response = social_auth_complete(self.request, backend='backend')
+        response = views.social_auth_complete(self.request, backend='backend')
         mock_do_complete.assert_called_once()
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, reverse('create_private_pass'))
@@ -348,7 +399,7 @@ class SocialAuthCompleteTestCase(TestCase):
         mock_do_complete.return_value.status_code = 302
         Volunteer.objects.create(user=self.user, is_verified=True)
         self.request.user.set_password('Password123.')
-        response = social_auth_complete(self.request, backend='backend')
+        response = views.social_auth_complete(self.request, backend='backend')
         mock_do_complete.assert_called_once()
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, reverse('profile'))

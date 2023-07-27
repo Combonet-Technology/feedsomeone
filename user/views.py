@@ -161,7 +161,7 @@ def social_auth_complete(request, backend, *args, **kwargs):
             if hasattr(user, 'volunteer'):
                 if user.has_usable_password():
                     return redirect('profile')
-            return redirect(set_password_view)
+            return redirect('create_private_pass')
 
 
 class InitiatePasswordReset(PasswordResetView):

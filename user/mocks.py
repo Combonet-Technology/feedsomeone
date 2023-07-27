@@ -46,7 +46,6 @@ class MockUser:
 
 
 def mock_decorator(*args, **kwargs):
-    print('SHOULD BE CALLED TO MOCK PSA')
     """Decorate by doing nothing."""
 
     def decorator(f):
