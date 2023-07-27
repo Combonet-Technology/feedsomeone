@@ -1,3 +1,4 @@
+import os
 import traceback
 import unittest
 
@@ -62,7 +63,7 @@ class CustomUserManagerTests(TestCase):
         self.user.save()
         self.assertEqual(self.user.get_full_name(), 'Richard Rahl')
 
-    @unittest.skip("Requires Internet")
+    @unittest.skipIf(os.getenv('DEBUG', 'False') == 'True', "Requires Internet")
     def test_invalid_email(self):
         email = ['tdts@keio34.com', 'tss@mail.cd']
         for mail in email:
