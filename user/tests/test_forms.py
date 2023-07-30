@@ -73,6 +73,7 @@ class FormsTestCase(TestCase):
         }
         form = VolunteerUpdateForm(form_data, {'image': image_file})
         form.is_valid()
+        print(form.data)
         self.assertTrue(form.is_valid())
 
     @patch('django.contrib.sites.shortcuts.get_current_site')
