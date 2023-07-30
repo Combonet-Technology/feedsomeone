@@ -91,7 +91,6 @@ def register(request, template='registration/register.html'):
                 'subject': f'Account creation for {username} started!',
                 'title': 'Feedsomeone - registration next step',
             }
-            print('got here')
             return render(request, 'thank-you.html', data)
         else:
             messages.error(request, 'INVALID USER INPUTS')
