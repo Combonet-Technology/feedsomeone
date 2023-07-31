@@ -90,7 +90,7 @@ class ProfileViewTestCase(TestCase):
     def test_post_request_unauthenticated(self):
         self.client.logout()
         form_data = {}
-        response = self.client.post(self.url, HTTP_HOST='google.com', data=form_data)
+        response = self.client.post(self.url, HTTP_HOST=self.host, data=form_data)
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, '/login/?next=/volunteers/profile/')
 
