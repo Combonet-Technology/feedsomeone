@@ -58,7 +58,7 @@ jobs:
 
       - name: Run Tests
         run: |
-          coverage run manage.py test --noinput --verbosity=2
+          coverage run manage.py test --noinput --verbosity=2 --parallel
           coverage report
 
       - name: Upload coverage report
