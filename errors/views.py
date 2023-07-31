@@ -3,7 +3,6 @@ from django.shortcuts import render
 
 # Create your views here.
 def handler404(request, exception):
-    print("got here")
     context = {}
     response = render(request, "errors/404.html", context=context)
     response.status_code = 404

@@ -1,4 +1,5 @@
-import requests
+import logging
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model
@@ -10,7 +11,8 @@ from django.db import transaction
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
-from django.utils.encoding import force_bytes, force_str
+from django.utils.encoding import (DjangoUnicodeDecodeError, force_bytes,
+                                   force_str)
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
@@ -20,17 +22,19 @@ from social_core.exceptions import AuthCanceled
 from social_django.utils import psa
 from social_django.views import NAMESPACE
 
-from ext_libs.python_social.social_auth_backends import do_complete
-from ext_libs.sendgrid.sengrid import send_email
+from ext_libs.python_social import social_auth_backends
+from ext_libs.sendgrid import sengrid
 from utils.auth import check_validity_token, get_user, set_password_and_login
 from utils.decorators import ajax_required
-from utils.views import custom_paginator, get_actual_template
+from utils.views import custom_paginator, get_actual_template, verify_recaptcha
 
 from .forms import (CustomPasswordResetForm, UsernameForm,
                     UserRegistrationForm, VolunteerRegistrationForm,
                     VolunteerUpdateForm)
 from .models import UserProfile, Volunteer
 from .token import account_activation_token
+
+logger = logging.getLogger(__name__)
 
 
 @login_required()
@@ -56,16 +60,6 @@ def profile(request):
     return render(request, 'profile.html', context)
 
 
-def verify_recaptcha(g_captcha):
-    data = {
-        'secret': settings.RECAPTCHA_PRIVATE_KEY,
-        'response': g_captcha
-    }
-    resp = requests.post('https://www.google.com/recaptcha/api/siteverify', data=data)
-    result_json = resp.json()
-    return 'success' in result_json
-
-
 def register(request, template='registration/register.html'):
     if request.method == 'POST':
         g_captcha = request.POST.get('g-recaptcha-response')
@@ -80,15 +74,12 @@ def register(request, template='registration/register.html'):
             with transaction.atomic():
                 user = user_form.save(commit=False)
                 current_site = get_current_site(request)
-                send_email(settings.EMAIL_NO_REPLY,
-                           user_form.cleaned_data.get('email'),
-                           'Activation link has been sent to your email id',
-                           render_to_string('acc_activation_email.html', {
-                               'username': user.username,
-                               'domain': current_site.domain,
-                               'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-                               'token': account_activation_token.make_token(user),
-                           }))
+                sengrid.send_email(settings.EMAIL_NO_REPLY, user_form.cleaned_data.get('email'),
+                                   'Activation link has been sent to your email id',
+                                   render_to_string('acc_activation_email.html',
+                                                    {'username': user.username, 'domain': current_site.domain,
+                                                     'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+                                                     'token': account_activation_token.make_token(user)}))
                 username = user_form.cleaned_data.get('username')
                 volunteer = volunteer_form.save(commit=False)
                 volunteer.user = user
@@ -110,19 +101,22 @@ def register(request, template='registration/register.html'):
                   {'forms': user_form, 'volunteer_form': volunteer_form, 'secret': settings.RECAPTCHA_PUBLIC_KEY})
 
 
-def activate(uidb64, token):
+def activate(request, uidb64, token):
     User = get_user_model()
+    user = None
     try:
         uid = force_str(urlsafe_base64_decode(uidb64))
         user = User.objects.get(pk=uid)
     except User.DoesNotExist:
-        user = None
+        logger.log(level=logging.DEBUG, msg='User does not exist')
+    except DjangoUnicodeDecodeError:
+        logger.log(level=logging.DEBUG, msg='Malformed UIDB')
     if user is not None and account_activation_token.check_token(user, token):
         user.is_active = True
         user.save()
         return redirect('login')
-    else:
-        return HttpResponse('Activation link is invalid or expired!')
+    logger.log(level=logging.DEBUG, msg='invalid token, definitely')
+    return HttpResponse('Activation link is invalid or expired!')
 
 
 class VolunteerListView(ListView):
@@ -131,7 +125,10 @@ class VolunteerListView(ListView):
     template_name = 'user/userprofile_list.html'
     paginate_by = 8
 
-    def get_template_names(self):
+    def get_template_names(self, **kwargs):
+        queryset = kwargs.pop('object_list', None)
+        if queryset is None:
+            self.object_list = self.model.objects.all()
         template_names = super().get_template_names()
         return get_actual_template(self, 'user/userprofile_ajax.html') + template_names
 
@@ -148,7 +145,7 @@ class VolunteerDetailView(DetailView):
 @csrf_exempt
 @psa(f"{NAMESPACE}:complete")
 def social_auth_complete(request, backend, *args, **kwargs):
-    response = do_complete(request.backend, user=request.user, *args, **kwargs)
+    response = social_auth_backends.do_complete(request.backend, user=request.user, *args, **kwargs)
     try:
         pass
     except AuthCanceled:
@@ -163,7 +160,7 @@ def social_auth_complete(request, backend, *args, **kwargs):
             if hasattr(user, 'volunteer'):
                 if user.has_usable_password():
                     return redirect('profile')
-            return redirect(set_password_view)
+            return redirect('create_private_pass')
 
 
 class InitiatePasswordReset(PasswordResetView):

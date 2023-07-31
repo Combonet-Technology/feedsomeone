@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
+    'taggit',
     'django.contrib.sitemaps',
     'mainsite.apps.MainsiteConfig',
     'blog.apps.BlogConfig',
@@ -54,7 +55,6 @@ INSTALLED_APPS = [
     'menus',
     'treebeard',
     'sekizai',
-    'taggit',
     'social_django',
     'django_extensions',
     'ckeditor',
@@ -323,3 +323,8 @@ CKEDITOR_CONFIGS = {
     },
     'article': base
 }
+
+TEST_RUNNER = 'custom_test_runner.TestRunner'
+TEST_OUTPUT_DIR = 'test-reports'
+SLACK_WEBHOOK_URL = os.environ.get('SLACK_WEBHOOK_URL')
+STAGE = 'bcx'

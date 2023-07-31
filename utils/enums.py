@@ -6,8 +6,7 @@ from enum import Enum
 class StateEnum(Enum):
     ABIA = 'ABIA'
     ADAMAWA = 'ADAMAWA'
-    AKWA = 'AKWA'
-    IBOM = 'IBOM'
+    AKWAIBOM = 'AKWAIBOM'
     ANAMBRA = 'ANAMBRA'
     BAUCHI = 'BAUCHI'
     BAYELSA = 'BAYELSA'
@@ -73,3 +72,10 @@ class EthnicityEnum(Enum):
     ANGERS = 'ANGERS'
     IDOMINA = 'IDOMINA'
     EBIRA = 'EBIRA'
+
+
+class ColorCodes(Enum):
+    SUCCESS = '#4BB543'
+    FAILURE = '#FFA500'
+    ERROR = '#6a6c6d'
+    LOGS = '#000000'

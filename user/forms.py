@@ -2,14 +2,14 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import PasswordResetForm, UserCreationForm
 from django.contrib.auth.tokens import default_token_generator
-from django.contrib.sites.shortcuts import get_current_site
+from django.contrib.sites import shortcuts
 from django.forms import FileInput, ImageField, Textarea
 from django.template import loader
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from django.utils.translation import gettext_lazy as _
 
-from ext_libs.sendgrid.sengrid import send_email
+from ext_libs.sendgrid import sengrid
 from user.models import Volunteer
 from utils.forms import clean_email
 
@@ -56,11 +56,11 @@ class CustomPasswordResetForm(PasswordResetForm):
     def send_mail(self, context, to_email, *args, **kwargs):
         email_template_name = 'registration/password_reset_email.html'
         body = loader.render_to_string(email_template_name, context)
-        send_email(destination=to_email, subject=f"Password reset on {context['site_name']}", content=body)
+        sengrid.send_email(destination=to_email, subject=f"Password reset on {context['site_name']}", content=body)
 
     def save(self, use_https=False, request=None, *args, **kwargs):
         email = self.cleaned_data["email"]
-        current_site = get_current_site(request)
+        current_site = shortcuts.get_current_site(request)
         site_name = current_site.name
         domain = current_site.domain
         email_field_name = get_user_model().get_email_field_name()

@@ -1,2 +1,2 @@
-def get_filename(filename, request):
+def get_filename(filename):
     return filename.upper()

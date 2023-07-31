@@ -6,37 +6,6 @@ on:
   pull_request:
     branches: [ "main" ]
 
-env:
-  SECRET_KEY: ${{ secrets.SECRET_KEY }}
-  POSTGRES_DB_NAME: ${{ secrets.POSTGRES_DB_NAME }}
-  POSTGRES_DB_PASS: ${{ secrets.POSTGRES_DB_PASS }}
-  POSTGRES_PORT: ${{ secrets.POSTGRES_PORT }}
-  POSTGRES_HOST: ${{ secrets.POSTGRES_HOST }}
-  POSTGRES_DB_USER: ${{ secrets.POSTGRES_DB_USER }}
-  RECAPTCHA_PUBLIC_KEY_v3: ${{ secrets.RECAPTCHA_PUBLIC_KEY_v3 }}
-  EMAIL_HOST_USER: ${{ secrets.EMAIL_HOST_USER }}
-  EMAIL_NO_REPLY: ${{ secrets.EMAIL_NO_REPLY }}
-  RECAPTCHA_PUBLIC_KEY: ${{ secrets.RECAPTCHA_PUBLIC_KEY }}
-  RECAPTCHA_PRIVATE_KEY: ${{ secrets.RECAPTCHA_PRIVATE_KEY }}
-  GMAIL_EMAIL: ${{ secrets.GMAIL_EMAIL }}
-  OUTLOOK_EMAIL: ${{ secrets.OUTLOOK_EMAIL }}
-  HONEYPOT_FIELD_NAME: ${{ secrets.HONEYPOT_FIELD_NAME }}
-  HONEYPOT_VALUE: ${{ secrets.HONEYPOT_VALUE }}
-  SOCIAL_AUTH_FACEBOOK_KEY: ${{ secrets.FACEBOOK_KEY }}
-  SOCIAL_AUTH_FACEBOOK_SECRET: ${{ secrets.FACEBOOK_KEY }}
-  SOCIAL_AUTH_TWITTER_KEY: ${{ secrets.TWITTER_API_KEY }}
-  SOCIAL_AUTH_TWITTER_SECRET: ${{ secrets.TWITTER_API_SECRET }}
-  SOCIAL_AUTH_TWITTER_OAUTH2_SECRET: ${{ secrets.TWITTER_OAUTH2_CLIENT_ID_KEY }}
-  SOCIAL_AUTH_TWITTER_OAUTH2_KEY: ${{ secrets.TWITTER_OAUTH2_CLIENT_SECRET }}
-  SOCIAL_AUTH_GOOGLE_OAUTH2_KEY: ${{ secrets.GOOGLE_OAUTH2_KEY }}
-  SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET: ${{ secrets.GOOGLE_OAUTH2_SECRET }}
-  SOCIAL_AUTH_GOOGLE_PLUS_KEY: ${{ secrets.GOOGLE_OAUTH2_KEY }}
-  SOCIAL_AUTH_GOOGLE_PLUS_SECRET: ${{ secrets.GOOGLE_OAUTH2_SECRET }}
-  SOCIAL_AUTH_LINKEDIN_OAUTH2_KEY: ${{ secrets.LINKEDIN_OAUTH2_KEY }}
-  SOCIAL_AUTH_LINKEDIN_OAUTH2_SECRET: ${{ secrets.LINKEDIN_OAUTH2_SECRET }}
-
-
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -45,18 +14,60 @@ jobs:
       matrix:
         python-version: [ 3.11.1 ]
 
+    env:
+      POSTGRES_DB_NAME: ${{ secrets.POSTGRES_DB_NAME }}
+      POSTGRES_DB_PASS: ${{ secrets.POSTGRES_DB_PASS }}
+      POSTGRES_PORT: ${{ secrets.POSTGRES_PORT }}
+      POSTGRES_HOST: ${{ secrets.POSTGRES_HOST }}
+      POSTGRES_DB_USER: ${{ secrets.POSTGRES_DB_USER }}
+      RECAPTCHA_PUBLIC_KEY_v3: ${{ secrets.RECAPTCHA_PUBLIC_KEY_v3 }}
+      EMAIL_HOST_USER: ${{ secrets.EMAIL_HOST_USER }}
+      EMAIL_NO_REPLY: ${{ secrets.EMAIL_NO_REPLY }}
+      RECAPTCHA_PUBLIC_KEY: ${{ secrets.RECAPTCHA_PUBLIC_KEY }}
+      RECAPTCHA_PRIVATE_KEY: ${{ secrets.RECAPTCHA_PRIVATE_KEY }}
+      GMAIL_EMAIL: ${{ secrets.GMAIL_EMAIL }}
+      OUTLOOK_EMAIL: ${{ secrets.OUTLOOK_EMAIL }}
+      HONEYPOT_FIELD_NAME: ${{ secrets.HONEYPOT_FIELD_NAME }}
+      HONEYPOT_VALUE: ${{ secrets.HONEYPOT_VALUE }}
+      SOCIAL_AUTH_FACEBOOK_KEY: ${{ secrets.FACEBOOK_KEY }}
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      SOCIAL_AUTH_FACEBOOK_SECRET: ${{ secrets.FACEBOOK_KEY }}
+      SOCIAL_AUTH_TWITTER_KEY: ${{ secrets.TWITTER_API_KEY }}
+      SOCIAL_AUTH_TWITTER_SECRET: ${{ secrets.TWITTER_API_SECRET }}
+      SOCIAL_AUTH_TWITTER_OAUTH2_SECRET: ${{ secrets.TWITTER_OAUTH2_CLIENT_ID_KEY }}
+      SOCIAL_AUTH_TWITTER_OAUTH2_KEY: ${{ secrets.TWITTER_OAUTH2_CLIENT_SECRET }}
+      SOCIAL_AUTH_GOOGLE_OAUTH2_KEY: ${{ secrets.GOOGLE_OAUTH2_KEY }}
+      SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET: ${{ secrets.GOOGLE_OAUTH2_SECRET }}
+      SOCIAL_AUTH_GOOGLE_PLUS_KEY: ${{ secrets.GOOGLE_OAUTH2_KEY }}
+      SOCIAL_AUTH_GOOGLE_PLUS_SECRET: ${{ secrets.GOOGLE_OAUTH2_SECRET }}
+      SOCIAL_AUTH_LINKEDIN_OAUTH2_KEY: ${{ secrets.LINKEDIN_OAUTH2_KEY }}
+      SOCIAL_AUTH_LINKEDIN_OAUTH2_SECRET: ${{ secrets.LINKEDIN_OAUTH2_SECRET }}
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
     steps:
       - uses: actions/checkout@v3
+
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python-version }}
+
       - name: Install Dependencies
         run: |
           python -m pip install -r requirements.txt
+
       - name: Run Tests
         run: |
-          python manage.py test
+          coverage run manage.py test --noinput --verbosity=2
+          coverage report
+
+      - name: Upload coverage report
+        uses: codecov/codecov-action@v3
+        with:
+          name: coverage-xml
+          flags: unit-test
+          file: coverage.xml
+          fail_ci_if_error: false
 
       - name: Slack Notification
         uses: slackapi/slack-github-action@v1.24.0
@@ -64,7 +75,7 @@ jobs:
         with:
           payload: |
             {
-              "text": "GitHub Action build result: ${{ job.status }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}",
+              "text": "GitHub Action build result: ${{ job.status }} by ${{ github.actor }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}",
               "blocks": [
                 {
                   "type": "section",
@@ -72,6 +83,20 @@ jobs:
                     "type": "mrkdwn",
                     "text": "GitHub Action build result: ${{ job.status }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}"
                   }
+                }
+              ],
+              "attachments": [
+                {
+                  "title": "Coverage Report",
+                  "title_link": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                  "color": "#964B00",
+                  "fields": [
+                    {
+                      "title": "Coverage",
+                      "value": "$(curl https://app.codecov.io/github/${{ github.repository }}/branch/${{ github.ref }}/graphs/badge.svg)",
+                      "short": false
+                    }
+                  ]
                 }
               ]
             }
