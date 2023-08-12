@@ -1,5 +1,9 @@
+import requests
+from django.conf import settings
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.http import HttpResponse
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 
 
 def custom_paginator(request, page_size, queryset):
@@ -21,3 +25,18 @@ def get_actual_template(view_obj, extra_template):
     if view_obj.request.is_ajax():
         return [extra_template]
     return []
+
+
+def verify_recaptcha(g_captcha):
+    data = {
+        'secret': settings.RECAPTCHA_PRIVATE_KEY,
+        'response': g_captcha
+    }
+    resp = requests.post('https://www.google.com/recaptcha/api/siteverify', data=data)
+    result_json = resp.json()
+    return 'success' in result_json
+
+
+def generate_uidb64(user):
+    uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
+    return uidb64

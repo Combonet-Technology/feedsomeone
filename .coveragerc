@@ -1,0 +1,7 @@
+[run]
+source =
+    .
+    user/management/tests/*
+
+[report]
+omit = */venv/*, */migrations/*, */env/*, */rave_python/*, parse_test_results.py, */tests/*

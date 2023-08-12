@@ -43,7 +43,6 @@ def add_attrib(field, css=None):
         attrs['rows'] = '9'
     if css:
         for style in css.split(','):
-            print(style)
             if ':' not in style:
                 attrs[style] = True
             else:

@@ -1,7 +1,10 @@
+import logging
+
 from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
 
 User = get_user_model()
+logger = logging.getLogger(__name__)
 
 
 class SiteService:
@@ -9,12 +12,15 @@ class SiteService:
     def add_site(name, domain):
         try:
             site, created = Site.objects.get_or_create(name=name, domain=domain)
-            if not created:
-                print(f'Site {name} with domain {domain} already exist')
+            if created:
+                logger.info(f'Site {name} with domain {domain} created successfully')
+            return site
         except Exception as e:
-            print(f"Error creating site: {str(e)}")
-        else:
-            print(f'Site {name} with domain {domain} created successfully')
+            logger.error(f'Site {name} with domain {domain} was not created because {str(e)}')
+
+    @staticmethod
+    def remove_site(domain):
+        Site.objects.filter(domain=domain).delete()
 
 
 class CreateSuperUserService:
@@ -23,9 +29,9 @@ class CreateSuperUserService:
         try:
             User.objects.create_superuser(email=email, password=password)
         except Exception as e:
-            print(f'Super user creation failed with error {str(e)}')
+            logger.error(f'Super user creation failed with error {str(e)}')
         else:
-            print('Superuser has been created.')
+            logger.info('Superuser has been created.')
 
     @staticmethod
     def recover_superuser_password(email, password=None):
@@ -33,11 +39,11 @@ class CreateSuperUserService:
             user = User.objects.get(email=email)
             if not password:
                 password = User.objects.make_random_password()
-                print(f'New password generated for superuser {email}: {password}')
+                logger.info(f'New password generated for superuser {email}: {password}')
             user.set_password(password)
             user.save()
-            print(f'Password set for superuser {email} Successfully')
+            logger.info(f'Password set for superuser {email} successfully')
         except User.DoesNotExist:
-            print(f'Superuser with email {email} does not exist')
+            logger.warning(f'Superuser with email {email} does not exist')
         except Exception as e:
-            print(f'Error recovering superuser password: {str(e)}')
+            logger.error(f'Error recovering superuser password: {str(e)}')
