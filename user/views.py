@@ -74,12 +74,13 @@ def register(request, template='registration/register.html'):
             with transaction.atomic():
                 user = user_form.save(commit=False)
                 current_site = get_current_site(request)
-                sengrid.send_email(settings.EMAIL_NO_REPLY, user_form.cleaned_data.get('email'),
-                                   'Activation link has been sent to your email id',
-                                   render_to_string('acc_activation_email.html',
-                                                    {'username': user.username, 'domain': current_site.domain,
-                                                     'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-                                                     'token': account_activation_token.make_token(user)}))
+                sengrid.send_email(source=settings.EMAIL_NO_REPLY, destination=user_form.cleaned_data.get('email'),
+                                   subject='Activation link has been sent to your email id',
+                                   content=render_to_string('acc_activation_email.html', {
+                                       'username': user.username,
+                                       'domain': current_site.domain,
+                                       'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+                                       'token': account_activation_token.make_token(user)}))
                 username = user_form.cleaned_data.get('username')
                 volunteer = volunteer_form.save(commit=False)
                 volunteer.user = user
