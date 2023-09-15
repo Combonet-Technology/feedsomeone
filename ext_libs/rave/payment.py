@@ -1,19 +1,12 @@
 import os
 from dataclasses import dataclass
+from typing import Optional
 
 import requests
+from django.shortcuts import redirect
 from rave_python import Rave
 
-from enum import Enum
-
-
-class SubscriptionPlan(Enum):
-    DAILY = {"interval": "daily"}
-    WEEKLY = {"interval": "weekly"}
-    MONTHLY = {"interval": "monthly"}
-    QUARTERLY = {"interval": "quarterly"}
-    ANNUALLY = {"interval": "annually"}
-
+from utils.enums import SubscriptionPlan
 
 # Replace with your Flutterwave API secret key
 FLW_SECRET_KEY = os.getenv("FLW_SECRET_KEY")
@@ -22,10 +15,10 @@ RAVE_WEBHOOK_URL = os.getenv("RAVE_WEBHOOK_URL")
 
 @dataclass
 class Customer:
-    full_name: str
+    full_name: Optional[str]
     email: str
-    phone_number: str
-    address: str  # You can add more fields as needed
+    phone_number: Optional[str]
+    address: Optional[str]
 
 
 # Example usage:
@@ -63,14 +56,13 @@ def generate_payment_link(amount, currency, customer_data, tx_ref_id):
 
         response = requests.post("https://api.flutterwave.com/v3/payments", headers=headers, json=data)
         response.raise_for_status()
-
-        return response.json()
+        return redirect(response.json()['data']['link'])
     except Exception as e:
         print("An error occurred:", str(e))
         return None
 
 
-def create_subscription_plan(duration):
+def create_subscription_plan(duration: SubscriptionPlan):
     try:
         # Define the subscription plan details based on the duration
         subscription_plans = {
@@ -89,7 +81,6 @@ def create_subscription_plan(duration):
         # Create the subscription plan using the details
         rave = Rave(os.getenv("FLW_PUBLIC_KEY"), os.getenv("FLW_SECRET_KEY"))
         res = rave.PaymentPlan.create({
-            "amount": plan_details["amount"],
             "name": f"{duration.capitalize()} Subscription Plan",
             "interval": plan_details["interval"]
         })
@@ -101,8 +92,8 @@ def create_subscription_plan(duration):
 
 
 # Example usage:
-payment_plan_result = create_payment_plan()
-if payment_plan_result:
+payment_url = generate_payment_link()
+if payment_url:
     print("Payment plan created successfully.")
 
 subscription_plan_result = create_subscription_plan("monthly")
