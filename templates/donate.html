@@ -1,146 +1,152 @@
-
 {% load static %}
 {% load humanize %}
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-SN22VH6DM1"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-SN22VH6DM1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
 
-  gtag('config', 'G-SN22VH6DM1');
-</script>
+        gtag('config', 'G-SN22VH6DM1');
+    </script>
     <meta charset="UTF-8">
     <title> FEEDSOMEONE | donate to our causes</title>
-	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-	<link href="https://fonts.googleapis.com/css?family=Montserrat:200,300,400,500,600,700,800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:200,300,400,500,600,700,800&display=swap"
+          rel="stylesheet">
 
-	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
 
-	<link rel="stylesheet" href="{% static 'css/animate.css' %}">
+    <link rel="stylesheet" href="{% static 'css/animate.css' %}">
 
-	<link rel="stylesheet" href="{% static 'css/owl.carousel.min.css' %}">
-	<link rel="stylesheet" href="{% static 'css/owl.theme.default.min.css' %}">
-	<link rel="stylesheet" href="{% static 'css/magnific-popup.css' %}">
+    <link rel="stylesheet" href="{% static 'css/owl.carousel.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/owl.theme.default.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/magnific-popup.css' %}">
 
 
-	<link rel="stylesheet" href="{% static 'css/bootstrap-datepicker.css' %}">
-	<link rel="stylesheet" href="{% static 'css/jquery.timepicker.css' %}">
+    <link rel="stylesheet" href="{% static 'css/bootstrap-datepicker.css' %}">
+    <link rel="stylesheet" href="{% static 'css/jquery.timepicker.css' %}">
 
-	<link rel="stylesheet" href="{% static 'css/flaticon.css' %}">
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/fontawesome.min.css">
+    <link rel="stylesheet" href="{% static 'css/flaticon.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/fontawesome.min.css">
 
-	<link rel="stylesheet" href="{% static 'css/donatestyle.css' %}">
-	 <style>
-    div#total_sum h2.number{font-size:1.5rem;}
-		.appointment .form-control {
-    height: 40px !important;
-    }.donation-wrap{ border-radius: 10px 10px 0px 0; margin: 60px 0 30px !important;}.appointment {
-    width: 100%;
-    padding: 25px;
-}.form-group {
-    margin-bottom: 5px;
-}
-.donation-wrap .total-donate {
-    padding: 4px 10px !important;
-}
-::placeholder {
-  font-color:rgba(208, 210, 212, .1.7) !important;
-}
+    <link rel="stylesheet" href="{% static 'css/donatestyle.css' %}">
+    <style>
+        div#total_sum h2.number{font-size:1.5rem;}
+            .appointment .form-control {
+        height: 40px !important;
+        }.donation-wrap{ border-radius: 10px 10px 0px 0; margin: 60px 0 30px !important;}.appointment {
+        width: 100%;
+        padding: 25px;
+    }.form-group {
+        margin-bottom: 5px;
+    }
+    .donation-wrap .total-donate {
+        padding: 4px 10px !important;
+    }
+    ::placeholder {
+      font-color:rgba(208, 210, 212, .1.7) !important;
+    }
 
-/* Portrait and Landscape */
-@media screen
-  and (max-width: 500px)
-  and (max-height: 640px) {
- div#total_sum h2.number{font-size:1rem !important}
- #back_home div{
-    text-align: center !important;
-    padding: 0 50px;
-    margin-left: 15px;
- }
-}
+    /* Portrait and Landscape */
+    @media screen
+      and (max-width: 500px)
+      and (max-height: 640px) {
+     div#total_sum h2.number{font-size:1rem !important}
+     #back_home div{
+        text-align: center !important;
+        padding: 0 50px;
+        margin-left: 15px;
+     }
+    }
 
-/* Portrait */
-@media screen
-  and (max-width: 500px)
-  and (max-height: 640px)
-  and (orientation: portrait) {
-  div#total_sum h2.number{font-size:1rem !important}
-   #back_home div{
-    text-align: center !important;
-    padding: 0 50px;
-    margin-left: 15px;
- }
-}
+    /* Portrait */
+    @media screen
+      and (max-width: 500px)
+      and (max-height: 640px)
+      and (orientation: portrait) {
+      div#total_sum h2.number{font-size:1rem !important}
+       #back_home div{
+        text-align: center !important;
+        padding: 0 50px;
+        margin-left: 15px;
+     }
+    }
 
-/* Landscape */
-@media screen
-  and (max-width: 500px)
-  and (max-height: 640px)
-  and (orientation: landscape) {
-div#total_sum h2.number{font-size:1rem !important}
- #back_home div{
-    text-align: center !important;
-    padding: 0 50px;
-    margin-left: 15px;
- }
-}
+    /* Landscape */
+    @media screen
+      and (max-width: 500px)
+      and (max-height: 640px)
+      and (orientation: landscape) {
+    div#total_sum h2.number{font-size:1rem !important}
+     #back_home div{
+        text-align: center !important;
+        padding: 0 50px;
+        margin-left: 15px;
+     }
+    }
     </style>
 </head>
 <body>
 <div class="container">
-	<div class="row">
-	<div class="col-md-7 wrap-about py-5" style="padding-top: 1rem !important;">
-					<div class="heading-section pr-md-5 pt-md-5">
-						<span class="subheading">FEEDSOMEONE</span>
-						<h2 class="mb-4">We have to give back to our community because if not us, who? if not now, when?</h2>
-						<p>The major issue in my community is hunger. It is so severe that it is the major causes of other forms of vices in our society. This has led to so many derogatory acts amongst members of the community and as if that is not enough, it is so sad that this situation is being taken advantage of whenever there is to be an election as candidates distribute packaged foods as well as meagre stipends to the electorates. Who can blame the people for making irrational decisions, no man can withstand the compelling power of hunger and for that reason, I am devoting myself to the cause against hunger, so help me God.</p>
-					</div>
-					<div class="row my-md-5">
-						<div class="col-md-6 d-flex counter-wrap">
-							<div class="block-18 d-flex">
-								<div class="icon d-flex align-items-center justify-content-center">
-									<span class="flaticon-volunteer"></span>
-								</div>
-								<div class="desc">
-									<div class="text">
-									<strong class="number" data-number="{{total_volunteers}}">{{total_volunteers}}+</strong>
-									</div>
-									<div class="text">
-										<span>Volunteers</span>
-									</div>
-								</div>
-							</div>
-						</div>
-						<div class="col-md-6 d-flex counter-wrap">
-							<div class="block-18 d-flex">
-								<div class="icon d-flex align-items-center justify-content-center">
-									<span class="flaticon-piggy-bank"></span>
-								</div>
-								<div class="desc">
-									<div class="text">
-										<strong class="number" data-number="150">150+</strong>
-									</div>
-									<div class="text">
-										<span>People Impacted</span>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-				<div class="col-md-5 order-md-last align-items-stretch">
-					<div class="donation-wrap" style="background: url({% static 'img/moroccan-flower-dark.png' %});">
-						<div class="row text-center">
-        {% if messages %}
-        {% for message in messages %}
-        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert" style="
+    <div class="row">
+        <div class="col-md-7 wrap-about py-5" style="padding-top: 1rem !important;">
+            <div class="pr-md-5 pt-md-5">
+                <span class="subheading">FEEDSOMEONE</span>
+                <h2 class="mb-4">We have to give back to our community because if not us, who? if not now, when?</h2>
+                <p>The major issue in my community is hunger. It is so severe that it is the major causes of other forms
+                    of vices in our society. This has led to so many derogatory acts amongst members of the community
+                    and as if that is not enough, it is so sad that this situation is being taken advantage of whenever
+                    there is to be an election as candidates distribute packaged foods as well as meagre stipends to the
+                    electorates. Who can blame the people for making irrational decisions, no man can withstand the
+                    compelling power of hunger and for that reason, I am devoting myself to the cause against hunger, so
+                    help me God.</p>
+            </div>
+            <div class="row my-md-5">
+                <div class="col-md-6 d-flex counter-wrap">
+                    <div class="block-18 d-flex">
+                        <div class="icon d-flex align-items-center justify-content-center">
+                            <span class="flaticon-volunteer"></span>
+                        </div>
+                        <div class="desc">
+                            <div class="text">
+                                <strong data-number="{{total_volunteers}}">{{total_volunteers}}+</strong>
+                            </div>
+                            <div class="text">
+                                <span>Volunteers</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 d-flex counter-wrap">
+                    <div class="block-18 d-flex">
+                        <div class="icon d-flex align-items-center justify-content-center">
+                            <span class="flaticon-piggy-bank"></span>
+                        </div>
+                        <div class="desc">
+                            <div class="text">
+                                <strong data-number="150">150+</strong>
+                            </div>
+                            <div class="text">
+                                <span>People Impacted</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-5 order-md-last align-items-stretch">
+            <div class="">
+                <div class="row text-center">
+                    {% if messages %}
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert" style="
 		width: 94%;
 		margin-left:14px;
 		margin-bottom: 0;
@@ -148,17 +154,18 @@ div#total_sum h2.number{font-size:1rem !important}
 		z-index: 1;
 		top: 38px;
 		">
-            <strong>{{message}}</strong>
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-            </button>
-        </div>
-        {% endfor %}
-        {% endif %}
-    </div><div class="row text-center">
-        {% if messages %}
-        {% for message in messages %}
-        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert" style="
+                        <strong>{{message}}</strong>
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+                </div>
+                <div class="row text-center">
+                    {% if messages %}
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert" style="
 		width: 94%;
 		margin-left:14px;
 		margin-bottom: 0;
@@ -166,181 +173,197 @@ div#total_sum h2.number{font-size:1rem !important}
 		z-index: 1;
 		top: 38px;
 		">
-            <strong>{{message}}</strong>
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-            </button>
-        </div>
-        {% endfor %}
-        {% endif %}
-    </div>
-		<div class="total-donate align-items-center" id="total_sum">
+                        <strong>{{message}}</strong>
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+                </div>
+                <div class="total-donate align-items-center" id="total_sum">
                     <span class="fa flaticon-cleaning"></span>
-                    <h2 class="number" style="color: white;font-weight: bold;font-size: 1.4rem;padding: 20px 6px 0;">
+                    <h2 class="number" style="color: #09cc7f;font-weight: bold;font-size: 1.4rem;padding: 20px 6px 0;">
                         Support the cause against poverty</h2>
                 </div>
-						<form id="donation-form" class="appointment">
-						<script src="https://js.paystack.co/v1/inline.js"></script>
-						<script src="https://checkout.flutterwave.com/v3.js"></script>
-<!--						<form id="donation-form" class="appointment" action="https://checkout.flutterwave.com/v3/hosted/pay" method="post">-->
+                <ul class="nav nav-tabs vertical-tabs-list">
+                    <li class="vertical-tab-button first active selected" role="tab"
+                        data-donation-type-text="Give Monthly" tabindex="0"><a href="#edit-monthly"
+                                                                               data-donation-type="monthly"
+                                                                               data-toggle="tab" aria-expanded="true"
+                                                                               tabindex="-1"><span>Give Monthly</span>
+                        <div class="summary"></div>
+                        <span id="active-vertical-tab" class="visually-hidden">(active tab)</span></a></li>
+                    <li class="vertical-tab-button last" role="tab" data-donation-type-text="Give Once" tabindex="0"><a
+                            href="#edit-one-time" data-donation-type="one-time" data-toggle="tab" tabindex="-1"
+                            aria-expanded="false"><span>Give Once</span>
+                        <div class="summary"></div>
+                    </a></li>
+                </ul>
+<!--                <form id="donation-form" class="appointment">-->
+<!--                    <script src="https://js.paystack.co/v1/inline.js"></script>-->
+<!--                    <script src="https://checkout.flutterwave.com/v3.js"></script>-->
+<!--                    &lt;!&ndash;						<form id="donation-form" class="appointment" action="https://checkout.flutterwave.com/v3/hosted/pay" method="post">&ndash;&gt;-->
 
-							<div class="row">
-								<div class="col-md-12">
-									<div class="form-group">
-										<label for="fullname">Full Name</label>
-										<div class="input-wrap">
-											<div class="icon"><span class="fa fa-user"></span></div>
-											<input type="text" class="form-control" name="customer[name]"
-												   id="fullname" placeholder="Enter your full name">
-										</div>
-									</div>
-								</div>
-								<div class="col-md-12">
-									<div class="form-group">
-										<label for="email">Email Address</label>
-										<div class="input-wrap">
-											<div class="icon"><span class="fa fa-paper-plane"></span></div>
-											<input type="email" class="form-control" id="emailaddr"
-												   name="email" placeholder="Enter your email address">
-										</div>
-									</div>
-								</div>
-								<div class="col-md-12">
-									<div class="form-group">
-										<label for="phone">Phone No.</label>
-										<div class="input-wrap">
-											<div class="icon"><span class="fa fa-phone"></span></div>
-											<input type="tel" class="form-control" id="phone_number" name="phone"
-												   placeholder="Enter your phone number">
-										</div>
-									</div>
-								</div>
-								<div class="col-md-12">
-									<div class="form-group">
-										<label for="cause">Select Causes</label>
-										<div class="form-field">
-											<div class="select-wrap">
-												<div class="icon"><span class="fa fa-chevron-down"></span></div>
-												<select name="cause" id="paymentfor" class="form-control">
-													<option value="0">Choose one</option>
-													<option value="Operation Feed the Slum">Operation Feed the Slum</option>
-													<option value="Orphanage Relief">Orphanage Relief</option>
-												</select>
-											</div>
-										</div>
-									</div>
-								</div>
-								<div class="col-md-12">
-									<div class="form-group">
-										<label for="amount">Amount</label>
-										<div class="input-wrap">
-											<div class="icon"><span class="fa fa-money"></span></div>
-											<input type="text" class="form-control" name="amount" id="amount" placeholder="Enter amount">
-										</div>
-									</div>
-								</div>
-								<div class="col-md-12 pt-5">
-								<div class="form-group">
-<!--									<input type="button" class="btn btn-secondary py-3 px-4" value="Donate Stack" onclick="payWithPaystack()">-->
-									<button type="button" class="btn btn-secondary py-3 px-4" onClick="makePayment()">Pay Now</button>
-<!--									<button type="button" onClick="makePayment()">Pay Now</button>-->
-								</div>
-								</div>
-							</div>
-						</form>
+<!--                    <div class="row">-->
+<!--                        <div class="col-md-12">-->
+<!--                            <div class="form-group">-->
+<!--                                <label for="fullname">Full Name</label>-->
+<!--                                <div class="input-wrap">-->
+<!--                                    <div class="icon"><span class="fa fa-user"></span></div>-->
+<!--                                    <input type="text" class="form-control" name="customer[name]"-->
+<!--                                           id="fullname" placeholder="Enter your full name">-->
+<!--                                </div>-->
+<!--                            </div>-->
+<!--                        </div>-->
+<!--                        <div class="col-md-12">-->
+<!--                            <div class="form-group">-->
+<!--                                <label for="email">Email Address</label>-->
+<!--                                <div class="input-wrap">-->
+<!--                                    <div class="icon"><span class="fa fa-paper-plane"></span></div>-->
+<!--                                    <input type="email" class="form-control" id="emailaddr"-->
+<!--                                           name="email" placeholder="Enter your email address">-->
+<!--                                </div>-->
+<!--                            </div>-->
+<!--                        </div>-->
+<!--                        <div class="col-md-12">-->
+<!--                            <div class="form-group">-->
+<!--                                <label for="phone">Phone No.</label>-->
+<!--                                <div class="input-wrap">-->
+<!--                                    <div class="icon"><span class="fa fa-phone"></span></div>-->
+<!--                                    <input type="tel" class="form-control" id="phone_number" name="phone"-->
+<!--                                           placeholder="Enter your phone number">-->
+<!--                                </div>-->
+<!--                            </div>-->
+<!--                        </div>-->
+<!--                        <div class="col-md-12">-->
+<!--                            <div class="form-group">-->
+<!--                                <label for="cause">Select Causes</label>-->
+<!--                                <div class="form-field">-->
+<!--                                    <div class="select-wrap">-->
+<!--                                        <div class="icon"><span class="fa fa-chevron-down"></span></div>-->
+<!--                                        <select name="cause" id="paymentfor" class="form-control">-->
+<!--                                            <option value="0">Choose one</option>-->
+<!--                                            <option value="Operation Feed the Slum">Operation Feed the Slum</option>-->
+<!--                                            <option value="Orphanage Relief">Orphanage Relief</option>-->
+<!--                                        </select>-->
+<!--                                    </div>-->
+<!--                                </div>-->
+<!--                            </div>-->
+<!--                        </div>-->
+<!--                        <div class="col-md-12">-->
+<!--                            <div class="form-group">-->
+<!--                                <label for="amount">Amount</label>-->
+<!--                                <div class="input-wrap">-->
+<!--                                    <div class="icon"><span class="fa fa-money"></span></div>-->
+<!--                                    <input type="text" class="form-control" name="amount" id="amount"-->
+<!--                                           placeholder="Enter amount">-->
+<!--                                </div>-->
+<!--                            </div>-->
+<!--                        </div>-->
+<!--                        <div class="col-md-12 pt-5">-->
+<!--                            <div class="form-group">-->
+<!--                                &lt;!&ndash;									<input type="button" class="btn btn-secondary py-3 px-4" value="Donate Stack" onclick="payWithPaystack()">&ndash;&gt;-->
+<!--                                <button type="button" class="btn btn-secondary py-3 px-4" onClick="makePayment()">Pay-->
+<!--                                    Now-->
+<!--                                </button>-->
+<!--                                &lt;!&ndash;									<button type="button" onClick="makePayment()">Pay Now</button>&ndash;&gt;-->
+<!--                            </div>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                </form>-->
 
-					</div>
-				</div>
-</div>
-<div class="row text-center" id="back_home">
-        <div><p><a href="{% url 'register'%}" class="btn btn-secondary btn-outline-secondary mr-4">Become A
+            </div>
+        </div>
+    </div>
+    <div class="row text-center" id="back_home">
+        <div><p><a href="{% url 'register'%}" class="mr-4">Become A
             Volunteer</a></p></div>
-        <div><p><a href="/" class="btn btn-secondary btn-outline-secondary" ><i class="fa fa-home"></i>Back to
+        <div><p><a href="/" class=""><i class="fa fa-home"></i>Back to
             Homepage</a></p></div>
+    </div>
 </div>
-</div>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script>
-  function makePayment() {
-    FlutterwaveCheckout({
-      public_key: "FLWPUBK-ef604c855317a5fd377639a5a6744efe-X",
-      tx_ref: "feed"+Math.floor((Math.random() * 1000000000) + 1)+"someone",
-      amount: document.getElementById("amount").value,
-      currency: "NGN",
-      country: "NG",
-      payment_options: "card, ussd",
-      redirect_url: // specified redirect URL
-        "{% url 'mainsite:donate-thanks' %}",
-      meta: {
-        cause: document.getElementById("paymentfor").value,
+    function makePayment() {
+      FlutterwaveCheckout({
+        public_key: "FLWPUBK-ef604c855317a5fd377639a5a6744efe-X",
+        tx_ref: "feed"+Math.floor((Math.random() * 1000000000) + 1)+"someone",
+        amount: document.getElementById("amount").value,
+        currency: "NGN",
+        country: "NG",
+        payment_options: "card, ussd",
+        redirect_url: // specified redirect URL
+          "{% url 'mainsite:donate-thanks' %}",
+        meta: {
+          cause: document.getElementById("paymentfor").value,
+        },
+        customer: {
+          email: document.getElementById("emailaddr").value,
+          phone_number: document.getElementById("phone_number").value,
+          name: document.getElementById("fullname").value
+        },
+        callback: function (data) {
+          console.log(data);
+          if(data.status === 'success'){
+          $('#donation-form').find('input[type="text"]').val('');
+          $('#donation-form').find('select').val('0');
+          $.ajax({
+              url: '/donate/',
+              data: JSON.stringify(data)
+          });
+        }
       },
-      customer: {
-        email: document.getElementById("emailaddr").value,
-        phone_number: document.getElementById("phone_number").value,
-        name: document.getElementById("fullname").value
-      },
-      callback: function (data) {
-        console.log(data);
-        if(data.status === 'success'){
-        $('#donation-form').find('input[type="text"]').val('');
-        $('#donation-form').find('select').val('0');
-        $.ajax({
-            url: '/donate/',
-            data: JSON.stringify(data)
-        });
-      }
-    },
-      customizations: {
-        title: "FEED SOMEONE",
-        description: "No act of kindness towards the less privilege goes unrewarded",
-	logo: "https://feedsomeone.org/static/img/logo/logo.png"
-      },
-    });
-  }
+        customizations: {
+          title: "FEED SOMEONE",
+          description: "No act of kindness towards the less privilege goes unrewarded",
+      logo: "https://feedsomeone.org/static/img/logo/logo.png"
+        },
+      });
+    }
 </script>
 
 
 <script>
-  function payWithPaystack(){
-    var handler = PaystackPop.setup({
-      key: 'pk_test_0e1491b53d12f6c67efd80954ad03b2a71396428',
-      email: document.getElementById("emailaddr").value,
-      amount: document.getElementById("amount").value*100,
-      currency: "NGN",
-      ref: 'feedsomeone'+Math.floor((Math.random() * 1000000000) + 1), // generates a pseudo-unique reference. Please replace with a reference you generated. Or remove the line entirely so our API will generate one for you
-      metadata: {
-         custom_fields: [
-            {
-                display_name: "FEED SOMEONE",
-                phone_number: document.getElementById("phone_number").value,
-        		name: document.getElementById("fullname").value
-            }
-         ]
-      },
-      callback: function(response){
-        alert('success. transaction ref is ' + response.reference);
-        if(response){
-        $('#donation-form').find('input[type="text"]').val('');
-        $('#donation-form').find('select').val('0');
-        $.ajax({
-            url: 'https:google.com',
-            data: JSON.stringify(data)
-        });
-      }
-      },
-      onClose: function(){
-          alert('window closed');
-      }
-    });
-    handler.openIframe();
-  }
+    function payWithPaystack(){
+      var handler = PaystackPop.setup({
+        key: 'pk_test_0e1491b53d12f6c67efd80954ad03b2a71396428',
+        email: document.getElementById("emailaddr").value,
+        amount: document.getElementById("amount").value*100,
+        currency: "NGN",
+        ref: 'feedsomeone'+Math.floor((Math.random() * 1000000000) + 1), // generates a pseudo-unique reference. Please replace with a reference you generated. Or remove the line entirely so our API will generate one for you
+        metadata: {
+           custom_fields: [
+              {
+                  display_name: "FEED SOMEONE",
+                  phone_number: document.getElementById("phone_number").value,
+                  name: document.getElementById("fullname").value
+              }
+           ]
+        },
+        callback: function(response){
+          alert('success. transaction ref is ' + response.reference);
+          if(response){
+          $('#donation-form').find('input[type="text"]').val('');
+          $('#donation-form').find('select').val('0');
+          $.ajax({
+              url: 'https:google.com',
+              data: JSON.stringify(data)
+          });
+        }
+        },
+        onClose: function(){
+            alert('window closed');
+        }
+      });
+      handler.openIframe();
+    }
 </script>
 <script type="text/javascript">
-$(document).ready(function (){
-  $('.alert').click(function(){
-  $('.alert').hide('close');
-  });
-});
+    $(document).ready(function (){
+      $('.alert').click(function(){
+      $('.alert').hide('close');
+      });
+    });
 
 </script>
 </body>
