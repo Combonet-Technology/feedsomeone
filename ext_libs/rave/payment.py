@@ -34,7 +34,7 @@ OEF_CUSTOMIZATION = {
 }
 
 
-def generate_payment_link(amount, currency, customer_data, tx_ref_id):
+def generate_payment_link(amount, currency, customer_data, tx_ref_id, payment_plan: Optional[str]):
     try:
         headers = {
             "Authorization": f"Bearer {FLW_SECRET_KEY}",
@@ -54,6 +54,9 @@ def generate_payment_link(amount, currency, customer_data, tx_ref_id):
             "customizations": OEF_CUSTOMIZATION
         }
 
+        if payment_plan:
+            data['payment_plan'] = payment_plan
+
         response = requests.post("https://api.flutterwave.com/v3/payments", headers=headers, json=data)
         response.raise_for_status()
         return redirect(response.json()['data']['link'])
@@ -64,25 +67,10 @@ def generate_payment_link(amount, currency, customer_data, tx_ref_id):
 
 def create_subscription_plan(duration: SubscriptionPlan):
     try:
-        # Define the subscription plan details based on the duration
-        subscription_plans = {
-            "daily": {"amount": 500, "interval": "daily"},
-            "weekly": {"amount": 2500, "interval": "weekly"},
-            "monthly": {"amount": 10000, "interval": "monthly"},
-            "quarterly": {"amount": 30000, "interval": "quarterly"},
-            "annually": {"amount": 120000, "interval": "annually"}
-        }
-
-        if duration not in subscription_plans:
-            raise ValueError("Invalid duration. Supported durations: daily, weekly, monthly, quarterly, annually")
-
-        plan_details = subscription_plans[duration]
-
-        # Create the subscription plan using the details
         rave = Rave(os.getenv("FLW_PUBLIC_KEY"), os.getenv("FLW_SECRET_KEY"))
         res = rave.PaymentPlan.create({
             "name": f"{duration.capitalize()} Subscription Plan",
-            "interval": plan_details["interval"]
+            "interval": duration
         })
 
         return res
