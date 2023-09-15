@@ -79,3 +79,11 @@ class ColorCodes(Enum):
     FAILURE = '#FFA500'
     ERROR = '#6a6c6d'
     LOGS = '#000000'
+
+
+class SubscriptionPlan(Enum):
+    DAILY = "daily"
+    WEEKLY = "weekly"
+    MONTHLY = "monthly"
+    QUARTERLY = "quarterly"
+    ANNUALLY = "annually"
