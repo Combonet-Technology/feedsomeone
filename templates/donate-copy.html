@@ -298,50 +298,5 @@ div#total_sum h2.number{font-size:1rem !important}
     });
   }
 </script>
-
-
-<script>
-  function payWithPaystack(){
-    var handler = PaystackPop.setup({
-      key: 'pk_test_0e1491b53d12f6c67efd80954ad03b2a71396428',
-      email: document.getElementById("emailaddr").value,
-      amount: document.getElementById("amount").value*100,
-      currency: "NGN",
-      ref: 'feedsomeone'+Math.floor((Math.random() * 1000000000) + 1), // generates a pseudo-unique reference. Please replace with a reference you generated. Or remove the line entirely so our API will generate one for you
-      metadata: {
-         custom_fields: [
-            {
-                display_name: "FEED SOMEONE",
-                phone_number: document.getElementById("phone_number").value,
-        		name: document.getElementById("fullname").value
-            }
-         ]
-      },
-      callback: function(response){
-        alert('success. transaction ref is ' + response.reference);
-        if(response){
-        $('#donation-form').find('input[type="text"]').val('');
-        $('#donation-form').find('select').val('0');
-        $.ajax({
-            url: 'https:google.com',
-            data: JSON.stringify(data)
-        });
-      }
-      },
-      onClose: function(){
-          alert('window closed');
-      }
-    });
-    handler.openIframe();
-  }
-</script>
-<script type="text/javascript">
-$(document).ready(function (){
-  $('.alert').click(function(){
-  $('.alert').hide('close');
-  });
-});
-
-</script>
 </body>
 </html>

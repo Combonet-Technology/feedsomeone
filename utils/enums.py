@@ -82,8 +82,14 @@ class ColorCodes(Enum):
 
 
 class SubscriptionPlan(Enum):
-    DAILY = "daily"
-    WEEKLY = "weekly"
-    MONTHLY = "monthly"
-    QUARTERLY = "quarterly"
-    ANNUALLY = "annually"
+    DAILY = 'daily'
+    WEEKLY = 'weekly'
+    MONTHLY = 'monthly'
+    QUARTERLY = 'quarterly'
+    ANNUALLY = 'annually'
+
+
+class Currency(Enum):
+    NAIRA = 'NGN'
+    DOLLARS = 'USD'
+    BRITISH_POUNDS = 'GBP'

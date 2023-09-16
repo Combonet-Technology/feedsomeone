@@ -137,7 +137,13 @@ def donate_thanks(request):
 
 
 def webhooks(request):
-    pass
+    # check for successful webhooks so we can email the donor updates about
+    # what we achieved and failed webhooks so we can remind them to try again
+    status = request.GET['status']
+    tx_ref = request.GET['tx_ref']
+    tx_id = request.GET['transaction_id']
+    print(f'{status=} {tx_id=} {tx_ref=}')
+    return redirect('/')
 
 
 def callback(request):
