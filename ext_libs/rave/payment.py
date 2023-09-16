@@ -4,13 +4,15 @@ from typing import Optional
 
 import requests
 from django.shortcuts import redirect
-from rave_python import Rave
 
+from rave_python import Rave
 from utils.enums import SubscriptionPlan
 
 # Replace with your Flutterwave API secret key
+
 FLW_SECRET_KEY = os.getenv("FLW_SECRET_KEY")
-RAVE_WEBHOOK_URL = os.getenv("RAVE_WEBHOOK_URL")
+FLW_SECRET_KEY = 'FLWSECK_TEST-8017fa700f790646a835491cefd646c7-X'
+RAVE_WEBHOOK_URL = 'https://dev.oluwafemiebenezer.foundation/webhooks'
 
 
 @dataclass
@@ -24,17 +26,17 @@ class Customer:
 # Example usage:
 customer_data = Customer(
     full_name="John Doe",
-    email="john@example.com",
-    phone_number="123-456-7890",
+    email="info@oluwafemiebenezerfoundation.org",
+    phone_number="+234-456-7890",
     address="123 Main Street"
 )
 OEF_CUSTOMIZATION = {
     "title": "Oluwafemi Ebenezer Foundation",
-    "logo": "https://www.combonettechnology.com/images/cbt.png"
+    "logo": "https://oluwafemiebenezerfoundation.org/static/img/logo/logo.png"
 }
 
 
-def generate_payment_link(amount, currency, customer_data, tx_ref_id, payment_plan: Optional[str]):
+def generate_payment_link(amount, currency, customer_data, tx_ref_id, payment_plan: Optional[str] = None):
     try:
         headers = {
             "Authorization": f"Bearer {FLW_SECRET_KEY}",
@@ -59,6 +61,7 @@ def generate_payment_link(amount, currency, customer_data, tx_ref_id, payment_pl
 
         response = requests.post("https://api.flutterwave.com/v3/payments", headers=headers, json=data)
         response.raise_for_status()
+        print(response.json()['data']['link'])
         return redirect(response.json()['data']['link'])
     except Exception as e:
         print("An error occurred:", str(e))
@@ -79,11 +82,14 @@ def create_subscription_plan(duration: SubscriptionPlan):
         return None
 
 
-# Example usage:
-payment_url = generate_payment_link()
-if payment_url:
-    print("Payment plan created successfully.")
-
-subscription_plan_result = create_subscription_plan("monthly")
-if subscription_plan_result:
-    print("Subscription plan created successfully.")
+if __name__ == '__main__':
+    #
+    # # Example usage:
+    # payment_url = generate_payment_link()
+    # if payment_url:
+    #     print("Payment plan created successfully.")
+    #
+    # subscription_plan_result = create_subscription_plan("monthly")
+    # if subscription_plan_result:
+    #     print("Subscription plan created successfully.")
+    generate_payment_link(10000, 'NGN', customer_data.__dict__, '123werty-feed')
