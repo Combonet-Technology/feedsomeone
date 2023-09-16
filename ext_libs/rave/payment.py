@@ -1,4 +1,5 @@
 import os
+import sys
 from dataclasses import dataclass
 from typing import Optional
 
@@ -6,13 +7,16 @@ import requests
 from django.shortcuts import redirect
 
 from rave_python import Rave
-from utils.enums import SubscriptionPlan
 
-# Replace with your Flutterwave API secret key
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')))
+from utils.enums import SubscriptionPlan  # noqa: E402
 
 FLW_SECRET_KEY = os.getenv("FLW_SECRET_KEY")
-FLW_SECRET_KEY = 'FLWSECK_TEST-8017fa700f790646a835491cefd646c7-X'
-RAVE_WEBHOOK_URL = 'https://dev.oluwafemiebenezer.foundation/webhooks'
+TEST_FLW_SECRET_KEY = 'FLWSECK_TEST-8017fa700f790646a835491cefd646c7-X'
+TEST_PUBLIC_KEY = 'FLWPUBK_TEST-1db61213ff9e3721f770e0697a9e60c5-X'
+TEST_ENCRYPTION_KEY = 'FLWSECK_TEST73746dfa2c5a'
+TEST_RAVE_WEBHOOK_URL = 'https://dev.oluwafemiebenezer.foundation/webhooks'
+RAVE_WEBHOOK_URL = TEST_RAVE_WEBHOOK_URL
 
 
 @dataclass
