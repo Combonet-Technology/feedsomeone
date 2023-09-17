@@ -8,10 +8,10 @@ from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import ListView
+from rave_python import Rave
 
 from events.models import Events, Volunteer
 from mainsite.models import GalleryImage, TransactionHistory
-from rave_python import Rave
 from user.models import UserProfile
 from utils.views import custom_paginator, get_actual_template
 
@@ -143,6 +143,8 @@ def webhooks(request):
     tx_ref = request.GET['tx_ref']
     tx_id = request.GET['transaction_id']
     print(f'{status=} {tx_id=} {tx_ref=}')
+    print(request.GET)
+    print(request.GET.__dict__)
     return redirect('/')
 
 
