@@ -20,7 +20,8 @@ class TransactionHistory(models.Model):
     donor = models.ForeignKey(Donor, on_delete=models.SET_NULL, null=True, blank=True, related_name='donations')
     tx_status = models.CharField(max_length=100)
     tx_ref = models.CharField(max_length=100)
-    tr_id = models.IntegerField()
+    subscription = models.ForeignKey('PaymentSubscription', on_delete=models.SET_NULL, null=True, blank=True,
+                             related_name='tx_history')
     amount = models.FloatField(default=0.0)
     date_created = models.DateTimeField(default=timezone.now)
 

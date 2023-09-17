@@ -15,7 +15,7 @@ from ext_libs.rave.payment import RavePaymentHandler
 from mainsite.models import GalleryImage, TransactionHistory, PaymentSubscription
 from user.models import UserProfile
 from utils.enums import TransactionStatus, PaymentPlanStatus
-from utils.views import custom_paginator, get_actual_template
+from utils.views import custom_paginator, get_actual_template, generate_hashed_string
 
 
 def home(request):
@@ -140,14 +140,13 @@ def donate_thanks(request):
 
 def single_payment_view(request):
     if request.method == 'POST':
-        # Handle form data, e.g., amount, currency, customer data, etc.
         amount = request.POST.get('amount')
         currency = request.POST.get('currency')
         first_name = request.POST.get('first_name')
         last_name = request.POST.get('last_name')
         email = request.POST.get('email')
         customer_data = {"first_name": first_name, "last_name": last_name, "email": email}
-        tx_ref_id = "unique_tx_ref_id"  # Generate a unique transaction reference ID
+        tx_ref_id = generate_hashed_string(customer_data)
 
         # Initialize the payment handler
         handler = RavePaymentHandler()
