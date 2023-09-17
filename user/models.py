@@ -95,12 +95,6 @@ class Volunteer(models.Model):
         return self.user.email + "'s profile"
 
 
-class Donor(models.Model):
-    """users that donates to the Foundation"""
-    uuid = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
-    user = models.OneToOneField(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name='donor')
-
-
 class Lead(models.Model):
     """mark lead as converted based on user actions and create entry
      for them in donor or volunteers as the case may be"""

@@ -7,7 +7,8 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.test import TestCase
 
-from user.models import Donor, Lead, Volunteer
+from user.models import Lead, Volunteer
+from mainsite.models import Donor
 from utils.enums import EthnicityEnum, ReligionEnum, StateEnum
 
 

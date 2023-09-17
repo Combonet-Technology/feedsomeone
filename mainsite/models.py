@@ -1,3 +1,5 @@
+import uuid
+
 from django.urls import reverse
 from django.utils import timezone
 from django.db import models
@@ -9,17 +11,31 @@ from user.models import UserProfile
 
 
 class TransactionHistory(models.Model):
-    status = models.CharField(max_length=100)
+    tx_status = models.CharField(max_length=100)
     tx_ref = models.CharField(max_length=100)
     tr_id = models.IntegerField()
     amount = models.FloatField(default=0.0)
     date_created = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
-        return f'{self.status}-{self.tr_id}'
+        return f'{self.tx_status}-{self.tr_id}'
 
     class Meta:
         verbose_name_plural = 'Transactions'
+
+
+class PaymentSubscription(models.Model):
+    plan_id = models.CharField(null=True, blank=True)
+    plan_status = models.CharField(max_length=100)
+    plan_name = models.CharField(null=True, blank=True)
+    date_created = models.DateTimeField(default=timezone.now)
+    plan_duration = models.IntegerField()
+
+
+class Donor(models.Model):
+    """users that donates to the Foundation"""
+    uuid = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
+    user = models.OneToOneField(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name='donor')
 
 
 class GalleryImage(models.Model):
@@ -33,5 +49,3 @@ class GalleryImage(models.Model):
 
     class Meta:
         verbose_name_plural = 'Gallery Images'
-
-

@@ -93,3 +93,15 @@ class Currency(Enum):
     NAIRA = 'NGN'
     DOLLARS = 'USD'
     BRITISH_POUNDS = 'GBP'
+
+
+class PaymentPlanStatus(Enum):
+    CREATED = 'created'
+    ENDED = 'ended'
+    CANCELLED = 'cancelled'
+
+
+class TransactionStatus(Enum):
+    PENDING = 'pending'
+    SUCCESSFUL = 'successful'
+    FAILED = 'failed'
