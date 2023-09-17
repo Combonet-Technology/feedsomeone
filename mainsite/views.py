@@ -72,18 +72,6 @@ class FooterGalleryImages(ListView):
     paginate_by = 6
 
 
-def donate(request):
-    total_transaction = TransactionHistory.objects.aggregate(amount=Sum('amount'))
-    transacters = len(list(TransactionHistory.objects.all())) - 2
-    total_volunteers = len(list(UserProfile.objects.all()))
-    context = {
-        'total_amount': total_transaction.get('amount'),
-        'total_volunteers': total_volunteers,
-        'total_transaction': transacters,
-    }
-    return render(request, 'donate.html', context)
-
-
 @csrf_exempt
 def upload_images(request):
     if request.method == 'POST':
@@ -138,76 +126,58 @@ def donate_thanks(request):
     return render(request, 'thanks-donation.html')
 
 
-def single_payment_view(request):
+def donate(request):
     if request.method == 'POST':
         amount = request.POST.get('amount')
         currency = request.POST.get('currency')
         first_name = request.POST.get('first_name')
         last_name = request.POST.get('last_name')
         email = request.POST.get('email')
+        tx_ref_id = generate_hashed_string({"first_name": first_name, "last_name": last_name, "email": email})
+
+        # Initialize the payment handler
+        handler = RavePaymentHandler()
+
+        # Check the flag from the frontend (e.g., 'payment_type' field)
+        payment_type = request.POST.get('payment_type')
         customer_data = {"first_name": first_name, "last_name": last_name, "email": email}
-        tx_ref_id = generate_hashed_string(customer_data)
 
-        # Initialize the payment handler
-        handler = RavePaymentHandler()
-
-        # Create a single payment link and store transaction information
-        response_data = handler.pay_once(amount, currency, customer_data, tx_ref_id)
-
-        if response_data:
-            # Store transaction information in the database
-            TransactionHistory.objects.create(
-                tx_status=TransactionStatus.PENDING.value,
-                tx_ref=tx_ref_id,
-                tr_id=response_data.get('transaction_id', ''),
-                amount=amount
-            )
-
-            # Redirect to the payment link
-            return redirect(response_data['link'])
-
-    return render(request, 'single_payment_form.html')
-
-
-def subscription_payment_view(request):
-    if request.method == 'POST':
-        # Handle form data, e.g., subscription name, interval, duration, amount, customer data, etc.
-        subscription_name = request.POST.get('subscription_name')
-        subscription_interval = request.POST.get('subscription_interval')
-        subscription_duration = int(request.POST.get('subscription_duration'))
-        amount = request.POST.get('amount')
-        currency = request.POST.get('currency')
-        customer_data = {"name": request.POST.get('customer_name')}  # Replace with actual customer data
-        tx_ref_id = "unique_tx_ref_id"  # Generate a unique transaction reference ID
-
-        # Initialize the payment handler
-        handler = RavePaymentHandler()
-
-        # Create a subscription payment link, store payment plan, and transaction information
-        response_data = handler.pay_recurrent(amount, currency, customer_data, tx_ref_id, subscription_name,
-                                              subscription_interval, subscription_duration)
-
-        if response_data:
-            # Store payment plan information in the database
-            PaymentSubscription.objects.create(
+        if payment_type == 'one_time':
+            # Handle one-time payment
+            response_data = handler.pay_once(amount, currency, customer_data, tx_ref_id)
+        elif payment_type == 'recurrent':
+            # Handle recurrent payment
+            subscription_name = request.POST.get('subscription_name')
+            subscription_interval = request.POST.get('subscription_interval')
+            subscription_duration = int(request.POST.get('subscription_duration'))
+            response_data = handler.pay_recurrent(amount, currency, customer_data, tx_ref_id, subscription_name,
+                                                  subscription_interval, subscription_duration)
+            subscription = PaymentSubscription.objects.create(
                 plan_id=response_data.get('plan_id', ''),
                 plan_status=PaymentPlanStatus.CREATED.value,
                 plan_name=subscription_name,
                 plan_duration=subscription_duration
             )
+        else:
+            return HttpResponse("Invalid payment type")
 
-            # Store transaction information in the database
-            TransactionHistory.objects.create(
-                tx_status=TransactionStatus.PENDING.value,
-                tx_ref=tx_ref_id,
-                tr_id=response_data.get('transaction_id', ''),
-                amount=amount
-            )
+        TransactionHistory.objects.create(
+            tx_status=TransactionStatus.PENDING.value,
+            tx_ref=tx_ref_id,
+            tr_id=response_data.get('transaction_id', ''),
+            amount=amount)
 
-            # Redirect to the payment link
-            return redirect(response_data['link'])
-
-    return render(request, 'subscription_payment_form.html')
+        # Redirect to the payment link
+        return redirect(response_data['link'])
+    total_transaction = TransactionHistory.objects.aggregate(amount=Sum('amount'))
+    transactors = len(list(TransactionHistory.objects.all())) - 2
+    total_volunteers = len(list(UserProfile.objects.all()))
+    context = {
+        'total_amount': total_transaction.get('amount'),
+        'total_volunteers': total_volunteers,
+        'total_transaction': transactors,
+    }
+    return render(request, 'donate.html', context)
 
 
 def webhooks(request):
