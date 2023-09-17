@@ -143,8 +143,8 @@ def donate(request):
         customer_data = {"first_name": first_name, "last_name": last_name, "email": email}
 
         if payment_type == 'one_time':
-            # Handle one-time payment
             response_data = handler.pay_once(amount, currency, customer_data, tx_ref_id)
+            subscription = None
         elif payment_type == 'recurrent':
             # Handle recurrent payment
             subscription_name = request.POST.get('subscription_name')
@@ -161,13 +161,14 @@ def donate(request):
         else:
             return HttpResponse("Invalid payment type")
 
-        TransactionHistory.objects.create(
+        tx_history = TransactionHistory.objects.create(
             tx_status=TransactionStatus.PENDING.value,
             tx_ref=tx_ref_id,
             tr_id=response_data.get('transaction_id', ''),
             amount=amount)
-
-        # Redirect to the payment link
+        if subscription:
+            tx_history.subscription = subscription
+            tx_history.save()
         return redirect(response_data['link'])
     total_transaction = TransactionHistory.objects.aggregate(amount=Sum('amount'))
     transactors = len(list(TransactionHistory.objects.all())) - 2
