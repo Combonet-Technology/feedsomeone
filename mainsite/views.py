@@ -143,7 +143,10 @@ def single_payment_view(request):
         # Handle form data, e.g., amount, currency, customer data, etc.
         amount = request.POST.get('amount')
         currency = request.POST.get('currency')
-        customer_data = {"name": request.POST.get('customer_name')}  # Replace with actual customer data
+        first_name = request.POST.get('first_name')
+        last_name = request.POST.get('last_name')
+        email = request.POST.get('email')
+        customer_data = {"first_name": first_name, "last_name": last_name, "email": email}
         tx_ref_id = "unique_tx_ref_id"  # Generate a unique transaction reference ID
 
         # Initialize the payment handler

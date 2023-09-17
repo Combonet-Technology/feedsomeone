@@ -60,6 +60,10 @@ class RavePaymentHandler:
         self.RAVE_WEBHOOK_URL = FLW_PUBLIC_KEY
         self.OEF_CUSTOMIZATION = OEF_CUSTOMIZATION
         self.filter = dict()
+        self.headers = {
+            "Authorization": f"Bearer {self.FLW_SECRET_KEY}",
+            "Content-Type": "application/json"
+        }
 
     def pay_once(self, amount, currency, customer_data, tx_ref_id):
         return self._generate_payment_link(amount, currency, customer_data, tx_ref_id)
@@ -74,11 +78,6 @@ class RavePaymentHandler:
 
     def _generate_payment_link(self, amount, currency, customer_data, tx_ref_id, plan_id=None):
         try:
-            headers = {
-                "Authorization": f"Bearer {self.FLW_SECRET_KEY}",
-                "Content-Type": "application/json"
-            }
-
             data = {
                 "tx_ref": tx_ref_id,
                 "amount": amount,
@@ -95,7 +94,7 @@ class RavePaymentHandler:
             if plan_id:
                 data['payment_plan'] = plan_id
 
-            response = requests.post("https://api.flutterwave.com/v3/payments", headers=headers, json=data)
+            response = requests.post("https://api.flutterwave.com/v3/payments", headers=self.headers, json=data)
             response.raise_for_status()
             return response.json()
         except Exception as e:
@@ -107,9 +106,6 @@ class RavePaymentHandler:
             filters = self.filter
         try:
             url = "https://api.flutterwave.com/v3/payment-plans"
-            headers = {
-                "Authorization": f"Bearer {self.FLW_SECRET_KEY}",
-            }
 
             # Use a dictionary comprehension to construct the query parameters
             query_params = {
@@ -118,7 +114,7 @@ class RavePaymentHandler:
                 if value is not None
             }
 
-            response = requests.get(url, headers=headers, params=query_params)
+            response = requests.get(url, headers=self.headers, params=query_params)
 
             if response.status_code == 200:
                 print(json.dumps(response.json()['data'], indent=2))
@@ -136,17 +132,13 @@ class RavePaymentHandler:
                                  subscription_duration):
         try:
             url = "https://api.flutterwave.com/v3/payment-plans"
-            headers = {
-                "Authorization": f"Bearer {self.FLW_SECRET_KEY}",
-                "Content-Type": "application/json"
-            }
             data = {
                 "name": subscription_name,
                 "interval": subscription_interval,
                 "duration": subscription_duration if subscription_name else 1_000_000_000_000_000_000
             }
 
-            response = requests.post(url, headers=headers, json=data)
+            response = requests.post(url, headers=self.headers, json=data)
 
             if response.status_code == 200:
                 return response.json()
@@ -161,12 +153,7 @@ class RavePaymentHandler:
 
 
 if __name__ == '__main__':
-    handler = RavePaymentHandler(
-        secret_key="your_secret_key",
-        webhook_url="your_webhook_url",
-        customization="your_customization",
-        filters=None  # Pass an instance of SubscriptionFilter here if needed
-    )
+    handler = RavePaymentHandler()
 
     # Example: Pay once
     handler.pay_once(amount=100, currency="USD", customer_data={"name": "John Doe"}, tx_ref_id="12345")

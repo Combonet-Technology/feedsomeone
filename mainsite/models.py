@@ -10,7 +10,14 @@ from events.models import Events
 from user.models import UserProfile
 
 
+class Donor(models.Model):
+    """users that donates to the Foundation"""
+    uuid = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
+    user = models.OneToOneField(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name='donor')
+
+
 class TransactionHistory(models.Model):
+    donor = models.ForeignKey(Donor, on_delete=models.SET_NULL, null=True, blank=True, related_name='donations')
     tx_status = models.CharField(max_length=100)
     tx_ref = models.CharField(max_length=100)
     tr_id = models.IntegerField()
@@ -30,12 +37,6 @@ class PaymentSubscription(models.Model):
     plan_name = models.CharField(null=True, blank=True)
     date_created = models.DateTimeField(default=timezone.now)
     plan_duration = models.IntegerField()
-
-
-class Donor(models.Model):
-    """users that donates to the Foundation"""
-    uuid = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
-    user = models.OneToOneField(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name='donor')
 
 
 class GalleryImage(models.Model):
