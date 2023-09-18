@@ -1,53 +1,21 @@
+import json
 import os
 import sys
-from dataclasses import dataclass
-from typing import Optional
-import json
 
 import requests
 from dotenv import load_dotenv
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')))
-from utils.enums import SubscriptionPlan  # noqa: E402
+from utils.enums import Currency, SubscriptionPlan  # noqa: E402
 
 load_dotenv()
-FLW_SECRET_KEY = os.environ.get("RAVE_SECRET_KEY")
-FLW_PUBLIC_KEY = os.environ.get("RAVE_PUBLIC_KEY")
 ENCRYPTION_KEY = os.environ.get("FLW_ENCRYPTION_KEY")
-print(FLW_PUBLIC_KEY, FLW_SECRET_KEY)
 TEST_FLW_PUBLIC_KEY = 'FLWPUBK_TEST-1db61213ff9e3721f770e0697a9e60c5-X'
 TEST_FLW_SECRET_KEY = 'FLWSECK_TEST-8017fa700f790646a835491cefd646c7-X'
 TEST_ENCRYPTION_KEY = 'FLWSECK_TEST73746dfa2c5a'
 TEST_RAVE_WEBHOOK_URL = 'https://dev.oluwafemiebenezer.foundation/webhooks'
 RAVE_WEBHOOK_URL = TEST_RAVE_WEBHOOK_URL
 
-
-@dataclass
-class Customer:
-    full_name: Optional[str]
-    email: str
-    phone_number: Optional[str]
-    address: Optional[str]
-
-
-@dataclass
-class SubscriptionFilter:
-    from_date: Optional[str] = None
-    to_date: Optional[str] = None
-    page: Optional[int] = None
-    amount: Optional[int] = None
-    currency: Optional[str] = None
-    interval: Optional[str] = None
-    status: Optional[str] = None
-
-
-# Example usage:
-customer_data = Customer(
-    full_name="John Doe",
-    email="info@oluwafemiebenezerfoundation.org",
-    phone_number="+234-456-7890",
-    address="123 Main Street"
-)
 OEF_CUSTOMIZATION = {
     "title": "Oluwafemi Ebenezer Foundation",
     "logo": "https://oluwafemiebenezerfoundation.org/static/img/logo/logo.png"
@@ -55,9 +23,9 @@ OEF_CUSTOMIZATION = {
 
 
 class RavePaymentHandler:
-    def __init__(self):
-        self.FLW_SECRET_KEY = FLW_SECRET_KEY
-        self.RAVE_WEBHOOK_URL = FLW_PUBLIC_KEY
+    def __init__(self, private_key, public_key):
+        self.FLW_SECRET_KEY = private_key
+        self.RAVE_WEBHOOK_URL = public_key
         self.OEF_CUSTOMIZATION = OEF_CUSTOMIZATION
         self.filter = dict()
         self.headers = {
@@ -65,18 +33,20 @@ class RavePaymentHandler:
             "Content-Type": "application/json"
         }
 
-    def pay_once(self, amount, currency, customer_data, tx_ref_id):
+    def pay_once(self, amount: float, currency: Currency, customer_data, tx_ref_id: str):
         return self._generate_payment_link(amount, currency, customer_data, tx_ref_id)
 
-    def pay_recurrent(self, amount, currency, customer_data, tx_ref_id, subscription_name, subscription_interval,
-                      subscription_duration):
+    def pay_recurrent(self, amount, currency, customer_data, tx_ref_id,
+                      subscription_name, subscription_duration,
+                      subscription_interval=SubscriptionPlan.MONTHLY):
         plan = self.create_subscription_plan(subscription_name, subscription_interval, subscription_duration)
         if plan:
-            return self._generate_payment_link(amount, currency, customer_data, tx_ref_id, plan.get('id'))
+            return self._generate_payment_link(amount, currency, customer_data, tx_ref_id, plan['data']['id'])
         else:
             return None
 
-    def _generate_payment_link(self, amount, currency, customer_data, tx_ref_id, plan_id=None):
+    def _generate_payment_link(self, amount, currency, customer_data, tx_ref_id,
+                               plan_id=None):
         try:
             data = {
                 "tx_ref": tx_ref_id,
@@ -93,7 +63,7 @@ class RavePaymentHandler:
 
             if plan_id:
                 data['payment_plan'] = plan_id
-
+            print(data)
             response = requests.post("https://api.flutterwave.com/v3/payments", headers=self.headers, json=data)
             response.raise_for_status()
             return response.json()
@@ -101,18 +71,16 @@ class RavePaymentHandler:
             print("An error occurred:", str(e))
             return None
 
-    def get_subscription(self, filters: SubscriptionFilter = None):
-        if not filters:
-            filters = self.filter
-        try:
-            url = "https://api.flutterwave.com/v3/payment-plans"
-
-            # Use a dictionary comprehension to construct the query parameters
+    def get_subscription(self, filters=None):
+        query_params = None
+        if filters:
             query_params = {
                 key: value
                 for key, value in filters.__dict__.items()
                 if value is not None
             }
+        try:
+            url = "https://api.flutterwave.com/v3/payment-plans"
 
             response = requests.get(url, headers=self.headers, params=query_params)
 
@@ -141,6 +109,7 @@ class RavePaymentHandler:
             response = requests.post(url, headers=self.headers, json=data)
 
             if response.status_code == 200:
+                print(response.json())
                 return response.json()
             else:
                 print("Failed to create subscription plan. Status code:", response.status_code)
@@ -156,14 +125,21 @@ if __name__ == '__main__':
     handler = RavePaymentHandler()
 
     # Example: Pay once
-    handler.pay_once(amount=100, currency="USD", customer_data={"name": "John Doe"}, tx_ref_id="12345")
+    # handler.pay_once(amount=100, currency="USD", customer_data={"name": "John Doe"}, tx_ref_id="12345")
 
     # Example: Pay recurrent
-    handler.pay_recurrent(amount=50, currency="EUR", customer_data={"name": "Jane Smith"}, tx_ref_id="54321",
-                          plan_id="your_plan_id")
-
+    # test_sub = handler.pay_recurrent(amount=50, currency="EUR", customer_data={"name": "Jane Smith"},
+#                                  tx_ref_id='coemhrnrehfgd1',
+#                                  subscription_name="Trial Annual Test subscription", subscription_interval="annual",
+#                                  subscription_duration=12)
+    # print(test_sub)
     # Example: Get subscription plans
-    subscription_plans = handler.get_subscription()
-
+    # subscription_plans = handler.get_subscription()
+    # print(subscription_plans)
     # Example: Create a subscription plan
-    new_plan = handler.create_subscription_plan("Silver Plan", "monthly", 12)
+    # new_plan = handler.create_subscription_plan("Silver Plan", "monthly", 12)
+    # print(new_plan)
+    lnk = handler._generate_payment_link(amount=50000, currency="NGN",
+                                         customer_data={"name": "Jane Smith", "email": "test@mail.com"},
+                                         tx_ref_id='coehfgd1', plan_id=108344)
+    print(lnk)

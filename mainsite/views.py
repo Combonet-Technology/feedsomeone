@@ -2,20 +2,20 @@ import json
 import os
 from datetime import datetime
 
-from django.contrib import messages
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import ListView
-from rave_python import Rave
 
 from events.models import Events, Volunteer
 from ext_libs.rave.payment import RavePaymentHandler
-from mainsite.models import GalleryImage, TransactionHistory, PaymentSubscription
+from mainsite.models import (GalleryImage, PaymentSubscription,
+                             TransactionHistory)
 from user.models import UserProfile
-from utils.enums import TransactionStatus, PaymentPlanStatus
-from utils.views import custom_paginator, get_actual_template, generate_hashed_string
+from utils.enums import PaymentPlanStatus, TransactionStatus
+from utils.views import (custom_paginator, generate_hashed_string,
+                         get_actual_template)
 
 
 def home(request):
@@ -110,19 +110,20 @@ def donate_thanks(request):
         status = query_dict.get('status')
         tx_ref = query_dict.get('tx_ref')
         tr_id = query_dict.get('transaction_id')
-        # cannot remember why this is like this, will check it out when I want to extend payment
-        rave = Rave("FLWPUBK-ef604c855317a5fd377639a5a6744efe-X",
-                    "FLWSECK-439f20374599e622cf6b0b03bacf2793-X",
-                    usingEnv=False, production=True)
-        if status == 'successful':
-            res = rave.Card.verify(tx_ref)
-            amount = res.get('amount')
-        else:
-            messages.info(request, 'PAYMENT UNSUCCESSFUL AND REVERSED')
-            return redirect('mainsite:donate')
-        transaction = TransactionHistory.objects.create(
-            status=status, tx_ref=tx_ref, tr_id=tr_id, amount=amount)
-        transaction.save()
+        print(status, tx_ref, tr_id)
+        # # cannot remember why this is like this, will check it out when I want to extend payment
+        # rave = Rave("FLWPUBK-ef604c855317a5fd377639a5a6744efe-X",
+        #             "FLWSECK-439f20374599e622cf6b0b03bacf2793-X",
+        #             usingEnv=False, production=True)
+        # if status == 'successful':
+        #     res = rave.Card.verify(tx_ref)
+        #     amount = res.get('amount')
+        # else:
+        #     messages.info(request, 'PAYMENT UNSUCCESSFUL AND REVERSED')
+        #     return redirect('mainsite:donate')
+        # transaction = TransactionHistory.objects.create(
+        #     status=status, tx_ref=tx_ref, tr_id=tr_id, amount=amount)
+        # transaction.save()
     return render(request, 'thanks-donation.html')
 
 
@@ -136,7 +137,7 @@ def donate(request):
         tx_ref_id = generate_hashed_string({"first_name": first_name, "last_name": last_name, "email": email})
 
         # Initialize the payment handler
-        handler = RavePaymentHandler()
+        handler = RavePaymentHandler(os.environ.get("RAVE_SECRET_KEY"), os.environ.get("RAVE_PUBLIC_KEY"))
 
         # Check the flag from the frontend (e.g., 'payment_type' field)
         payment_type = request.POST.get('payment_type')
@@ -178,7 +179,7 @@ def donate(request):
         'total_volunteers': total_volunteers,
         'total_transaction': transactors,
     }
-    return render(request, 'donate.html', context)
+    return render(request, 'donate-copy.html', context)
 
 
 def webhooks(request):

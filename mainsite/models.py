@@ -1,8 +1,9 @@
 import uuid
+from dataclasses import dataclass
+from typing import Optional
 
-from django.urls import reverse
-from django.utils import timezone
 from django.db import models
+from django.utils import timezone
 
 # TODO reassign deleted posts and images to admin
 #  USING https://medium.com/@inem.patrick/django-database-integrity-foreignkey-on-delete-option-db7d160762e4
@@ -18,10 +19,11 @@ class Donor(models.Model):
 
 class TransactionHistory(models.Model):
     donor = models.ForeignKey(Donor, on_delete=models.SET_NULL, null=True, blank=True, related_name='donations')
+    tr_id = models.CharField(max_length=100, null=True, blank=True)
     tx_status = models.CharField(max_length=100)
     tx_ref = models.CharField(max_length=100)
     subscription = models.ForeignKey('PaymentSubscription', on_delete=models.SET_NULL, null=True, blank=True,
-                             related_name='tx_history')
+                                     related_name='tx_history')
     amount = models.FloatField(default=0.0)
     date_created = models.DateTimeField(default=timezone.now)
 
@@ -33,9 +35,9 @@ class TransactionHistory(models.Model):
 
 
 class PaymentSubscription(models.Model):
-    plan_id = models.CharField(null=True, blank=True)
+    plan_id = models.CharField(max_length=100, null=True, blank=True)
     plan_status = models.CharField(max_length=100)
-    plan_name = models.CharField(null=True, blank=True)
+    plan_name = models.CharField(max_length=100, null=True, blank=True)
     date_created = models.DateTimeField(default=timezone.now)
     plan_duration = models.IntegerField()
 
@@ -51,3 +53,22 @@ class GalleryImage(models.Model):
 
     class Meta:
         verbose_name_plural = 'Gallery Images'
+
+
+@dataclass
+class Customer:
+    full_name: Optional[str]
+    email: str
+    phone_number: Optional[str]
+    address: Optional[str]
+
+
+@dataclass
+class SubscriptionFilter:
+    from_date: Optional[str] = None
+    to_date: Optional[str] = None
+    page: Optional[int] = None
+    amount: Optional[int] = None
+    currency: Optional[str] = None
+    interval: Optional[str] = None
+    status: Optional[str] = None
