@@ -21,7 +21,7 @@ class TransactionHistory(models.Model):
     donor = models.ForeignKey(Donor, on_delete=models.SET_NULL, null=True, blank=True, related_name='donations')
     tr_id = models.CharField(max_length=100, null=True, blank=True)
     tx_status = models.CharField(max_length=100)
-    tx_ref = models.CharField(max_length=100)
+    tx_ref = models.CharField(max_length=255)
     subscription = models.ForeignKey('PaymentSubscription', on_delete=models.SET_NULL, null=True, blank=True,
                                      related_name='tx_history')
     amount = models.FloatField(default=0.0)
@@ -39,7 +39,6 @@ class PaymentSubscription(models.Model):
     plan_status = models.CharField(max_length=100)
     plan_name = models.CharField(max_length=100, null=True, blank=True)
     date_created = models.DateTimeField(default=timezone.now)
-    plan_duration = models.IntegerField()
 
 
 class GalleryImage(models.Model):
@@ -56,11 +55,15 @@ class GalleryImage(models.Model):
 
 
 @dataclass
-class Customer:
+class RequestCustomerPayment:
     full_name: Optional[str]
     email: str
     phone_number: Optional[str]
     address: Optional[str]
+
+    def validate(self):
+        if not self.email:
+            raise Exception("Email cannot be blank")
 
 
 @dataclass

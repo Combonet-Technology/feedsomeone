@@ -13,7 +13,7 @@ from ext_libs.rave.payment import RavePaymentHandler
 from mainsite.models import (GalleryImage, PaymentSubscription,
                              TransactionHistory)
 from user.models import UserProfile
-from utils.enums import PaymentPlanStatus, TransactionStatus
+from utils.enums import PaymentPlanStatus, SubscriptionPlan, TransactionStatus
 from utils.views import (custom_paginator, generate_hashed_string,
                          get_actual_template)
 
@@ -131,33 +131,27 @@ def donate(request):
     if request.method == 'POST':
         amount = request.POST.get('amount')
         currency = request.POST.get('currency')
-        first_name = request.POST.get('first_name')
-        last_name = request.POST.get('last_name')
+        full_name = request.POST.get('full_name')
         email = request.POST.get('email')
-        tx_ref_id = generate_hashed_string({"first_name": first_name, "last_name": last_name, "email": email})
-
-        # Initialize the payment handler
+        customer_data = {"full_name": full_name, "email": email}
+        tx_ref_id = generate_hashed_string(customer_data)
+        assert email is not None, "Email cannot be None"
         handler = RavePaymentHandler(os.environ.get("RAVE_SECRET_KEY"), os.environ.get("RAVE_PUBLIC_KEY"))
 
         # Check the flag from the frontend (e.g., 'payment_type' field)
-        payment_type = request.POST.get('payment_type')
-        customer_data = {"first_name": first_name, "last_name": last_name, "email": email}
-
-        if payment_type == 'one_time':
+        payment_type = request.POST.get('donation_type').lower()
+        customer_data = {"full_name": full_name, "email": email}
+        if payment_type == SubscriptionPlan.ONE_TIME.value:
             response_data = handler.pay_once(amount, currency, customer_data, tx_ref_id)
             subscription = None
-        elif payment_type == 'recurrent':
-            # Handle recurrent payment
-            subscription_name = request.POST.get('subscription_name')
-            subscription_interval = request.POST.get('subscription_interval')
-            subscription_duration = int(request.POST.get('subscription_duration'))
+        elif payment_type in ['monthly', 'quarterly', 'annually']:
+            subscription_name = f'{full_name}-{payment_type}-pledge'
             response_data = handler.pay_recurrent(amount, currency, customer_data, tx_ref_id, subscription_name,
-                                                  subscription_interval, subscription_duration)
+                                                  payment_type)
             subscription = PaymentSubscription.objects.create(
                 plan_id=response_data.get('plan_id', ''),
                 plan_status=PaymentPlanStatus.CREATED.value,
                 plan_name=subscription_name,
-                plan_duration=subscription_duration
             )
         else:
             return HttpResponse("Invalid payment type")
@@ -170,7 +164,8 @@ def donate(request):
         if subscription:
             tx_history.subscription = subscription
             tx_history.save()
-        return redirect(response_data['link'])
+        print(response_data)
+        return redirect(response_data['data']['link'])
     total_transaction = TransactionHistory.objects.aggregate(amount=Sum('amount'))
     transactors = len(list(TransactionHistory.objects.all())) - 2
     total_volunteers = len(list(UserProfile.objects.all()))
@@ -179,7 +174,7 @@ def donate(request):
         'total_volunteers': total_volunteers,
         'total_transaction': transactors,
     }
-    return render(request, 'donate-copy.html', context)
+    return render(request, 'donate-draft.html', context)
 
 
 def webhooks(request):

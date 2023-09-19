@@ -82,8 +82,7 @@ class ColorCodes(Enum):
 
 
 class SubscriptionPlan(Enum):
-    DAILY = 'daily'
-    WEEKLY = 'weekly'
+    ONE_TIME = 'once'
     MONTHLY = 'monthly'
     QUARTERLY = 'quarterly'
     ANNUALLY = 'annually'

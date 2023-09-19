@@ -46,7 +46,7 @@ def generate_uidb64(user):
 
 
 def generate_hashed_string(customer_data):
-    data_string = f"{customer_data['first_name']}-{customer_data['last_name']}-{customer_data['email']}"
+    data_string = f"{customer_data['full_name']}-{customer_data['email']}"
     hash_one = hashlib.sha256(data_string.encode()).hexdigest()
     current_timestamp = str(int(time.time()))
     hash_two = hashlib.sha256(current_timestamp.encode()).hexdigest()

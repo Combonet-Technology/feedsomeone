@@ -37,9 +37,9 @@ class RavePaymentHandler:
         return self._generate_payment_link(amount, currency, customer_data, tx_ref_id)
 
     def pay_recurrent(self, amount, currency, customer_data, tx_ref_id,
-                      subscription_name, subscription_duration,
+                      subscription_name,
                       subscription_interval=SubscriptionPlan.MONTHLY):
-        plan = self.create_subscription_plan(subscription_name, subscription_interval, subscription_duration)
+        plan = self.create_subscription_plan(subscription_name, subscription_interval)
         if plan:
             return self._generate_payment_link(amount, currency, customer_data, tx_ref_id, plan['data']['id'])
         else:
@@ -96,14 +96,12 @@ class RavePaymentHandler:
             print("An error occurred:", str(e))
             return None
 
-    def create_subscription_plan(self, subscription_name, subscription_interval: SubscriptionPlan,
-                                 subscription_duration):
+    def create_subscription_plan(self, subscription_name, subscription_interval: SubscriptionPlan):
         try:
             url = "https://api.flutterwave.com/v3/payment-plans"
             data = {
                 "name": subscription_name,
                 "interval": subscription_interval,
-                "duration": subscription_duration if subscription_name else 1_000_000_000_000_000_000
             }
 
             response = requests.post(url, headers=self.headers, json=data)
@@ -120,26 +118,44 @@ class RavePaymentHandler:
             print("An error occurred:", str(e))
             return None
 
+    def deactivate_plan(self, plan_ids):
+        if isinstance(plan_ids, int):
+            response = self._deactivate_single_plan(plan_ids)
+            return response
+
+        elif isinstance(plan_ids, list) and all(isinstance(id, int) for id in plan_ids):
+            responses = []
+            for id in plan_ids:
+                response = self._deactivate_single_plan(id)
+                responses.append(response)
+            return responses
+
+        else:
+            raise ValueError("plan_ids should be either an integer or a list of integers")
+
+    def _deactivate_single_plan(self, plan_id):
+        try:
+            url = f"https://api.flutterwave.com/v3/payment-plans/{plan_id}/cancel"
+            headers = {
+                "Authorization": f"Bearer {self.FLW_SECRET_KEY}",
+                "Content-Type": "application/json"
+            }
+
+            response = requests.post(url, headers=headers)
+            response.raise_for_status()
+
+            return response.json()
+
+        except Exception as e:
+            print("An error occurred during plan deactivation:", str(e))
+            return None
+
 
 if __name__ == '__main__':
-    handler = RavePaymentHandler()
-
-    # Example: Pay once
-    # handler.pay_once(amount=100, currency="USD", customer_data={"name": "John Doe"}, tx_ref_id="12345")
-
-    # Example: Pay recurrent
-    # test_sub = handler.pay_recurrent(amount=50, currency="EUR", customer_data={"name": "Jane Smith"},
-#                                  tx_ref_id='coemhrnrehfgd1',
-#                                  subscription_name="Trial Annual Test subscription", subscription_interval="annual",
-#                                  subscription_duration=12)
-    # print(test_sub)
-    # Example: Get subscription plans
-    # subscription_plans = handler.get_subscription()
-    # print(subscription_plans)
-    # Example: Create a subscription plan
-    # new_plan = handler.create_subscription_plan("Silver Plan", "monthly", 12)
-    # print(new_plan)
-    lnk = handler._generate_payment_link(amount=50000, currency="NGN",
-                                         customer_data={"name": "Jane Smith", "email": "test@mail.com"},
-                                         tx_ref_id='coehfgd1', plan_id=108344)
-    print(lnk)
+    handler = RavePaymentHandler(os.environ.get("RAVE_SECRET_KEY"), os.environ.get("RAVE_PUBLIC_KEY"))
+    print(f"Bearer {handler.FLW_SECRET_KEY}")
+    # lnk = handler.get_subscription()
+    # ids = [plan['id'] for plan in lnk['data']]
+    # print(ids)
+    # deleted = handler.deactivate_plan(ids)
+    # print(deleted)
