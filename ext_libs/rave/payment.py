@@ -10,11 +10,11 @@ from utils.enums import Currency, SubscriptionPlan  # noqa: E402
 
 load_dotenv()
 ENCRYPTION_KEY = os.environ.get("FLW_ENCRYPTION_KEY")
-TEST_FLW_PUBLIC_KEY = 'FLWPUBK_TEST-1db61213ff9e3721f770e0697a9e60c5-X'
-TEST_FLW_SECRET_KEY = 'FLWSECK_TEST-8017fa700f790646a835491cefd646c7-X'
-TEST_ENCRYPTION_KEY = 'FLWSECK_TEST73746dfa2c5a'
-TEST_RAVE_WEBHOOK_URL = 'https://dev.oluwafemiebenezer.foundation/webhooks'
-RAVE_WEBHOOK_URL = TEST_RAVE_WEBHOOK_URL
+TEST_FLW_PUBLIC_KEY = os.environ.get("TEST_FLW_PUBLIC_KEY")
+TEST_FLW_SECRET_KEY = os.environ.get("TEST_FLW_SECRET_KEY")
+TEST_ENCRYPTION_KEY = os.environ.get("TEST_ENCRYPTION_KEY")
+TEST_RAVE_WEBHOOK_URL = os.environ.get("TEST_RAVE_WEBHOOK_URL")
+RAVE_REDIRECT_URL = os.environ.get("RAVE_REDIRECT_URL")
 
 OEF_CUSTOMIZATION = {
     "title": "Oluwafemi Ebenezer Foundation",
@@ -25,7 +25,7 @@ OEF_CUSTOMIZATION = {
 class RavePaymentHandler:
     def __init__(self, private_key, public_key):
         self.FLW_SECRET_KEY = private_key
-        self.RAVE_WEBHOOK_URL = public_key
+        self.RAVE_REDIRECT_URL = 'https://dev.oluwafemiebenezer.foundation/donate'
         self.OEF_CUSTOMIZATION = OEF_CUSTOMIZATION
         self.filter = dict()
         self.headers = {
@@ -52,7 +52,7 @@ class RavePaymentHandler:
                 "tx_ref": tx_ref_id,
                 "amount": amount,
                 "currency": currency,
-                "redirect_url": self.RAVE_WEBHOOK_URL,
+                "redirect_url": self.RAVE_REDIRECT_URL,
                 "meta": {
                     "consumer_id": 23,
                     "consumer_mac": "92a3-912ba-1192a"
