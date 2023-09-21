@@ -11,10 +11,15 @@ from django.views.generic import ListView
 
 from events.models import Events, Volunteer
 from ext_libs.rave.payment import RavePaymentHandler
-from mainsite.models import (Donor, GalleryImage, PaymentSubscription,
-                             TransactionHistory)
+from mainsite.models import GalleryImage, TransactionHistory
+from mainsite.utils import (create_transaction_history, get_or_create_donor,
+                            get_or_create_user_profile,
+                            handle_failed_transaction,
+                            handle_one_time_donation,
+                            handle_recurrent_donation,
+                            handle_successful_transaction)
 from user.models import UserProfile
-from utils.enums import PaymentPlanStatus, SubscriptionPlan, TransactionStatus
+from utils.enums import SubscriptionPlan, TransactionStatus
 from utils.views import (custom_paginator, generate_hashed_string,
                          get_actual_template)
 
@@ -107,57 +112,55 @@ def upload_images(request):
 
 def donate(request):
     handler = RavePaymentHandler(os.environ.get("RAVE_SECRET_KEY"), os.environ.get("RAVE_PUBLIC_KEY"))
+
     if request.method == 'POST':
-        amount = request.POST.get('amount')
-        currency = request.POST.get('currency')
-        full_name = request.POST.get('full_name')
-        email = request.POST.get('email')
-        customer_data = {"full_name": full_name, "email": email}
-        names = full_name.split(' ')
-        first_name = names[0]
-        last_name = ' '.join(names[1:])
-        user_profile, created = UserProfile.objects.get_or_create(email=email)
+        return handle_donation_post(request, handler)
 
-        if not created:
-            # The UserProfile already exists, update the attributes
-            user_profile.first_name = first_name
-            user_profile.last_name = last_name
-            user_profile.save()
+    if request.method == 'GET':
+        return handle_donation_get(request, handler)
 
-        donor = Donor.objects.filter(user=user_profile).first()
-        if not donor:
-            donor = Donor.objects.create(user=user_profile)
+    total_transaction = TransactionHistory.objects.aggregate(amount=Sum('amount'))
+    transactors = len(list(TransactionHistory.objects.all())) - 2
+    total_volunteers = len(list(UserProfile.objects.all()))
+    context = {
+        'total_amount': total_transaction.get('amount'),
+        'total_volunteers': total_volunteers,
+        'total_transaction': transactors,
+    }
+    return render(request, 'donate-draft.html', context)
 
-        tx_ref_id = generate_hashed_string(customer_data)
-        assert email is not None, "Email cannot be None"
 
-        # Check the flag from the frontend (e.g., 'payment_type' field)
-        payment_type = request.POST.get('donation_type').lower()
-        customer_data = {"full_name": full_name, "email": email}
-        if payment_type == SubscriptionPlan.ONE_TIME.value:
-            response_data = handler.pay_once(amount, currency, customer_data, tx_ref_id)
-            subscription = None
-        elif payment_type in ['monthly', 'quarterly', 'annually']:
-            subscription_name = f'{full_name}-{payment_type}-pledge'
-            response_data, payment_plan = handler.pay_recurrent(amount, currency, customer_data, tx_ref_id,
-                                                                subscription_name,
-                                                                payment_type)
-            subscription = PaymentSubscription.objects.create(
-                plan_id=payment_plan,
-                plan_status=PaymentPlanStatus.CREATED.value,
-                plan_name=subscription_name,
-            )
-        else:
-            return HttpResponse("Invalid payment type")
+def handle_donation_post(request, handler):
+    amount = request.POST.get('amount')
+    currency = request.POST.get('currency')
+    full_name = request.POST.get('full_name')
+    email = request.POST.get('email')
+    donation_type = request.POST.get('donation_type')
 
-        tx_history = TransactionHistory.objects.create(
-            tx_status=TransactionStatus.PENDING.value,
-            tx_ref=tx_ref_id,
-            amount=amount, donor=donor)
-        if subscription:
-            tx_history.subscription = subscription
-            tx_history.save()
-        return redirect(response_data['data']['link'])
+    customer_data = {"full_name": full_name, "email": email}
+    names = full_name.split(' ')
+    first_name = names[0]
+    last_name = ' '.join(names[1:])
+    user_profile = get_or_create_user_profile(email, first_name, last_name)
+    donor = get_or_create_donor(user_profile)
+
+    tx_ref_id = generate_hashed_string(customer_data)
+    assert email is not None, "Email cannot be None"
+
+    if donation_type == SubscriptionPlan.ONE_TIME.value:
+        response_data, subscription = handle_one_time_donation(handler, amount, currency, customer_data, tx_ref_id)
+    elif donation_type in ['monthly', 'quarterly', 'annually']:
+        response_data, subscription = handle_recurrent_donation(
+            handler, amount, currency, customer_data, tx_ref_id, full_name, donation_type
+        )
+    else:
+        return HttpResponse("Invalid payment type")
+
+    create_transaction_history(TransactionStatus.PENDING.value, tx_ref_id, amount, donor, subscription)
+    return redirect(response_data['data']['link'])
+
+
+def handle_donation_get(request, handler):
     query_dict = request.GET
     if query_dict:
         status = query_dict.get('status')
@@ -168,30 +171,12 @@ def donate(request):
         transaction.tr_id = tr_id
 
         if status == TransactionStatus.SUCCESSFUL.value:
-            verified_amount = handler.verify_transaction(tr_id).get('amount')
-            if verified_amount == transaction.amount:
-                transaction.tx_status = status
-            if transaction.subscription is not None:
-                transaction.subscription__status = PaymentPlanStatus.ACTIVE.value
-            transaction.save()
+            handle_successful_transaction(handler, transaction)
         else:
-            transaction.tx_status = 'failed'
-            if status == 'cancelled' and transaction.subscription is not None:
-                transaction.subscription.plan_status = 'cancelled'
-                transaction.subscription.save()
-            transaction.save()
+            handle_failed_transaction(transaction)
             messages.info(request, 'PAYMENT UNSUCCESSFUL AND REVERSED')
             return redirect('mainsite:donate')
         return render(request, 'thanks-donation.html')
-    total_transaction = TransactionHistory.objects.aggregate(amount=Sum('amount'))
-    transactors = len(list(TransactionHistory.objects.all())) - 2
-    total_volunteers = len(list(UserProfile.objects.all()))
-    context = {
-        'total_amount': total_transaction.get('amount'),
-        'total_volunteers': total_volunteers,
-        'total_transaction': transactors,
-    }
-    return render(request, 'donate-draft.html', context)
 
 
 def webhooks(request):
