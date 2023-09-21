@@ -172,11 +172,12 @@ def handle_donation_get(request, handler):
 
         if status == TransactionStatus.SUCCESSFUL.value:
             handle_successful_transaction(handler, transaction)
+            return render(request, 'thanks-donation.html')
         else:
             handle_failed_transaction(transaction)
             messages.info(request, 'PAYMENT UNSUCCESSFUL AND REVERSED')
             return redirect('mainsite:donate')
-        return render(request, 'thanks-donation.html')
+    return render(request, 'donate-draft.html')
 
 
 def webhooks(request):
