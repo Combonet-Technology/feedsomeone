@@ -36,12 +36,13 @@ def handle_recurrent_donation(handler, amount, currency, customer_data, tx_ref_i
     return response_data, subscription
 
 
-def create_transaction_history(tx_status, tx_ref_id, amount, donor, subscription):
+def create_transaction_history(tx_status, tx_ref_id, amount, donor, subscription, currency):
     tx_history = TransactionHistory.objects.create(
         tx_status=tx_status,
         tx_ref=tx_ref_id,
         amount=amount,
-        donor=donor
+        donor=donor,
+        currency=currency
     )
     if subscription:
         tx_history.subscription = subscription
