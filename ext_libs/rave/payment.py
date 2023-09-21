@@ -24,7 +24,7 @@ OEF_CUSTOMIZATION = {
 
 class RavePaymentHandler:
     def __init__(self, private_key, public_key):
-        self.FLW_SECRET_KEY = TEST_FLW_SECRET_KEY
+        self.FLW_SECRET_KEY = private_key
         self.RAVE_REDIRECT_URL = RAVE_REDIRECT_URL
         self.OEF_CUSTOMIZATION = OEF_CUSTOMIZATION
         self.filter = dict()
@@ -40,8 +40,11 @@ class RavePaymentHandler:
                       subscription_name,
                       subscription_interval=SubscriptionPlan.MONTHLY):
         plan = self.create_subscription_plan(subscription_name, subscription_interval)
+
         if plan:
-            return self._generate_payment_link(amount, currency, customer_data, tx_ref_id, plan['data']['id'])
+            plan_id = plan['data']['id']
+            url = self._generate_payment_link(amount, currency, customer_data, tx_ref_id, plan_id)
+            return url, plan_id
         else:
             return None
 
@@ -111,6 +114,25 @@ class RavePaymentHandler:
                 return response.json()
             else:
                 print("Failed to create subscription plan. Status code:", response.status_code)
+                print("Response:", response.text)
+                return None
+
+        except Exception as e:
+            print("An error occurred:", str(e))
+            return None
+
+    def verify_transaction(self, tr_id):
+        print('here')
+        try:
+            url = f'https://api.flutterwave.com/v3/transactions/{tr_id}/verify'
+
+            response = requests.get(url, headers=self.headers)
+            print(response.json())
+            if response.status_code == 200:
+                print(response.json())
+                return response.json()['data']
+            else:
+                print("Failed to verify transaction. Status code:", response.status_code)
                 print("Response:", response.text)
                 return None
 

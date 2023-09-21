@@ -96,6 +96,7 @@ class Currency(Enum):
 
 class PaymentPlanStatus(Enum):
     CREATED = 'created'
+    ACTIVE = 'active'
     ENDED = 'ended'
     CANCELLED = 'cancelled'
 

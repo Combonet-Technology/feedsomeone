@@ -21,6 +21,7 @@ class TransactionHistory(models.Model):
     donor = models.ForeignKey(Donor, on_delete=models.SET_NULL, null=True, blank=True, related_name='donations')
     tr_id = models.CharField(max_length=100, null=True, blank=True)
     tx_status = models.CharField(max_length=100)
+    tx_currency = models.CharField(max_length=100)
     tx_ref = models.CharField(max_length=255)
     subscription = models.ForeignKey('PaymentSubscription', on_delete=models.SET_NULL, null=True, blank=True,
                                      related_name='tx_history')
