@@ -156,7 +156,7 @@ def handle_donation_post(request, handler):
     else:
         return HttpResponse("Invalid payment type")
 
-    create_transaction_history(TransactionStatus.PENDING.value, tx_ref_id, amount, donor, subscription)
+    create_transaction_history(TransactionStatus.PENDING.value, tx_ref_id, amount, donor, subscription, currency)
     return redirect(response_data['data']['link'])
 
 

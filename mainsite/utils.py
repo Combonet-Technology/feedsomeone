@@ -42,7 +42,7 @@ def create_transaction_history(tx_status, tx_ref_id, amount, donor, subscription
         tx_ref=tx_ref_id,
         amount=amount,
         donor=donor,
-        currency=currency
+        tx_currency=currency
     )
     if subscription:
         tx_history.subscription = subscription
