@@ -2,6 +2,7 @@ import json
 import os
 from datetime import datetime
 
+from django.contrib import messages
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
@@ -10,7 +11,7 @@ from django.views.generic import ListView
 
 from events.models import Events, Volunteer
 from ext_libs.rave.payment import RavePaymentHandler
-from mainsite.models import (GalleryImage, PaymentSubscription,
+from mainsite.models import (Donor, GalleryImage, PaymentSubscription,
                              TransactionHistory)
 from user.models import UserProfile
 from utils.enums import PaymentPlanStatus, SubscriptionPlan, TransactionStatus
@@ -104,39 +105,31 @@ def upload_images(request):
         return render(request, 'file_upload.html', {'event': event})
 
 
-def donate_thanks(request):
-    query_dict = request.GET
-    if query_dict:
-        status = query_dict.get('status')
-        tx_ref = query_dict.get('tx_ref')
-        tr_id = query_dict.get('transaction_id')
-        print(status, tx_ref, tr_id)
-        # # cannot remember why this is like this, will check it out when I want to extend payment
-        # rave = Rave("FLWPUBK-ef604c855317a5fd377639a5a6744efe-X",
-        #             "FLWSECK-439f20374599e622cf6b0b03bacf2793-X",
-        #             usingEnv=False, production=True)
-        # if status == 'successful':
-        #     res = rave.Card.verify(tx_ref)
-        #     amount = res.get('amount')
-        # else:
-        #     messages.info(request, 'PAYMENT UNSUCCESSFUL AND REVERSED')
-        #     return redirect('mainsite:donate')
-        # transaction = TransactionHistory.objects.create(
-        #     status=status, tx_ref=tx_ref, tr_id=tr_id, amount=amount)
-        # transaction.save()
-    return render(request, 'thanks-donation.html')
-
-
 def donate(request):
+    handler = RavePaymentHandler(os.environ.get("RAVE_SECRET_KEY"), os.environ.get("RAVE_PUBLIC_KEY"))
     if request.method == 'POST':
         amount = request.POST.get('amount')
         currency = request.POST.get('currency')
         full_name = request.POST.get('full_name')
         email = request.POST.get('email')
         customer_data = {"full_name": full_name, "email": email}
+        names = full_name.split(' ')
+        first_name = names[0]
+        last_name = ' '.join(names[1:])
+        user_profile, created = UserProfile.objects.get_or_create(email=email)
+
+        if not created:
+            # The UserProfile already exists, update the attributes
+            user_profile.first_name = first_name
+            user_profile.last_name = last_name
+            user_profile.save()
+
+        donor = Donor.objects.filter(user=user_profile).first()
+        if not donor:
+            donor = Donor.objects.create(user=user_profile)
+
         tx_ref_id = generate_hashed_string(customer_data)
         assert email is not None, "Email cannot be None"
-        handler = RavePaymentHandler(os.environ.get("RAVE_SECRET_KEY"), os.environ.get("RAVE_PUBLIC_KEY"))
 
         # Check the flag from the frontend (e.g., 'payment_type' field)
         payment_type = request.POST.get('donation_type').lower()
@@ -146,10 +139,11 @@ def donate(request):
             subscription = None
         elif payment_type in ['monthly', 'quarterly', 'annually']:
             subscription_name = f'{full_name}-{payment_type}-pledge'
-            response_data = handler.pay_recurrent(amount, currency, customer_data, tx_ref_id, subscription_name,
-                                                  payment_type)
+            response_data, payment_plan = handler.pay_recurrent(amount, currency, customer_data, tx_ref_id,
+                                                                subscription_name,
+                                                                payment_type)
             subscription = PaymentSubscription.objects.create(
-                plan_id=response_data.get('plan_id', ''),
+                plan_id=payment_plan,
                 plan_status=PaymentPlanStatus.CREATED.value,
                 plan_name=subscription_name,
             )
@@ -159,13 +153,36 @@ def donate(request):
         tx_history = TransactionHistory.objects.create(
             tx_status=TransactionStatus.PENDING.value,
             tx_ref=tx_ref_id,
-            tr_id=response_data.get('transaction_id', ''),
-            amount=amount)
+            amount=amount, donor=donor)
         if subscription:
             tx_history.subscription = subscription
             tx_history.save()
-        print(response_data)
         return redirect(response_data['data']['link'])
+    query_dict = request.GET
+    if query_dict:
+        status = query_dict.get('status')
+        tx_ref = query_dict.get('tx_ref')
+        tr_id = query_dict.get('transaction_id')
+        print(status, tx_ref, tr_id)
+        transaction = TransactionHistory.objects.get(tx_ref=tx_ref)
+        transaction.tr_id = tr_id
+
+        if status == TransactionStatus.SUCCESSFUL.value:
+            verified_amount = handler.verify_transaction(tr_id).get('amount')
+            if verified_amount == transaction.amount:
+                transaction.tx_status = status
+            if transaction.subscription is not None:
+                transaction.subscription__status = PaymentPlanStatus.ACTIVE.value
+            transaction.save()
+        else:
+            transaction.tx_status = 'failed'
+            if status == 'cancelled' and transaction.subscription is not None:
+                transaction.subscription.plan_status = 'cancelled'
+                transaction.subscription.save()
+            transaction.save()
+            messages.info(request, 'PAYMENT UNSUCCESSFUL AND REVERSED')
+            return redirect('mainsite:donate')
+        return render(request, 'thanks-donation.html')
     total_transaction = TransactionHistory.objects.aggregate(amount=Sum('amount'))
     transactors = len(list(TransactionHistory.objects.all())) - 2
     total_volunteers = len(list(UserProfile.objects.all()))
