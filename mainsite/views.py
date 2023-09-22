@@ -166,7 +166,6 @@ def handle_donation_get(request, handler):
         status = query_dict.get('status')
         tx_ref = query_dict.get('tx_ref')
         tr_id = query_dict.get('transaction_id')
-        print(status, tx_ref, tr_id)
         transaction = TransactionHistory.objects.get(tx_ref=tx_ref)
         transaction.tr_id = tr_id
 
