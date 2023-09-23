@@ -24,7 +24,7 @@ OEF_CUSTOMIZATION = {
 
 class RavePaymentHandler:
     def __init__(self, private_key, public_key):
-        self.FLW_SECRET_KEY = TEST_FLW_SECRET_KEY
+        self.FLW_SECRET_KEY = private_key
         self.RAVE_REDIRECT_URL = RAVE_REDIRECT_URL
         self.OEF_CUSTOMIZATION = OEF_CUSTOMIZATION
         self.filter = dict()
