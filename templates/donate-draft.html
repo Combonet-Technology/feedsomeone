@@ -1,0 +1,349 @@
+{% load static %}
+{% load humanize %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-SN22VH6DM1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'G-SN22VH6DM1');
+    </script>
+    <meta charset="UTF-8">
+    <title> FEEDSOMEONE | donate to our causes</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:200,300,400,500,600,700,800&display=swap"
+          rel="stylesheet">
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <link rel="stylesheet" href="{% static 'css/animate.css' %}">
+
+    <link rel="stylesheet" href="{% static 'css/owl.carousel.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/owl.theme.default.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/magnific-popup.css' %}">
+
+
+    <link rel="stylesheet" href="{% static 'css/bootstrap-datepicker.css' %}">
+    <link rel="stylesheet" href="{% static 'css/jquery.timepicker.css' %}">
+
+    <link rel="stylesheet" href="{% static 'css/flaticon.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/fontawesome.min.css">
+
+    <link rel="stylesheet" href="{% static 'css/donatestyle.css' %}">
+    <style>
+        .form-group {
+        margin-bottom: 5px;
+    }
+    .donation-wrap .total-donate {
+        padding: 4px 10px !important;
+    }
+    input::placeholder, .select-first {
+    color: #ddd !important;
+}
+    /* Portrait and Landscape */
+    @media screen
+      and (max-width: 500px)
+      and (max-height: 640px) {
+     div#total_sum h2.number{font-size:1rem !important}
+     #back_home div{
+        text-align: center !important;
+        padding: 0 50px;
+        margin-left: 15px;
+     }
+    }
+
+    /* Portrait */
+    @media screen
+      and (max-width: 500px)
+      and (max-height: 640px)
+      and (orientation: portrait) {
+      div#total_sum h2.number{font-size:1rem !important}
+       #back_home div{
+        text-align: center !important;
+        padding: 0 50px;
+        margin-left: 15px;
+     }
+    }
+
+    /* Landscape */
+    @media screen
+      and (max-width: 500px)
+      and (max-height: 640px)
+      and (orientation: landscape) {
+    div#total_sum h2.number{font-size:1rem !important}
+     #back_home div{
+        text-align: center !important;
+        padding: 0 50px;
+        margin-left: 15px;
+     }
+    }
+
+    .donation_body {
+    align-items: flex-start;
+    background: url({% static 'img/section/donate-banner.jpg' %}) center no-repeat;
+    background-image: linear-gradient(rgba(18, 18, 44, 0.8), rgba(18, 18, 44, 0.8)), linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url({% static 'img/section/donate-banner.jpg' %});
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-color: white;
+    display: flex;
+<!--    width:100%;-->
+    flex-wrap: wrap;
+    height: 100%;
+    justify-content: flex-start;
+    overflow: auto;
+    position: relative;
+}
+#donation-form {
+background: white;}
+.appointment .form-group label {
+  color: #fd645b;
+ }
+.form-control{
+display: block;
+    border: 1px solid #c4cdd5 !important;
+    border-radius: 4px !important;
+    font-family: inherit !important;
+    letter-spacing: 1px !important;
+    padding: 10px !important;
+    line-height: 1.5em !important;
+
+}.btn.btn-secondary.btn-outline-secondary {
+  border: 2px solid #fd645b;
+  background: #eee7e7;
+  color: #221212;
+}
+
+.btn {
+  padding: 12px 14px; !important}
+#back_home {
+  margin-left: 5px;
+
+}
+    </style>
+</head>
+<body>
+<div class="donation_body">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-7 wrap-about py-5" style="padding-top: 1rem !important;">
+                <div class="heading-section pr-md-5 pt-md-5">
+                    <h2 class="mb-4" style="font-size: 35px; line-height: 53px; text-align: left; color: white; ">
+                        Support our noble causes</h2>
+                    <p style="text-align: left; color: white; line-height: 2em; font-weight: bold; font-size: 1em">
+                        Hunger and health disparities are pressing challenges in our community, especially for orphans.
+                        At the Oluwafemi Ebenezer Foundation, we're committed to comprehensive support, addressing
+                        hunger, healthcare, and mental well-being.
+                    </p>
+
+                    <hr style="border: 1px solid white; margin: 20px 0;">
+
+                    <h3 style="font-size: 24px; font-weight: bold; text-align: left; color: white;">Orphanage
+                        Visits:</h3>
+                    <p style="text-align: left; color: white;">We regularly visit orphanages, spreading love and
+                        support. With your help, we provide essential items like food, clothing, educational materials,
+                        and toys to bring joy to the children's lives.</p>
+
+                    <h3 style="font-size: 24px; font-weight: bold; text-align: left; color: white;">Medical
+                        Outreaches:</h3>
+                    <p style="text-align: left; color: white;">We conduct medical outreaches, offering <span
+                            style="text-decoration: underline;">free check-ups</span>, consultations, and medications.
+                        Your support extends our reach, ensuring essential healthcare access for more people.</p>
+
+                    <h3 style="font-size: 24px; font-weight: bold; text-align: left; color: white;">Mental Health
+                        Aid:</h3>
+                    <p style="text-align: left; color: white;">We provide counseling and support services to address
+                        <span style="font-style: italic;">trauma, anxiety, and depression</span>, aiming to restore hope
+                        and resilience in our community.</p>
+
+                    <h3 style="font-size: 24px; font-weight: bold; text-align: left; color: white;">Health Program
+                        Sensitization:</h3>
+                    <p style="text-align: left; color: white;">We empower our community with <span
+                            style="text-transform: uppercase;">health education</span>, promoting hygiene and disease
+                        prevention. Informed individuals make healthier choices.</p>
+
+                    <p style="text-align: left; color: white;">Together, we build a healthier, happier, and more
+                        prosperous community. <span style="font-weight: bold;">Join us in the fight for improved health and against hunger, contributing to a brighter future for all.</span>
+                    </p>
+
+                    <p style="text-align: left; color: white; font-size: 1em;">For additional information or to request
+                        our USD account number, please email <a href="mailto:info@oluwafemiebenezerfoundation.org"
+                                                                style="color: #0056b3; text-decoration: underline;">info@oluwafemiebenezerfoundation.org</a>
+                        or call <span style="color: #0056b3; font-weight: bold;">+2348170838856</span>.</p>
+
+                </div>
+                <div class="row my-md-5">
+                    <!--                <div class="col-md-6 d-flex counter-wrap">-->
+                    <!--                    <div class="block-18 d-flex">-->
+                    <!--                        <div class="icon d-flex align-items-center justify-content-center">-->
+                    <!--                            <span class="flaticon-volunteer"></span>-->
+                    <!--                        </div>-->
+                    <!--                        <div class="desc">-->
+                    <!--                            <div class="text">-->
+                    <!--                                <strong class="number" data-number="{{total_volunteers}}">{{total_volunteers}}+</strong>-->
+                    <!--                            </div>-->
+                    <!--                            <div class="text">-->
+                    <!--                                <span>Volunteers</span>-->
+                    <!--                            </div>-->
+                    <!--                        </div>-->
+                    <!--                    </div>-->
+                    <!--                </div>-->
+                    <!--                <div class="col-md-6 d-flex counter-wrap">-->
+                    <!--                    <div class="block-18 d-flex">-->
+                    <!--                        <div class="icon d-flex align-items-center justify-content-center">-->
+                    <!--                            <span class="flaticon-piggy-bank"></span>-->
+                    <!--                        </div>-->
+                    <!--                        <div class="desc">-->
+                    <!--                            <div class="text">-->
+                    <!--                                <strong class="number" data-number="150">150+</strong>-->
+                    <!--                            </div>-->
+                    <!--                            <div class="text">-->
+                    <!--                                <span>People Impacted</span>-->
+                    <!--                            </div>-->
+                    <!--                        </div>-->
+                    <!--                    </div>-->
+                    <!--                </div>-->
+                </div>
+            </div>
+            <div class="col-md-5 order-md-last align-items-stretch">
+                <div class="donation-wrap">
+                    <div class="row text-center">
+                        {% if messages %}
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert" style="
+		width: 94%;
+		margin-left:14px;
+		margin-bottom: 0;
+		position: absolute;
+		z-index: 1;
+		top: 38px;
+		">
+                            <strong>{{message}}</strong>
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        {% endfor %}
+                        {% endif %}
+                    </div>
+                    <div class="row text-center">
+                        {% if messages %}
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert" style="
+		width: 94%;
+		margin-left:14px;
+		margin-bottom: 0;
+		position: absolute;
+		z-index: 1;
+		top: 38px;
+		">
+                            <strong>{{message}}</strong>
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        {% endfor %}
+                        {% endif %}
+                    </div>
+<!--                    <div class="total-donate align-items-center" id="total_sum">-->
+<!--                        <span class="fa flaticon-cleaning"></span>-->
+<!--                        <h2 class="number"-->
+<!--                            style="color: white;font-weight: bold;font-size: 1.4rem;padding: 20px 6px 0;">-->
+<!--                            Support the cause against poverty</h2>-->
+<!--                    </div>-->
+                    <form id="donation-form" class="appointment" action="{% url 'mainsite:donate' %}" method="POST">
+                        {% csrf_token %}
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="donation-type">Donation Type</label>
+                                <div class="form-field">
+                                    <div class="select-wrap">
+                                        <div class="icon"><span class="fa fa-chevron-down"></span></div>
+                                        <select name="donation_type" id="donation-type" class="form-control" required>
+                                            <option value="" class="select-first" disabled selected>Choose donation structure</option>
+                                            <option value="once">Donate Once</option>
+                                            <option value="monthly">Donate Monthly</option>
+                                            <option value="quarterly">Donate Quarterly</option>
+                                            <option value="annually">Donate Annually</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="fullname">Full Name</label>
+                                <div class="input-wrap">
+                                    <div class="icon"><span class="fa fa-user"></span></div>
+                                    <input type="text" class="form-control" name="full_name"
+                                           id="fullname" placeholder="Enter your full name">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="email">Email Address</label>
+                                <div class="input-wrap">
+                                    <div class="icon"><span class="fa fa-paper-plane"></span></div>
+                                    <input type="email" class="form-control" id="emailaddr"
+                                           name="email" placeholder="Enter your email address">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="amount">Amount</label>
+                                <div class="input-wrap">
+                                    <div class="icon"><span class="fa fa-money"></span></div>
+                                    <input type="text" class="form-control" name="amount" id="amount" placeholder="Enter amount to donate">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="donation-type">Currency</label>
+                                <div class="form-field">
+                                    <div class="select-wrap">
+                                        <div class="icon"><span class="fa fa-chevron-down"></span></div>
+                                        <select name="currency" id="currency" class="form-control" required>
+                                            <option value="" class="select-first" disabled selected>Choose currency</option>
+                                            <option value="NGN">Naira</option>
+                                            <option value="USD">Dollars</option>
+                                            <option value="GBP">Pounds</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-12 pt-5">
+                            <div class="form-group">
+                                <!--									<input type="button" class="btn btn-secondary py-3 px-4" value="Donate Stack" onclick="payWithPaystack()">-->
+                                <button type="submit" class="btn btn-secondary py-3 px-4">Donate
+                                    Now
+                                </button>
+                                <!--									<button type="button" onClick="makePayment()">Pay Now</button>-->
+                            </div>
+                        </div>
+                    </form>
+                    <div class="row text-center col-md-12" style="padding-top:20px" id="back_home">
+                        <div><p><a href="{% url 'register'%}" class="btn btn-secondary mr-4">Become A
+                            Volunteer</a></p></div>
+                        <div><p><a href="/" class="btn btn-secondary btn-outline-secondary"><i class="fa fa-home"></i>Back
+                            to
+                            Home</a></p></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</body>
+</html>
