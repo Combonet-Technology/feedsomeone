@@ -112,7 +112,7 @@ def upload_images(request):
 
 def donate(request):
     handler = RavePaymentHandler(os.environ.get("RAVE_SECRET_KEY"), os.environ.get("RAVE_PUBLIC_KEY"))
-
+    print(f'{handler=}')
     if request.method == 'POST':
         return handle_donation_post(request, handler)
 
@@ -136,7 +136,7 @@ def handle_donation_post(request, handler):
     full_name = request.POST.get('full_name')
     email = request.POST.get('email')
     donation_type = request.POST.get('donation_type')
-
+    print(amount, currency, full_name, email, donation_type)
     customer_data = {"full_name": full_name, "email": email}
     names = full_name.split(' ')
     first_name = names[0]
@@ -157,6 +157,7 @@ def handle_donation_post(request, handler):
         return HttpResponse("Invalid payment type")
 
     create_transaction_history(TransactionStatus.PENDING.value, tx_ref_id, amount, donor, subscription, currency)
+    print(f'{response_data=}')
     return redirect(response_data['data']['link'])
 
 

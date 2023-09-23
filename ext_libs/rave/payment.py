@@ -24,6 +24,7 @@ OEF_CUSTOMIZATION = {
 
 class RavePaymentHandler:
     def __init__(self, private_key, public_key):
+        print('called handler')
         self.FLW_SECRET_KEY = TEST_FLW_SECRET_KEY
         self.RAVE_REDIRECT_URL = RAVE_REDIRECT_URL
         self.OEF_CUSTOMIZATION = OEF_CUSTOMIZATION
@@ -34,6 +35,7 @@ class RavePaymentHandler:
         }
 
     def pay_once(self, amount: float, currency: Currency, customer_data, tx_ref_id: str):
+        print('mocked out in test')
         return self._generate_payment_link(amount, currency, customer_data, tx_ref_id)
 
     def pay_recurrent(self, amount, currency, customer_data, tx_ref_id,

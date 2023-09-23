@@ -21,6 +21,7 @@ def get_or_create_donor(user_profile):
 
 def handle_one_time_donation(handler, amount, currency, customer_data, tx_ref_id):
     response_data = handler.pay_once(amount, currency, customer_data, tx_ref_id)
+    print(f'{response_data=}')
     return response_data, None
 
 
