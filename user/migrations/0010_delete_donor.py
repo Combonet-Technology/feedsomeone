@@ -8,7 +8,7 @@ class Migration(migrations.Migration):
     dependencies = [
         ('blog', '0007_article_tags'),
         ('events', '0002_initial'),
-        ('social_django', '0012_merge_0009_auto_20230519_1245_0011_alter_id_fields'),
+        # ('social_django', '0012_merge_0009_auto_20230519_1245_0011_alter_id_fields'),
         ('admin', '0003_logentry_add_action_flag_choices'),
         ('user', '0009_delete_table'),
     ]
