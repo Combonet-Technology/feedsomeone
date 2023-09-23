@@ -8,12 +8,20 @@ from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import ListView
-from rave_python import Rave
 
 from events.models import Events, Volunteer
+from ext_libs.rave.payment import RavePaymentHandler
 from mainsite.models import GalleryImage, TransactionHistory
+from mainsite.utils import (create_transaction_history, get_or_create_donor,
+                            get_or_create_user_profile,
+                            handle_failed_transaction,
+                            handle_one_time_donation,
+                            handle_recurrent_donation,
+                            handle_successful_transaction)
 from user.models import UserProfile
-from utils.views import custom_paginator, get_actual_template
+from utils.enums import SubscriptionPlan, TransactionStatus
+from utils.views import (custom_paginator, generate_hashed_string,
+                         get_actual_template)
 
 
 def home(request):
@@ -70,18 +78,6 @@ class FooterGalleryImages(ListView):
     paginate_by = 6
 
 
-def donate(request):
-    total_transaction = TransactionHistory.objects.aggregate(amount=Sum('amount'))
-    transacters = len(list(TransactionHistory.objects.all())) - 2
-    total_volunteers = len(list(UserProfile.objects.all()))
-    context = {
-        'total_amount': total_transaction.get('amount'),
-        'total_volunteers': total_volunteers,
-        'total_transaction': transacters,
-    }
-    return render(request, 'donate.html', context)
-
-
 @csrf_exempt
 def upload_images(request):
     if request.method == 'POST':
@@ -114,26 +110,74 @@ def upload_images(request):
         return render(request, 'file_upload.html', {'event': event})
 
 
-def donate_thanks(request):
+def donate(request):
+    handler = RavePaymentHandler(os.environ.get("RAVE_SECRET_KEY"), os.environ.get("RAVE_PUBLIC_KEY"))
+    print(f'{handler=}')
+    if request.method == 'POST':
+        return handle_donation_post(request, handler)
+
+    if request.method == 'GET':
+        return handle_donation_get(request, handler)
+
+    total_transaction = TransactionHistory.objects.aggregate(amount=Sum('amount'))
+    transactors = len(list(TransactionHistory.objects.all())) - 2
+    total_volunteers = len(list(UserProfile.objects.all()))
+    context = {
+        'total_amount': total_transaction.get('amount'),
+        'total_volunteers': total_volunteers,
+        'total_transaction': transactors,
+    }
+    return render(request, 'donate-draft.html', context)
+
+
+def handle_donation_post(request, handler):
+    amount = request.POST.get('amount')
+    currency = request.POST.get('currency')
+    full_name = request.POST.get('full_name')
+    email = request.POST.get('email')
+    donation_type = request.POST.get('donation_type')
+    print(amount, currency, full_name, email, donation_type)
+    customer_data = {"full_name": full_name, "email": email}
+    names = full_name.split(' ')
+    first_name = names[0]
+    last_name = ' '.join(names[1:])
+    user_profile = get_or_create_user_profile(email, first_name, last_name)
+    donor = get_or_create_donor(user_profile)
+
+    tx_ref_id = generate_hashed_string(customer_data)
+    assert email is not None, "Email cannot be None"
+
+    if donation_type == SubscriptionPlan.ONE_TIME.value:
+        response_data, subscription = handle_one_time_donation(handler, amount, currency, customer_data, tx_ref_id)
+    elif donation_type in ['monthly', 'quarterly', 'annually']:
+        response_data, subscription = handle_recurrent_donation(
+            handler, amount, currency, customer_data, tx_ref_id, full_name, donation_type
+        )
+    else:
+        return HttpResponse("Invalid payment type")
+
+    create_transaction_history(TransactionStatus.PENDING.value, tx_ref_id, amount, donor, subscription, currency)
+    print(f'{response_data=}')
+    return redirect(response_data['data']['link'])
+
+
+def handle_donation_get(request, handler):
     query_dict = request.GET
     if query_dict:
         status = query_dict.get('status')
         tx_ref = query_dict.get('tx_ref')
         tr_id = query_dict.get('transaction_id')
-        # cannot remember why this is like this, will check it out when I want to extend payment
-        rave = Rave("FLWPUBK-ef604c855317a5fd377639a5a6744efe-X",
-                    "FLWSECK-439f20374599e622cf6b0b03bacf2793-X",
-                    usingEnv=False, production=True)
-        if status == 'successful':
-            res = rave.Card.verify(tx_ref)
-            amount = res.get('amount')
+        transaction = TransactionHistory.objects.get(tx_ref=tx_ref)
+        transaction.tr_id = tr_id
+
+        if status == TransactionStatus.SUCCESSFUL.value:
+            handle_successful_transaction(handler, transaction)
+            return render(request, 'thanks-donation.html')
         else:
+            handle_failed_transaction(transaction)
             messages.info(request, 'PAYMENT UNSUCCESSFUL AND REVERSED')
             return redirect('mainsite:donate')
-        transaction = TransactionHistory.objects.create(
-            status=status, tx_ref=tx_ref, tr_id=tr_id, amount=amount)
-        transaction.save()
-    return render(request, 'thanks-donation.html')
+    return render(request, 'donate-draft.html')
 
 
 def webhooks(request):

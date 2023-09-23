@@ -1,3 +1,6 @@
+import hashlib
+import time
+
 import requests
 from django.conf import settings
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
@@ -40,3 +43,13 @@ def verify_recaptcha(g_captcha):
 def generate_uidb64(user):
     uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
     return uidb64
+
+
+def generate_hashed_string(customer_data):
+    data_string = f"{customer_data['full_name']}-{customer_data['email']}"
+    hash_one = hashlib.sha256(data_string.encode()).hexdigest()
+    current_timestamp = str(int(time.time()))
+    hash_two = hashlib.sha256(current_timestamp.encode()).hexdigest()
+    combined_hash = f"{hash_one}:{hash_two}"
+
+    return combined_hash

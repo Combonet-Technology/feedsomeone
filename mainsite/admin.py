@@ -9,6 +9,6 @@ admin.site.register([GalleryImage], ImportExportActionModelAdmin)
 
 @admin.register(TransactionHistory)
 class TransactionHistoryAdmin(ImportExportActionModelAdmin):
-    list_display = ('status', 'tx_ref', 'tr_id', 'amount', 'date_created')
-    list_filter = ('status',)
+    list_display = ('tx_status', 'tx_ref', 'tr_id', 'amount', 'date_created')
+    list_filter = ('tx_status',)
     search_fields = ('tx_ref', 'tr_id', 'amount')

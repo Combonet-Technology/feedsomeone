@@ -82,8 +82,7 @@ class ColorCodes(Enum):
 
 
 class SubscriptionPlan(Enum):
-    DAILY = 'daily'
-    WEEKLY = 'weekly'
+    ONE_TIME = 'once'
     MONTHLY = 'monthly'
     QUARTERLY = 'quarterly'
     ANNUALLY = 'annually'
@@ -93,3 +92,16 @@ class Currency(Enum):
     NAIRA = 'NGN'
     DOLLARS = 'USD'
     BRITISH_POUNDS = 'GBP'
+
+
+class PaymentPlanStatus(Enum):
+    CREATED = 'created'
+    ACTIVE = 'active'
+    ENDED = 'ended'
+    CANCELLED = 'cancelled'
+
+
+class TransactionStatus(Enum):
+    PENDING = 'pending'
+    SUCCESSFUL = 'successful'
+    FAILED = 'failed'
