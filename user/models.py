@@ -39,7 +39,7 @@ class CustomUserManager(BaseUserManager):
 # TODO add user ipaddress information for security
 class UserProfile(AbstractBaseUser, PermissionsMixin):
     id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
-    email = models.EmailField(unique=True, max_length=30, blank=True, null=True)
+    email = models.EmailField(unique=True, max_length=50, blank=True, null=True)
     username = models.CharField(unique=True, max_length=30, blank=True, null=True)
     first_name = models.CharField(max_length=255, null=True)
     last_name = models.CharField(max_length=255, null=True)
