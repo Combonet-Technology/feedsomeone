@@ -1,7 +1,7 @@
 from django.contrib import admin
 from import_export.admin import ImportExportActionModelAdmin
 
-from user.models import UserProfile
+from user.models import UserProfile, Volunteer
 
 
 # Register your models here.
@@ -25,3 +25,10 @@ class UserProfileAdmin(ImportExportActionModelAdmin):
 
     def disable_user(self, request, queryset):
         queryset.update(is_active=False)
+
+
+@admin.register(Volunteer)
+class VolunteerAdmin(admin.ModelAdmin):
+    list_display = ('user', 'profession', 'is_verified', 'ethnicity', 'religion')
+    list_filter = ('is_verified',)
+    search_fields = ('state_of_residence', 'ethnicity', 'phone_number')
