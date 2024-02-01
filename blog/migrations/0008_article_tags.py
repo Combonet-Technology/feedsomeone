@@ -7,7 +7,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        # ('taggit', '0004_auto_20230501_1835'),
+        ('taggit', '0004_auto_20230501_1835'),
         ('blog', '0007_article_tags'),
     ]
 
