@@ -68,7 +68,7 @@
             </strong>
         </div>
         <div style="float: right">
-            {% if not user.volunteer.is_verified %}
+            {% if not user.is_verified %}
                 <h2>Unverified <i class="fas fa-exclamation-circle"></i></h2>
             {% else %}
                 <h2>Verified <i class="material-icons">check_circle</i></h2>
