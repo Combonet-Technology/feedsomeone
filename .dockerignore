@@ -22,3 +22,7 @@ output.txt
 broken.txt
 keywords.txt
 graphify-out
+*.backup
+*.backup.gz
+*.dump
+*.sql.gz
