@@ -3,7 +3,7 @@
 set -o errexit
 
 # environment setup
-pip install --upgrade pip
+python -m pip install "pip<24.1"
 pip install -r requirements.txt
 
 # handle static files

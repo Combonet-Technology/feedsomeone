@@ -10,9 +10,11 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
+from urllib.parse import urlparse
+
 from .base import *
 
-DEBUG = os.environ.get('DEBUG')
+DEBUG = os.environ.get('DEBUG', '').lower() == 'true'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -23,6 +25,18 @@ DATABASES = {
         'PORT': os.environ.get('POSTGRES_PORT')
     }
 }
+
+if os.environ.get('DATABASE_URL'):
+    database_url = urlparse(os.environ.get('DATABASE_URL'))
+    DATABASES['default'] = {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': database_url.path.lstrip('/'),
+        'USER': database_url.username,
+        'PASSWORD': database_url.password,
+        'HOST': database_url.hostname,
+        'PORT': database_url.port,
+    }
+
 CSRF_TRUSTED_ORIGINS = os.environ.get("ALLOWED_CSRF").split(" ")
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS").split(" ")
 INSTALLED_APPS.insert(-1, 'cloudinary')

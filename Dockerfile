@@ -1,26 +1,30 @@
-# Pull base image
-FROM python:3.8
+# syntax=docker/dockerfile:1
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
-ENV AWS_ACCESS_KEY_ID="AKIATI4TZBPNID2AQEM2"
-ENV AWS_SECRET_ACCESS_KEY="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"
-ENV AWS_STORAGE_BUCKET_NAME="feedsomeonebucket"
-ENV EMAIL_HOST_USER="femolak@outlook.com"
-ENV EMAIL_HOST_PASS="Ia00eAKAmf"
-ENV POSTGRES_DB_NAME="feedsomeone"
-ENV POSTGRES_DB_PASS="Ia00eAKApf"
-ENV POSTGRES_DB_USER="postgres"
-ENV SECRET_KEY="5f*ovu$9jd%2io#8yy0t5o6_&dt)co-_z$#=d%^#*)3)y0uu(y"
+FROM python:3.10-slim
 
-# Set work directory
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
+
 WORKDIR /code
 
-# Install dependencies
-COPY requirements.txt /code/
-RUN pip install -r requirements.txt
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        build-essential \
+        libffi-dev \
+        libgdk-pixbuf-2.0-0 \
+        libpango-1.0-0 \
+        libpangocairo-1.0-0 \
+        libpq-dev \
+        shared-mime-info \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy project
+COPY requirements.txt /code/
+RUN python -m pip install "pip<24.1" \
+    && pip install -r requirements.txt
+
 COPY . /code/
 
+EXPOSE 8000
+
+CMD ["sh", "-c", "gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8000}"]

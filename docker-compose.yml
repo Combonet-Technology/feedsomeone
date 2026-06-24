@@ -1,21 +1,47 @@
-version: '3.8'
 services:
-  postgres:
-    image: postgres:15.1
-    container_name: postgres
-    restart: always
+  web:
+    build:
+      context: .
+    container_name: feedsomeone-web
+    command: python manage.py runserver 0.0.0.0:8000
+    env_file:
+      - .env
     environment:
-      - POSTGRES_USER=${POSTGRES_DB_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_DB_PASS}
-      - POSTGRES_DB=${POSTGRES_DB_NAME}
+      SETTINGS: config.settings.local
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB_USER: postgres
+      POSTGRES_DB_PASS: postgres
     ports:
-      - '5444:5432'
+      - "8000:8000"
     volumes:
-      - ./db:/var/lib/postgresql/data
+      - .:/code
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       - app-network
-volumes:
-  postgres_data:
+
+  postgres:
+    image: postgres:14
+    container_name: feedsomeone-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_DB_USER:-postgres}
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ${POSTGRES_DB_NAME:-feedsomeone}
+    ports:
+      - "5444:5432"
+    volumes:
+      - ./db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
 networks:
   app-network:
     driver: bridge

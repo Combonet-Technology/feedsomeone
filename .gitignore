@@ -194,3 +194,5 @@ output.txt
 test_results.txt
 coverage.xml
 /config/settings/testtt.py
+.onboarding-backups/
+graphify-out/
