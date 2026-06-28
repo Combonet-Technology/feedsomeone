@@ -161,6 +161,7 @@ IMAGEFIT_ROOT = BASE_DIR
 AUTH_USER_MODEL = 'user.UserProfile'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+SITE_ID = int(os.environ.get('SITE_ID', '1'))
 RECAPTCHA_PUBLIC_KEY = str(os.environ.get('RECAPTCHA_PUBLIC_KEY_v3'))
 RECAPTCHA_PRIVATE_KEY = str(os.environ.get('RECAPTCHA_PRIVATE_KEY_v3'))
 

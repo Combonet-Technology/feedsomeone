@@ -15,10 +15,12 @@ services:
         value: config.settings.prod
       - key: DEBUG
         value: "false"
+      - key: SITE_ID
+        value: "4"
       - key: ALLOWED_HOSTS
-        value: feedsomeone.onrender.com
+        value: oef-service.onrender.com oluwafemiebenezerfoundation.org www.oluwafemiebenezerfoundation.org
       - key: ALLOWED_CSRF
-        value: https://feedsomeone.onrender.com
+        value: https://oef-service.onrender.com https://oluwafemiebenezerfoundation.org https://www.oluwafemiebenezerfoundation.org
       - key: SECRET_KEY
         generateValue: true
       - key: DATABASE_URL
