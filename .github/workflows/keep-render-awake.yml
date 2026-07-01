@@ -8,27 +8,27 @@ on:
 jobs:
   ping:
     runs-on: ubuntu-latest
-    timeout-minutes: 2
+    timeout-minutes: 3
 
     steps:
       - name: Ping website
         run: |
           curl --fail \
+            --location \
             --silent \
             --show-error \
-            --max-time 90 \
-            --retry 2 \
+            --connect-timeout 10 \
+            --max-time 110 \
+            --retry 5 \
+            --retry-all-errors \
             --retry-delay 10 \
             https://oluwafemiebenezerfoundation.org/
 
       - name: Slack Notification
-        uses: slackapi/slack-github-action@v1.24.0
+        uses: slackapi/slack-github-action@v3.0.3
         if: ${{ always() }}
         with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
           payload: |
-            {
-              "text": "Render keep-awake ping result: ${{ job.status }}\n${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-            }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+            text: "Render keep-awake ping result: ${{ job.status }}\n${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
