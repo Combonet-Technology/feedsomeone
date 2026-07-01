@@ -12,8 +12,10 @@ jobs:
 
     steps:
       - name: Ping website
+        id: ping
         run: |
-          curl --fail \
+          set +e
+          response=$(curl --fail \
             --location \
             --silent \
             --show-error \
@@ -22,7 +24,20 @@ jobs:
             --retry 5 \
             --retry-all-errors \
             --retry-delay 10 \
-            https://oluwafemiebenezerfoundation.org/
+            --output /dev/null \
+            --write-out '%{http_code}\t%{time_starttransfer}\t%{time_total}\t%{url_effective}' \
+            https://oluwafemiebenezerfoundation.org/)
+          curl_exit=$?
+          IFS=$'\t' read -r http_code time_to_first_byte total_time final_url <<< "$response"
+
+          {
+            echo "http_code=${http_code:-unavailable}"
+            echo "time_to_first_byte=${time_to_first_byte:-unavailable}"
+            echo "total_time=${total_time:-unavailable}"
+            echo "final_url=${final_url:-unavailable}"
+          } >> "$GITHUB_OUTPUT"
+
+          exit "$curl_exit"
 
       - name: Slack Notification
         uses: slackapi/slack-github-action@v3.0.3
@@ -31,4 +46,4 @@ jobs:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
           webhook-type: incoming-webhook
           payload: |
-            text: "Render keep-awake ping result: ${{ job.status }}\n${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            text: "Render keep-awake ping result: ${{ job.status }}\nHTTP: ${{ steps.ping.outputs.http_code }}\nTime to first byte: ${{ steps.ping.outputs.time_to_first_byte }}s\nTotal response time: ${{ steps.ping.outputs.total_time }}s\nFinal URL: ${{ steps.ping.outputs.final_url }}\n${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
