@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load humanize %}
 {% load static %}
-{% block page_title %}about us{% endblock %}
+{% block page_title %}About the Oluwafemi Ebenezer Foundation{% endblock %}
 {% block content %}
     <main>
     <!--? Hero Start -->
@@ -27,7 +27,7 @@
                     <!-- Section Tittle -->
                     <div class="section-tittle text-center mb-80">
                         <span>What we are doing</span>
-                        <h2>We Are On A Mission To Provide The Following To The Helpless</h2>
+                        <h2>Practical support today, stronger pathways for tomorrow</h2>
                     </div>
                 </div>
             </div>
@@ -38,8 +38,8 @@
                             <span class="fas fa-hamburger"></span>
                         </div>
                         <div class="cat-cap">
-                            <h5><a href="#">Feeding</a></h5>
-                            <p>We are here to help the less-privileged have access to good food and clean water.</p>
+                            <h5 id="feed-someone">Feed Someone</h5>
+                            <p>Our flagship relief programme delivers food, clothing, infant supplies and other essentials to underserved communities and children's homes.</p>
                         </div>
                     </div>
                 </div>
@@ -49,8 +49,8 @@
                             <span class="fas fa-hospital"></span>
                         </div>
                         <div class="cat-cap">
-                            <h5><a href="#">Health</a></h5>
-                            <p>We provide health-care assistance to the less-privilege, both young and old</p>
+                            <h5 id="healthy-communities">Healthy Communities</h5>
+                            <p>Health education, disease prevention and partnerships that improve access to qualified care.</p>
                         </div>
                     </div>
                 </div>
@@ -60,8 +60,8 @@
                             <span class="fas fa-home"></span>
                         </div>
                         <div class="cat-cap">
-                            <h5><a href="#">Shelter</a></h5>
-                            <p>We provide a place of shelter to the displaced until they are able to get their own places</p>
+                            <h5 id="safe-lives">Safe Lives</h5>
+                            <p>Child protection, abuse prevention, mental-health awareness and trusted referral pathways.</p>
                         </div>
                     </div>
                 </div>
@@ -71,8 +71,8 @@
                             <span class="flaticon-think"></span>
                         </div>
                         <div class="cat-cap">
-                            <h5><a href="#">Empowerment</a></h5>
-                            <p>We provide education, human development and capital to the less privilege.</p>
+                            <h5 id="empower-futures">Empower Futures</h5>
+                            <p>Education, skills, mentorship, technology access and sustainable livelihood opportunities.</p>
                         </div>
                     </div>
                 </div>
@@ -89,12 +89,13 @@
                         <!-- Section Tittle -->
                         <div class="section-tittle mb-35">
                             <span>About our foundation</span>
-                            <h2>We are on a mission to eradicate hunger and poverty</h2>
+                            <h2>From Feed Someone to a broader platform for opportunity</h2>
                         </div>
-                        <p><strong>Mission Statement: </strong>To ensure that the marginalized, socially and economically unstable are being kept in a state of hapiness and vitality by a steady source of meal and shelter</p>
-                        <p><strong>Vision Statement: </strong>Transforming the percentage of disadvantaged and mentally unstable people into valuable members of the society with the aid of rehabilitating actions such as free feeding, shelter, counselling and empowerment.</p>
+                        <p>Founded from the Feed Someone outreach conceived in 2019, the Oluwafemi Ebenezer Foundation is a Nigerian nonprofit working to meet urgent needs while expanding long-term opportunity.</p>
+                        <p><strong>Mission:</strong> To improve the lives of underserved children, families and communities in Nigeria through practical relief, preventive health, protection, education, empowerment and access to technology.</p>
+                        <p><strong>Vision:</strong> A world where every child and underserved community has the health, protection, resources and opportunities required to live with dignity and build a hopeful future.</p>
                     </div>
-                    <a href="#" class="btn">About US</a>
+                    <a href="{% url 'contact' %}" class="btn">Partner with us</a>
                 </div>
                 <div class="col-lg-6 col-md-12">
                     <!-- about-img -->
@@ -144,7 +145,7 @@
                                     <div class="founder-img mb-40">
                                         <img src="{% static 'img/gallery/bcx.png' %}" alt="">
                                         <span>Oluwafemi Olanrewaju</span>
-                                        <p>Innovator</p>
+                                        <p>Founder</p>
                                     </div>
                                 </div>
                                 <div class="testimonial-top-cap">

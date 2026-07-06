@@ -46,7 +46,7 @@
                                    <h2>You can also become a part of this wonderful act of kindness through your donations and volunteering</h2>
                                    <div class="button-group-area mt-10">
                                    <a href="{% url 'register'%}" class="genric-btn primary e-large">Become a Volunteer</a>
-                                   <a href="{% url 'donate'%}" class="genric-btn primary-border e-large ml-3">Donate</a>
+                                   <a href="{% url 'mainsite:donate'%}" class="genric-btn primary-border e-large ml-3">Donate</a>
                                    </div>
                                 </div>
                            </div>
@@ -56,6 +56,26 @@
 <!--                         </div>-->
                      </div>
                   </div>
+
+                  {% if gallery %}
+                  <section class="mt-50" aria-labelledby="event-gallery-title">
+                     <h2 id="event-gallery-title">{{ gallery.title }} gallery</h2>
+                     <p>{{ gallery.summary }}</p>
+                     {% if gallery_assets %}
+                     <div class="row gallery-item">
+                        {% for image in gallery_assets %}
+                        <div class="col-md-6 mb-30">
+                           <a href="{{ image.url }}" class="img-pop-up" aria-label="Open {{ image.alt }}">
+                              <img class="img-fluid" src="{{ image.thumbnail_url }}" width="640" height="480" loading="lazy" decoding="async" alt="{{ image.alt }}">
+                           </a>
+                        </div>
+                        {% endfor %}
+                     </div>
+                     {% else %}
+                     <p>This gallery is undergoing a consent and privacy review before public release.</p>
+                     {% endif %}
+                  </section>
+                  {% endif %}
 
                </div>
                <div class="col-lg-4">
@@ -100,22 +120,22 @@
                         </ul>
                      </aside>
                      <aside class="single_sidebar_widget tag_cloud_widget">
-                        <h4 class="widget_title" style="color: #2d2d2d;">Tag Clouds</h4>
+                        <h4 class="widget_title" style="color: #2d2d2d;">Programme areas</h4>
                         <ul class="list">
                            <li>
-                              <a href="#">Orphanages</a>
+                              <a href="{% url 'mainsite:about-page' %}#feed-someone">Community relief</a>
                            </li>
                            <li>
-                              <a href="#">Food</a>
+                              <a href="{% url 'mainsite:about-page' %}#healthy-communities">Health</a>
                            </li>
                            <li>
-                              <a href="#">Clean water</a>
+                              <a href="{% url 'mainsite:about-page' %}#safe-lives">Protection</a>
                            </li>
                            <li>
-                              <a href="#">Shelter</a>
+                              <a href="{% url 'mainsite:about-page' %}#empower-futures">Education</a>
                            </li>
                            <li>
-                              <a href="#">Education</a>
+                              <a href="{% url 'mainsite:impact' %}">Impact</a>
                            </li>
                         </ul>
                      </aside>

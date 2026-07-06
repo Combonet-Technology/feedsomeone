@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block page_title %}Transparency and Governance{% endblock %}
+{% block social_title %}Transparency | Oluwafemi Ebenezer Foundation{% endblock %}
+{% block content %}
+<main>
+    <div class="slider-area2">
+        <div class="slider-height2 d-flex align-items-center">
+            <div class="container text-center"><h1>Transparency and Governance</h1></div>
+        </div>
+    </div>
+    <section class="section-padding30">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-9">
+                    <div class="section-tittle mb-35">
+                        <span>Accountability as we grow</span>
+                        <h2>Building public trust through clear information</h2>
+                    </div>
+                    <p>Oluwafemi Ebenezer Foundation is a Nigerian nonprofit organization. Our programmes began through founder funding and volunteer support, and we have not yet received an institutional grant.</p>
+                    <h3 class="mt-40">What we publish</h3>
+                    <ul>
+                        <li>Clear descriptions of our programmes and activities.</li>
+                        <li>Conservative beneficiary figures, with estimates identified as estimates.</li>
+                        <li>Funding sources for activities, including founder-funded work.</li>
+                        <li>Corrections when previously published information is incomplete or inaccurate.</li>
+                    </ul>
+                    <h3 class="mt-40">Governance information in preparation</h3>
+                    <p>Our registration number, incorporation date, trustee profiles, safeguarding policy, conflict-of-interest policy and financial reporting documents are being prepared for publication after verification.</p>
+                    <h3 class="mt-40">Contact and verification</h3>
+                    <p>Organizations conducting due diligence may contact <a href="mailto:info@oluwafemiebenezerfoundation.org">info@oluwafemiebenezerfoundation.org</a>.</p>
+                    <a href="{% url 'mainsite:impact' %}" class="btn mt-30">Review our impact</a>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+{% endblock %}

@@ -31,6 +31,12 @@ services:
         sync: false
       - key: CLOUDINARY_API_SECRET
         sync: false
+      - key: CLOUDINARY_GALLERY_ENABLED
+        sync: false
+      - key: CLOUDINARY_GALLERY_CACHE_SECONDS
+        value: "900"
+      - key: CLOUDINARY_GALLERY_PUBLICATION_TAG
+        value: publication-approved
       - key: RECAPTCHA_PUBLIC_KEY_v3
         sync: false
       - key: RECAPTCHA_PRIVATE_KEY_v3

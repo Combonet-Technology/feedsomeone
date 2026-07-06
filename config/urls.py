@@ -21,10 +21,12 @@ from django.contrib.sitemaps.views import sitemap
 from django.urls import include, path
 
 from blog.sitemaps import ArticleSitemap
+from mainsite.sitemaps import StaticViewSitemap
 from user.views import social_auth_complete
 
 sitemaps = {
     'articles': ArticleSitemap,
+    'static': StaticViewSitemap,
 }
 
 urlpatterns = [

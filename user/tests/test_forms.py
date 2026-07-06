@@ -2,6 +2,7 @@ import random
 from unittest.mock import patch
 
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.exceptions import ValidationError
 from django.test import RequestFactory, TestCase
 
 from user.forms import (CustomPasswordResetForm, UsernameForm,
@@ -9,6 +10,7 @@ from user.forms import (CustomPasswordResetForm, UsernameForm,
                         VolunteerRegistrationForm, VolunteerUpdateForm)
 from user.management.services import SiteService
 from utils.enums import EthnicityEnum, ReligionEnum, StateEnum
+from utils.forms import clean_email
 
 
 class MockObjects:
@@ -110,3 +112,7 @@ class FormsTestCase(TestCase):
         }
         form = UsernameForm(data=form_data)
         self.assertTrue(form.is_valid())
+
+    def test_clean_email_rejects_invalid_syntax_without_network_lookup(self):
+        with self.assertRaises(ValidationError):
+            clean_email('not-an-email')

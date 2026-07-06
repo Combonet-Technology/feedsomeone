@@ -1,85 +1,62 @@
 {% extends 'base.html' %}
-{% block page_title %}gallery of our past events{% endblock %}
+{% block page_title %}Feed Someone Gallery{% endblock %}
 {% load static %}
 {% block content %}
-
 <main>
-    <!--? Hero Start -->
     <div class="slider-area2">
         <div class="slider-height2 d-flex align-items-center">
-            <div class="container">
-                <div class="row">
-                    <div class="col-xl-12">
-                        <div class="hero-cap hero-cap2 pt-20 text-center">
-                            <h2>Gallery </h2>
-                        </div>
-                    </div>
+            <div class="container text-center">
+                <div class="hero-cap hero-cap2 pt-20">
+                    <h1>Feed Someone Gallery</h1>
+                    <p>Documenting OEF's flagship community outreach programme.</p>
                 </div>
             </div>
         </div>
     </div>
-<div class="container">
-    <div class="section-top-border">
-					<div id="search-results" class="row gallery-item">
-						    {% include "mainsite/gallery_ajax.html" %}
 
+    <section class="section-padding30">
+        <div class="container">
+            <div class="row justify-content-center mb-40">
+                {% for option in gallery_options %}
+                <div class="col-lg-5 col-md-6 mb-30">
+                    <div class="single-job-items">
+                        <div class="job-tittle">
+                            <h2>{{ option.title }}</h2>
+                            <p><strong>{{ option.date }} · {{ option.location }}</strong></p>
+                            <p>{{ option.summary }}</p>
+                            <a class="genric-btn primary" href="{% url 'mainsite:gallery' %}?event={{ option.slug }}">View approved photographs</a>
+                        </div>
                     </div>
-    </div>
-<!--    <nav class="blog-pagination justify-content-center d-flex">-->
-<!--                                <ul class="pagination">-->
-<!--                                    <li class="page-item">-->
-<!--                                        <a href="#" class="page-link" aria-label="Previous">-->
-<!--                                            <i class="ti-angle-left"></i>-->
-<!--                                        </a>-->
-<!--                                    </li>-->
-<!--                                    <li class="page-item">-->
-<!--                                        <a href="#" class="page-link">1</a>-->
-<!--                                    </li>-->
-<!--                                    <li class="page-item active">-->
-<!--                                        <a href="#" class="page-link">2</a>-->
-<!--                                    </li>-->
-<!--                                    <li class="page-item">-->
-<!--                                        <a href="#" class="page-link" aria-label="Next">-->
-<!--                                            <i class="ti-angle-right"></i>-->
-<!--                                        </a>-->
-<!--                                    </li>-->
-<!--                                </ul>-->
-<!--                            </nav>-->
+                </div>
+                {% endfor %}
+            </div>
 
-    <nav class="blog-pagination justify-content-center d-flex">
-        <ul class="pagination mb-4">
-            {% if page_obj.has_previous %}
-            <li class="page-item">
-                <a href="?page=1" class="page-link" aria-label="Previous">First</a>
-            </li>
-            <li class="page-item">
-                <a href="?page={{page_obj.previous_page_number}}" class="page-link" aria-label="Previous"><i class="ti-angle-left"></i></a>
-            </li>
-            {% endif %}
-            {% for page in page_obj.paginator.page_range %}
-            {% if page_obj.number == page %}
-            <li class="page-item active">
-                <a class="page-link" href="?page={{page}}">{{page}}</a>
-            </li>
-            {% elif page > page_obj.number|add:'-2' and page < page_obj.number|add:'2' %}
-            <li class="page-item"><a class="page-link" href="?page={{page}}">{{page}}</a></li>
-            {% endif %}
-            {% endfor %}
-            {% if page_obj.has_next %}
-            <li class="page-item">
-                <a href="?page={{ page_obj.next_page_number }}" class="page-link" aria-label="Next">
-                    <i class="ti-angle-right"></i>
-                </a>
-            </li>
-            <li class="page-item">
-                <a href="?page={{ page_obj.paginator.num_pages }}" class="page-link">Last</a>
-            </li>
-            {% endif %}
-        </ul>
-    </nav>
-</div>
-    <!-- Hero End -->
-    <!--? Count Down Start -->
+            {% if selected_gallery %}
+            <div class="section-tittle text-center mb-40">
+                <span>{{ selected_gallery.date }} · {{ selected_gallery.location }}</span>
+                <h2>{{ selected_gallery.title }}</h2>
+                <p>{{ selected_gallery.summary }}</p>
+            </div>
 
-    </main>
+            {% if objects %}
+            <div class="row gallery-item" id="event-gallery">
+                {% include 'mainsite/gallery_ajax.html' %}
+            </div>
+            {% elif not gallery_enabled %}
+            <div class="alert alert-info" role="status">
+                This gallery is undergoing a consent and privacy review before public release.
+            </div>
+            {% else %}
+            <div class="alert alert-warning" role="status">
+                The gallery is temporarily unavailable. Please try again later.
+            </div>
+            {% endif %}
+            {% else %}
+            <div class="alert alert-info text-center" role="status">
+                Choose an outreach above to view its photographs.
+            </div>
+            {% endif %}
+        </div>
+    </section>
+</main>
 {% endblock %}

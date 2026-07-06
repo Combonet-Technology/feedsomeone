@@ -1,6 +1,7 @@
 import logging
 
 from django.conf import settings
+from django.core.cache import cache
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
@@ -37,6 +38,23 @@ from .token import account_activation_token
 logger = logging.getLogger(__name__)
 
 
+def _client_ip(request):
+    forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR', '')
+    return forwarded_for.split(',')[0].strip() if forwarded_for else request.META.get('REMOTE_ADDR', 'unknown')
+
+
+def _registration_is_rate_limited(request):
+    key = f"registration:{_client_ip(request)}"
+    if cache.add(key, 1, timeout=settings.REGISTRATION_RATE_LIMIT_WINDOW):
+        return False
+    try:
+        attempts = cache.incr(key)
+    except ValueError:
+        cache.set(key, 1, timeout=settings.REGISTRATION_RATE_LIMIT_WINDOW)
+        return False
+    return attempts > settings.REGISTRATION_RATE_LIMIT
+
+
 @login_required()
 def profile(request):
     current_user_profile = request.user.volunteer
@@ -62,12 +80,16 @@ def profile(request):
 
 def register(request, template='registration/register.html'):
     if request.method == 'POST':
+        if _registration_is_rate_limited(request):
+            logger.warning('Volunteer registration rate limit exceeded for IP %s', _client_ip(request))
+            return render(request, 'robot_response.html', {'is_robot': True}, status=429)
+
         g_captcha = request.POST.get('g-recaptcha-response')
         user_form = UserRegistrationForm(request.POST)
         volunteer_form = VolunteerRegistrationForm(request.POST)
 
         # verify recaptcha
-        if not verify_recaptcha(g_captcha):
+        if not verify_recaptcha(g_captcha, remote_ip=_client_ip(request)):
             return render(request, 'robot_response.html', {'is_robot': True})
 
         if user_form.is_valid() and volunteer_form.is_valid():

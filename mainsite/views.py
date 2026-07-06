@@ -2,33 +2,35 @@ import json
 import os
 from datetime import datetime
 
+from django.conf import settings
 from django.contrib import messages
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt
-from django.views.generic import ListView
+from django.views.generic import ListView, TemplateView
 
-from events.models import Events, Volunteer
+from events.models import Events
 from ext_libs.rave.payment import RavePaymentHandler
 from mainsite.models import GalleryImage, TransactionHistory
+from mainsite.services.cloudinary_gallery import (get_gallery_assets,
+                                                   get_gallery_definition)
 from mainsite.utils import (create_transaction_history, get_or_create_donor,
                             get_or_create_user_profile,
                             handle_failed_transaction,
                             handle_one_time_donation,
                             handle_recurrent_donation,
                             handle_successful_transaction)
-from user.models import UserProfile
+from user.models import UserProfile, Volunteer
 from utils.enums import SubscriptionPlan, TransactionStatus
-from utils.views import (custom_paginator, generate_hashed_string,
-                         get_actual_template)
+from utils.views import generate_hashed_string
 
 
 def home(request):
     volunteers = Volunteer.objects.all().order_by("?")[:4]
     total_transaction = TransactionHistory.objects.aggregate(amount=Sum('amount'))
-    number_of_donations = len(list(TransactionHistory.objects.all()))
-    events = len(list(Events.objects.filter(event_date__lt=datetime.now())))
+    number_of_donations = TransactionHistory.objects.count()
+    events = Events.objects.filter(event_date__lt=datetime.now()).count()
     context = {
         'total_amount': total_transaction.get('amount'),
         'events_done': events,
@@ -41,8 +43,8 @@ def home(request):
 
 def about(request):
     total_transaction = TransactionHistory.objects.aggregate(amount=Sum('amount'))
-    transacters = len(list(TransactionHistory.objects.all()))
-    total_volunteers = len(list(UserProfile.objects.all()))
+    transacters = TransactionHistory.objects.count()
+    total_volunteers = UserProfile.objects.count()
     context = {
         'total_amount': total_transaction.get('amount'),
         'total_volunteers': total_volunteers,
@@ -52,20 +54,35 @@ def about(request):
     return render(request, 'about.html', context)
 
 
+def impact(request):
+    return render(request, 'impact.html')
+
+
+def transparency(request):
+    return render(request, 'transparency.html')
+
+
+def robots_txt(request):
+    content = "User-agent: *\nAllow: /\nSitemap: https://www.oluwafemiebenezerfoundation.org/sitemap.xml\n"
+    return HttpResponse(content, content_type='text/plain')
+
+
 # Post Page Fxn recreated into a class
-class AllGalleryImagesListView(ListView):
-    model = GalleryImage
+class AllGalleryImagesListView(TemplateView):
     template_name = 'mainsite/gallery_list.html'
-    context_object_name = 'objects'
-    ordering = ['-date_posted']
-    paginate_by = 8
 
-    def get_template_names(self):
-        template_names = super().get_template_names()
-        return get_actual_template(self, 'mainsite/gallery_ajax.html') + template_names
-
-    def paginate_queryset(self, queryset, page_size):
-        return custom_paginator(self.request, page_size, queryset)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        gallery_slug = self.request.GET.get('event', '')
+        context['gallery_options'] = [
+            {'slug': slug, **definition}
+            for slug, definition in settings.CLOUDINARY_GALLERIES.items()
+        ]
+        context['selected_gallery'] = get_gallery_definition(gallery_slug)
+        context['selected_gallery_slug'] = gallery_slug if context['selected_gallery'] else ''
+        context['objects'] = get_gallery_assets(gallery_slug) if context['selected_gallery'] else []
+        context['gallery_enabled'] = settings.CLOUDINARY_GALLERY_ENABLED
+        return context
 
 
 # Post Page Fxn recreated into a class

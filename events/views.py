@@ -4,6 +4,9 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import CreateView, DetailView, ListView
 
 from events.models import Events
+from mainsite.services.cloudinary_gallery import (get_gallery_assets,
+                                                   get_gallery_definition,
+                                                   resolve_event_gallery_slug)
 from user.models import Volunteer
 
 
@@ -67,8 +70,15 @@ class EventDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        volunteers = Volunteer.objects.all().order_by('date_joined')[:6]
+        volunteers = Volunteer.objects.all().order_by('user__date_joined')[:6]
         context['volunteers'] = volunteers
+        gallery_slug = resolve_event_gallery_slug(
+            self.object.event_slug or '',
+            self.object.title or '',
+        )
+        context['gallery_slug'] = gallery_slug
+        context['gallery'] = get_gallery_definition(gallery_slug) if gallery_slug else None
+        context['gallery_assets'] = get_gallery_assets(gallery_slug) if gallery_slug else []
         return context
 
 

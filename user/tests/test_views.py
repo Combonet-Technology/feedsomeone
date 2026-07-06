@@ -1,6 +1,5 @@
 import importlib
 import json
-import random
 from unittest import mock
 from unittest.mock import MagicMock, patch
 
@@ -8,9 +7,11 @@ import social_core
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.messages import get_messages
+from django.core.cache import cache
 from django.core.paginator import Paginator
 from django.forms import ImageField
 from django.test import TestCase
+from django.test import override_settings
 from django.test.client import Client, RequestFactory
 from django.urls import reverse
 from django.utils.encoding import force_bytes
@@ -60,9 +61,9 @@ class ProfileViewTestCase(TestCase):
         form_data = {
             'phone_number': '1234567890',
             'profession': 'Teacher',
-            'ethnicity': random.choice(list(EthnicityEnum)).value,
-            'religion': random.choice(list(ReligionEnum)).value,
-            'state_of_residence': random.choice(list(StateEnum)).value,
+            'ethnicity': EthnicityEnum.YORUBA.name,
+            'religion': ReligionEnum.CHRISTIANITY.name,
+            'state_of_residence': StateEnum.ANAMBRA.name,
             'short_bio': 'I am a volunteer.',
         }
         response = self.client.post(self.url, data=form_data, files=image_file, follow=True)
@@ -146,6 +147,7 @@ class ActivateTestCase(TestCase):
 @patch('ext_libs.sendgrid.sengrid.send_email')
 class RegisterTestCase(TestCase):
     def setUp(self):
+        cache.clear()
         self.client = Client()
         self.user = RegisterUser()
 
@@ -178,6 +180,20 @@ class RegisterTestCase(TestCase):
         response = self.client.post(reverse('register'), data)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'robot_response.html')
+
+    @override_settings(REGISTRATION_RATE_LIMIT=1, REGISTRATION_RATE_LIMIT_WINDOW=3600)
+    def test_rate_limits_repeated_registration_attempts(self, mock_send_email, mock_get_current_site,
+                                                         mock_verify_recaptcha):
+        mock_verify_recaptcha.return_value = False
+        data = self.user.spawn
+        data.update({'g-recaptcha-response': 'invalid_captcha'})
+
+        first_response = self.client.post(reverse('register'), data, REMOTE_ADDR='203.0.113.20')
+        second_response = self.client.post(reverse('register'), data, REMOTE_ADDR='203.0.113.20')
+
+        self.assertEqual(first_response.status_code, 200)
+        self.assertEqual(second_response.status_code, 429)
+        self.assertTemplateUsed(second_response, 'robot_response.html')
 
     def test_invalid_post_forms(self, *args):
         response = self.client.post(reverse('register'), {})

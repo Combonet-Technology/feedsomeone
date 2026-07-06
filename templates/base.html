@@ -18,8 +18,37 @@
     </script>
     <meta charset="utf-8">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
-    <title> FEEDSOMEONE | {% block page_title %} {% endblock %}</title>
-    <meta name="description" content="">
+    <title>{% block page_title %}Oluwafemi Ebenezer Foundation{% endblock %} | OEF</title>
+    <meta name="description" content="Oluwafemi Ebenezer Foundation is a Nigerian nonprofit supporting underserved children, families and communities through relief, health, protection, education and technology programmes.">
+    <meta name="robots" content="index,follow">
+    <link rel="canonical" href="{{ request.build_absolute_uri }}">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Oluwafemi Ebenezer Foundation">
+    <meta property="og:title" content="{% block social_title %}Oluwafemi Ebenezer Foundation{% endblock %}">
+    <meta property="og:description" content="Practical relief and lasting opportunity for underserved children, families and communities in Nigeria.">
+    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "NGO",
+      "name": "Oluwafemi Ebenezer Foundation",
+      "alternateName": "OEF",
+      "url": "https://www.oluwafemiebenezerfoundation.org/",
+      "email": "info@oluwafemiebenezerfoundation.org",
+      "telephone": "+2348170838856",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Kubwa",
+        "addressRegion": "FCT Abuja",
+        "addressCountry": "NG"
+      },
+      "sameAs": [
+        "https://www.instagram.com/feedsomeone_",
+        "https://www.linkedin.com/company/feed-someone/",
+        "https://www.facebook.com/oluwafemiebenezerfoundation"
+      ]
+    }
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="manifest" href="manifest.json" crossorigin="use-credentials">
     <link rel="shortcut icon" type="image/x-icon" href="{% static 'img/favicon.ico' %}">
@@ -200,9 +229,6 @@ margin-top:100px
                                         <div class="select-itms">
                                             <select name="select" id="select1">
                                                 <option value="">English</option>
-                                                <option value="">Bangla</option>
-                                                <option value="">Arabic</option>
-                                                <option value="">Hindi</option>
                                             </select>
                                         </div>
                                     </form>
@@ -245,7 +271,8 @@ margin-top:100px
                                         <ul id="navigation">
                                             <li><a href="{% url 'mainsite:homepage' %}">Home</a></li>
                                             <li><a href="{% url 'mainsite:about-page' %}">About</a></li>
-                                            <li><a href="#">Events</a>
+                                            <li><a href="{% url 'mainsite:impact' %}">Impact</a></li>
+                                            <li><a href="{% url 'events' %}">Programmes</a>
                                                 <ul style="width: 220px;" class="submenu">
                                                     <li><a href="{% url 'past_events' %}">Past Events</a></li>
                                                     <li><a href="{% url 'future_events' %}">Future Events</a></li>
@@ -254,16 +281,13 @@ margin-top:100px
                                             <li><a href="#">Volunteers</a>
                                                 <ul style="width: 220px;" class="submenu">
                                                     <li><a href="{% url 'register' %}">Become a volunteer</a></li>
-                                                    <li><a href="#">Become a Group Leader</a></li>
                                                     <li><a href="{% url 'volunteer-list' %}">View our Volunteers</a>
                                                     </li>
                                                 </ul>
                                             </li>
-                                            <li><a href=" '' %}">News</a>
+                                            <li><a href="{% url 'article:all-articles' %}">News</a>
                                                 <ul class="submenu">
                                                     <li><a href="{% url 'article:all-articles' %}">Articles</a></li>
-                                                    <li><a href="#">News Briefing</a></li>
-                                                    <li><a href="#">Testimonials</a></li>
                                                 </ul>
                                             </li>
                                             <li><a href="{% url 'contact' %}">Contact us</a></li>
@@ -313,9 +337,7 @@ margin-top:100px
                     <div class="footer-logo">
                         <a class="logo" href="#"><img src="{% static 'img/logo/logo.png' %}" alt=""></a>
                     </div>
-                    <p>Everybody deserves good meal, a comfortable shelter and opportunities to exploit their
-                        potentials.
-                        Together we move !!!</p>
+                    <p>Everyone deserves dignity, practical support and a fair opportunity to build a hopeful future.</p>
                     <ul class="footer-contact">
                         <li><i class="fa fa-phone"></i> <a href="tel:+2348170838856">(+234) 8170 838 856</a></li>
                         <li><i class="fa fa-map-marker"></i>Arab rd, Kubwa, FCT-Abuja, Nigeria</li>
@@ -382,6 +404,8 @@ margin-top:100px
                 <ul class="footer-nav">
                     <li><a href="/">Home</a></li>
                     <li><a href="{% url 'mainsite:about-page' %}">About</a></li>
+                    <li><a href="{% url 'mainsite:impact' %}">Impact</a></li>
+                    <li><a href="{% url 'mainsite:transparency' %}">Transparency</a></li>
                     <li><a href="{% url 'future_events' %}">Programs</a></li>
                     <li><a href="{% url 'volunteer-list' %}">Volunteers</a></li>
                     <li><a href="{% url 'article:all-articles' %}">Blog</a></li>

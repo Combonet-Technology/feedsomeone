@@ -1,7 +1,14 @@
-{% for img in objects %}
-<div class="col-md-3">
-    <a href="{{ img.image.url }}" class="img-pop-up">
-        <div class="single-gallery-image" style="background: url({{ img.image.url }});"></div>
+{% for image in objects %}
+<div class="col-lg-3 col-md-4 col-sm-6 mb-30">
+    <a href="{{ image.url }}" class="img-pop-up" aria-label="Open {{ image.alt }}">
+        <img
+            class="img-fluid"
+            src="{{ image.thumbnail_url }}"
+            width="640"
+            height="480"
+            loading="lazy"
+            decoding="async"
+            alt="{{ image.alt }}">
     </a>
 </div>
 {% endfor %}

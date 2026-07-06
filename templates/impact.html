@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block page_title %}Our Impact{% endblock %}
+{% block social_title %}Our Impact | Oluwafemi Ebenezer Foundation{% endblock %}
+{% block content %}
+<main>
+    <div class="slider-area2">
+        <div class="slider-height2 d-flex align-items-center">
+            <div class="container text-center"><h1>Our Impact</h1></div>
+        </div>
+    </div>
+    <section class="section-padding30">
+        <div class="container">
+            <div class="row justify-content-center mb-50">
+                <div class="col-lg-9 text-center">
+                    <div class="section-tittle">
+                        <span>Community action since 2019</span>
+                        <h2>Small beginnings, practical support</h2>
+                    </div>
+                    <p>Our early outreach activities were funded by the founder, friends and volunteers. We are documenting this history transparently while building stronger systems for measurement and reporting.</p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-6 mb-40">
+                    <h3>Feed Someone 1.0</h3>
+                    <p><strong>27 December 2019 · Akure, Ondo State</strong></p>
+                    <p>Friends and volunteers prepared and distributed meals and drinks to more than 150 people in an underserved street-connected community.</p>
+                    <a href="{% url 'mainsite:gallery' %}?event=feed-someone-1.0" class="genric-btn primary">View gallery</a>
+                </div>
+                <div class="col-lg-6 mb-40">
+                    <h3>Feed Someone 2.0</h3>
+                    <p><strong>December 2020 · Akure, Ondo State</strong></p>
+                    <p>Two children's homes and an underserved street-connected community received food staples, infant supplies, toiletries, clothing, footwear and other relief materials collected through a community campaign.</p>
+                    <a href="{% url 'mainsite:gallery' %}?event=feed-someone-2.0" class="genric-btn primary">View gallery</a>
+                </div>
+                <div class="col-lg-6 mb-40">
+                    <h3>Children's outreach support</h3>
+                    <p><strong>2021 · Abeokuta, Ogun State</strong></p>
+                    <p>The founder supported an independently led outreach reported to have reached approximately 200 children. Partner and contribution details are being documented.</p>
+                </div>
+                <div class="col-lg-6 mb-40">
+                    <h3>Birthday orphanage outreach</h3>
+                    <p><strong>9 August 2022 · Lugbe, Abuja</strong></p>
+                    <p>A founder-funded visit delivered noodles, beverages and other essential supplies to a children's home with support from a small group of friends.</p>
+                </div>
+            </div>
+            <div class="row justify-content-center mt-30">
+                <div class="col-lg-9 text-center">
+                    <p><em>Where exact beneficiary records are unavailable, we use conservative estimates and identify them clearly. Institution names and supporting evidence will be added after verification.</em></p>
+                    <a href="{% url 'contact' %}" class="btn">Partner with us</a>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+{% endblock %}

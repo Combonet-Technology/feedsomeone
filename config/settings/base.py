@@ -164,6 +164,38 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 SITE_ID = int(os.environ.get('SITE_ID', '1'))
 RECAPTCHA_PUBLIC_KEY = str(os.environ.get('RECAPTCHA_PUBLIC_KEY_v3'))
 RECAPTCHA_PRIVATE_KEY = str(os.environ.get('RECAPTCHA_PRIVATE_KEY_v3'))
+RECAPTCHA_MIN_SCORE = float(os.environ.get('RECAPTCHA_MIN_SCORE', '0.5'))
+RECAPTCHA_TIMEOUT_SECONDS = float(os.environ.get('RECAPTCHA_TIMEOUT_SECONDS', '5'))
+REGISTRATION_RATE_LIMIT = int(os.environ.get('REGISTRATION_RATE_LIMIT', '5'))
+REGISTRATION_RATE_LIMIT_WINDOW = int(os.environ.get('REGISTRATION_RATE_LIMIT_WINDOW', '3600'))
+
+# Historical public galleries are fetched server-side from an allow-list of
+# verified Cloudinary tags. Keep disabled until image consent/privacy review is
+# complete, then set CLOUDINARY_GALLERY_ENABLED=true in the deployment.
+CLOUDINARY_GALLERY_ENABLED = os.environ.get('CLOUDINARY_GALLERY_ENABLED', '').lower() == 'true'
+CLOUDINARY_GALLERY_CACHE_SECONDS = int(os.environ.get('CLOUDINARY_GALLERY_CACHE_SECONDS', '900'))
+CLOUDINARY_GALLERY_PUBLICATION_TAG = os.environ.get(
+    'CLOUDINARY_GALLERY_PUBLICATION_TAG',
+    'publication-approved',
+)
+CLOUDINARY_GALLERIES = {
+    'feed-someone-1.0': {
+        'tag': 'feed-someone-1.0',
+        'title': 'Feed Someone 1.0',
+        'date': '27 December 2019',
+        'location': 'Akure, Ondo State',
+        'summary': 'Meals and drinks shared with an underserved street-connected community.',
+        'library_count': 25,
+    },
+    'feed-someone-2.0': {
+        'tag': 'feed-someone-2.0',
+        'title': 'Feed Someone 2.0',
+        'date': 'December 2020',
+        'location': 'Akure, Ondo State',
+        'summary': 'Relief support delivered to two children\'s homes and an underserved community.',
+        'library_count': 74,
+    },
+}
 
 BATON = {
     'SITE_HEADER': 'Oluwafemi Ebenezer Foundation',
