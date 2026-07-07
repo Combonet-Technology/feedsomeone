@@ -39,6 +39,27 @@ if os.environ.get('DATABASE_URL'):
 
 CSRF_TRUSTED_ORIGINS = os.environ.get("ALLOWED_CSRF").split(" ")
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS").split(" ")
+
+# Render terminates TLS before forwarding requests to Django. Trust its
+# forwarded protocol header so SecurityMiddleware can apply HTTPS-only
+# protections without causing redirect loops.
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = os.environ.get('SECURE_SSL_REDIRECT', 'true').lower() == 'true'
+
+# Public grant/due-diligence pages should be served with basic browser security
+# guarantees. Keep HSTS preload/subdomain enforcement opt-in until every
+# subdomain is audited.
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+SECURE_HSTS_SECONDS = int(os.environ.get('SECURE_HSTS_SECONDS', '31536000'))
+SECURE_HSTS_INCLUDE_SUBDOMAINS = (
+    os.environ.get('SECURE_HSTS_INCLUDE_SUBDOMAINS', '').lower() == 'true'
+)
+SECURE_HSTS_PRELOAD = os.environ.get('SECURE_HSTS_PRELOAD', '').lower() == 'true'
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = 'same-origin'
+X_FRAME_OPTIONS = 'DENY'
+
 INSTALLED_APPS.insert(-1, 'cloudinary')
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
