@@ -285,8 +285,8 @@ margin-top:100px
                                             <li><a href="{% url 'mainsite:impact' %}">Impact</a></li>
                                             <li><a href="{% url 'events' %}">Programmes</a>
                                                 <ul style="width: 220px;" class="submenu">
-                                                    <li><a href="{% url 'past_events' %}">Past Events</a></li>
-                                                    <li><a href="{% url 'future_events' %}">Future Events</a></li>
+                                                    <li><a href="{% url 'past_events' %}">Past Outreach</a></li>
+                                                    <li><a href="{% url 'future_events' %}">Planned Programmes</a></li>
                                                 </ul>
                                             </li>
                                             <li><a href="#">Volunteers</a>
@@ -353,7 +353,7 @@ margin-top:100px
                     <p>Everyone deserves dignity, practical support and a fair opportunity to build a hopeful future.</p>
                     <ul class="footer-contact">
                         <li><i class="fa fa-phone"></i> <a href="tel:+2348170838856">(+234) 8170 838 856</a></li>
-                        <li><i class="fa fa-map-marker"></i>Arab rd, Kubwa, FCT-Abuja, Nigeria</li>
+                        <li><i class="fa fa-map-marker"></i>Abuja, FCT / Nigeria</li>
                         <li><i class="fa fa-envelope"></i> <a href="mailto:info@oluwafemiebenezerfoundation.org">Email:
                             info@oluwafemiebenezer...</a>
                         </li>
@@ -394,7 +394,7 @@ margin-top:100px
             <div class="col-md-4">
                 <div class="footer">
                     <h3 class="footer-title">Newsletter</h3>
-                    <p>Subscribe to our newsletter and you will always be updated on our upcoming charity events</p>
+                    <p>Subscribe for updates on OEF outreach, evidence reports, volunteer opportunities and grant-readiness milestones.</p>
                     {% newsletter_form %}
                     <ul class="footer-social" id="footer-social">
                         <li><a><i class="fa fa-arrow-right"></i></a></li>
@@ -419,9 +419,9 @@ margin-top:100px
                     <li><a href="{% url 'mainsite:about-page' %}">About</a></li>
                     <li><a href="{% url 'mainsite:impact' %}">Impact</a></li>
                     <li><a href="{% url 'mainsite:transparency' %}">Transparency</a></li>
-                    <li><a href="{% url 'future_events' %}">Programs</a></li>
+                    <li><a href="{% url 'events' %}">Programmes</a></li>
                     <li><a href="{% url 'volunteer-list' %}">Volunteers</a></li>
-                    <li><a href="{% url 'article:all-articles' %}">Blog</a></li>
+                    <li><a href="{% url 'article:all-articles' %}">News</a></li>
                     <li><a href="{% url 'contact' %}">Contact</a></li>
                     {% if request.user.is_authenticated %}
                     <li><a href="{% url 'profile' %}"> Edit Profile</a></li>
