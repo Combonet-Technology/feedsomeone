@@ -3,12 +3,9 @@ from unittest.mock import Mock, patch
 from django.test import SimpleTestCase, override_settings
 from django.urls import reverse
 
-from mainsite.services.cloudinary_gallery import (
-    GalleryAsset,
-    get_gallery_assets,
-    resolve_event_gallery_slug,
-)
-
+from mainsite.services.cloudinary_gallery import (GalleryAsset,
+                                                  get_gallery_assets,
+                                                  resolve_event_gallery_slug)
 
 GALLERIES = {
     'feed-someone-1.0': {
@@ -102,6 +99,10 @@ class GalleryViewTests(SimpleTestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Feed Someone 1.0')
+        self.assertContains(response, 'OEF Evidence Gallery')
+        self.assertContains(response, 'View programme records')
+        self.assertContains(response, 'Read impact summary')
+        self.assertContains(response, "OEF's media review workflow")
         self.assertContains(response, 'https://example.com/thumb.jpg')
         get_assets.assert_called_once_with('feed-someone-1.0')
 
@@ -111,7 +112,7 @@ class GalleryViewTests(SimpleTestCase):
 
         self.assertEqual(response.status_code, 200)
         get_assets.assert_not_called()
-        self.assertContains(response, 'Choose an outreach')
+        self.assertContains(response, 'Choose an outreach above to view its approved evidence gallery')
 
     def test_impact_page_links_to_both_verified_galleries(self):
         response = self.client.get(reverse('mainsite:impact'))
