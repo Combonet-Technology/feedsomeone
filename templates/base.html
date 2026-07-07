@@ -190,6 +190,18 @@ margin-top:100px
     max-width: 260px;
 }
 
+.popular_post_widget .post_item img {
+    width: 86px;
+    height: 86px;
+    max-width: 86px;
+    object-fit: cover;
+    flex: 0 0 86px;
+}
+
+.popular_post_widget .post_item .media-body {
+    min-width: 0;
+}
+
 
 
     </style>
@@ -302,22 +314,10 @@ margin-top:100px
                                             <li><a href="{% url 'mainsite:homepage' %}">Home</a></li>
                                             <li><a href="{% url 'mainsite:about-page' %}">About</a></li>
                                             <li><a href="{% url 'mainsite:impact' %}">Impact</a></li>
-                                            <li><a href="{% url 'events' %}">Programmes</a>
-                                                <ul style="width: 220px;" class="submenu">
-                                                    <li><a href="{% url 'past_events' %}">Past Outreach</a></li>
-                                                    <li><a href="{% url 'future_events' %}">Planned Programmes</a></li>
-                                                </ul>
-                                            </li>
-                                            <li><a href="#">Volunteers</a>
-                                                <ul style="width: 220px;" class="submenu">
-                                                    <li><a href="{% url 'register' %}">Become a volunteer</a></li>
-                                                    <li><a href="{% url 'volunteer-list' %}">View our Volunteers</a>
-                                                    </li>
-                                                </ul>
-                                            </li>
                                             <li><a href="{% url 'article:all-articles' %}">News</a>
-                                                <ul class="submenu">
-                                                    <li><a href="{% url 'article:all-articles' %}">Articles</a></li>
+                                                <ul style="width: 190px;" class="submenu">
+                                                    <li><a href="{% url 'article:articles-by-category' 'Briefings' %}">Briefings</a></li>
+                                                    <li><a href="{% url 'article:articles-by-category' 'Articles' %}">Articles</a></li>
                                                 </ul>
                                             </li>
                                             <li><a href="{% url 'contact' %}">Contact us</a></li>
@@ -438,9 +438,9 @@ margin-top:100px
                     <li><a href="{% url 'mainsite:about-page' %}">About</a></li>
                     <li><a href="{% url 'mainsite:impact' %}">Impact</a></li>
                     <li><a href="{% url 'mainsite:transparency' %}">Transparency</a></li>
-                    <li><a href="{% url 'events' %}">Programmes</a></li>
-                    <li><a href="{% url 'volunteer-list' %}">Volunteers</a></li>
                     <li><a href="{% url 'article:all-articles' %}">News</a></li>
+                    <li><a href="{% url 'article:articles-by-category' 'Briefings' %}">Briefings</a></li>
+                    <li><a href="{% url 'article:articles-by-category' 'Articles' %}">Articles</a></li>
                     <li><a href="{% url 'contact' %}">Contact</a></li>
                     {% if request.user.is_authenticated %}
                     <li><a href="{% url 'profile' %}"> Edit Profile</a></li>

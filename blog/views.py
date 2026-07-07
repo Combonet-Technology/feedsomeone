@@ -41,12 +41,20 @@ class ArticleListView(ListView):
             self.tag = get_object_or_404(Tag, slug=self.kwargs.get('tag'))
             queryset = queryset.filter(tags__in=[self.tag])
         if self.kwargs.get('category'):
-            queryset = queryset.filter(category__title=self.kwargs.get('category'))
+            self.category = self.kwargs.get('category')
+            queryset = queryset.filter(category__title=self.category)
         return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['tags'] = self.tag
+        context['current_category'] = self.category
+        if self.category == 'Briefings':
+            context['page_title'] = 'OEF News Briefings'
+            context['page_heading'] = 'OEF News Briefings'
+        elif self.category == 'Articles':
+            context['page_title'] = 'OEF Articles'
+            context['page_heading'] = 'OEF Articles'
         context['posts'] = self.get_queryset()
         context['recent_posts'] = self.get_queryset().order_by("-date_created")[:8]
         return context

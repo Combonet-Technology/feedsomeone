@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block page_title %}OEF News and Articles{% endblock %}
+{% block page_title %}{{ page_title|default:"OEF News and Articles" }}{% endblock %}
 {% load static %}
 {% load blog_tags %}
 {% block content %}
@@ -11,7 +11,7 @@
                 <div class="row">
                     <div class="col-xl-12">
                         <div class="hero-cap hero-cap2 pt-70 text-center">
-                            <h2>OEF News & Articles</h2>
+                            <h2>{{ page_heading|default:"OEF News & Articles" }}</h2>
                         </div>
                     </div>
                 </div>
