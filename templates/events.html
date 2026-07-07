@@ -1,151 +1,87 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block page_title %}{{page_title_sub}}{% endblock %}
+{% block page_title %}{{ page_title_sub|default:"Programmes and Events" }}{% endblock %}
+{% block social_title %}Programmes and Events | Oluwafemi Ebenezer Foundation{% endblock %}
 {% block content %}
-
 <main>
-    <!--? Hero Start -->
     <div class="slider-area2">
         <div class="slider-height2 d-flex align-items-center">
             <div class="container">
                 <div class="row">
                     <div class="col-xl-12">
                         <div class="hero-cap hero-cap2 pt-20 text-center">
-                            <h2>{{page_title_head}}</h2>
+                            <h2>{{ page_title_head|default:"Programmes and Events" }}</h2>
+                            <p>{{ page_intro|default:"Explore OEF's completed outreach activities and planned programme work." }}</p>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    <!-- Hero End -->
-    <!--? Count Down Start -->
-    <div class="count-down-area pt-25 section-bg" data-background="{% static 'img/gallery/section_bg02.png' %}">
+
+    <section class="section-padding30">
         <div class="container">
-            <div class="row justify-content-center">
-                <div class="col-lg-12 col-md-12">
-                    <div class="count-down-wrapper" >
-                        <div class="row justify-content-between">
-                            <div class="col-lg-3 col-md-6 col-sm-6">
-                                <!-- Counter Up -->
-                                <div class="single-counter text-center">
-                                    <span class="counter color-green">70000</span>
-                                    <span class="plus">+</span>
-                                    <p class="color-green">Donations</p>
-                                </div>
-                            </div>
-                            <div class="col-lg-4 col-md-6 col-sm-6">
-                                <!-- Counter Up -->
-                                <div class="single-counter text-center">
-                                    <span class="counter color-green">1</span>
-                                    <span class="plus">+</span>
-                                    <p class="color-green">Event Done</p>
-                                </div>
-                            </div>
-                            <div class="col-lg-4 col-md-6 col-sm-6">
-                                <!-- Counter Up -->
-                                <div class="single-counter text-center">
-                                    <span class="counter color-green">3</span>
-                                    <span class="plus">+</span>
-                                    <p class="color-green">People Donated</p>
-                                </div>
-                            </div>
-                            <div class="col-lg-4 col-md-6 col-sm-6">
-                                <!-- Counter Up -->
-                            </div>
-                        </div>
+            <div class="row justify-content-center mb-50">
+                <div class="col-xl-8 col-lg-9 col-md-10 col-sm-12">
+                    <div class="section-tittle text-center">
+                        <span>{{ page_title_sub|default:"OEF programmes" }}</span>
+                        <h2>{{ page_title_content|default:"Relief today, opportunity tomorrow" }}</h2>
                     </div>
+                    <p class="text-center">Feed Someone is OEF's flagship outreach programme. Our wider programme direction includes orphanage relief, community relief, health and dignity, safe lives, learning support, and future digital access hubs.</p>
                 </div>
             </div>
-        </div>
-    </div>
-    <!-- Count Down End -->
-    <!-- Featured_job_start -->
-   <section class="featured-job-area section-padding30 section-bg2" data-background="{% static 'img/gallery/section_bg03.png' %}">
-        <div class="container">
-            <div class="row justify-content-center">
-                <div class="col-xl-7 col-lg-9 col-md-10 col-sm-12">
-                    <!-- Section Tittle -->
-                    <div class="section-tittle text-center mb-80">
-                        <span>{{page_title_sub}}</span>
-                        <h2>{{page_title_content}}</h2>
-                    </div>
-                </div>
-            </div>
+
             <div class="row justify-content-center">
                 <div class="col-lg-9 col-md-12">
-                    <!-- single-job-content -->
                     <div class="single-job-items">
                         {% for event in events %}
                         <div class="job-items" style="margin-bottom: 50px; padding-bottom: 50px;">
                             <div class="company-img">
                                 <a href="{% url 'event-details' event.id event.event_slug %}"><img width="360" height="240"
-                                                                                         src="{{event.feature_img.url}}" alt=""></a>
+                                                                                         src="{{ event.feature_img.url }}" alt="{{ event.title }}"></a>
                             </div>
                             <div class="job-tittle">
-                                <a href="{% url 'event-details' event.id event.event_slug %}"><h4>{{event.title}}</h4></a>
+                                <a href="{% url 'event-details' event.id event.event_slug %}"><h4>{{ event.title }}</h4></a>
                                 <ul>
-                                    <li><i class="far fa-clock"></i>{{event.time}}</li>
-                                    <li><i class="fas fa-sort-amount-down"></i>{{event.event_date}}</li>
-                                    <li><i class="fas fa-map-marker-alt"></i>{{event.location}}</li>
+                                    <li><i class="far fa-clock"></i>{{ event.time }}</li>
+                                    <li><i class="fas fa-sort-amount-down"></i>{{ event.event_date }}</li>
+                                    <li><i class="fas fa-map-marker-alt"></i>{{ event.location }}</li>
                                 </ul>
+                                {% if event.description %}<p>{{ event.description }}</p>{% endif %}
                             </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-center">
+                            <h3>Programme records are being updated</h3>
+                            <p>We are currently publishing OEF's historical outreach records and planned programme pipeline. In the meantime, review our impact page and approved galleries.</p>
+                            <a href="{% url 'mainsite:impact' %}" class="genric-btn primary">View impact</a>
+                            <a href="{% url 'mainsite:gallery' %}" class="genric-btn primary-border ml-3">View gallery</a>
                         </div>
                         {% endfor %}
                     </div>
                 </div>
-<!--                <div class="col-lg-9 col-md-12">-->
-<!--                    &lt;!&ndash; single-job-content &ndash;&gt;-->
-<!--                    <div class="single-job-items mb-30">-->
-<!--                        <div class="job-items">-->
-<!--                            <div class="company-img">-->
-<!--                                <a href="#"><img src="{% static 'img/gallery/orphanage.png' %}" alt=""></a>-->
-<!--                            </div>-->
-<!--                            <div class="job-tittle">-->
-<!--                                <a href="#"><h4>A visit to the orphanages</h4></a>-->
-<!--                                <ul>-->
-<!--                                    <li><i class="far fa-clock"></i>10:30 - 2:30pm</li>-->
-<!--                                    <li><i class="fas fa-sort-amount-down"></i>25.12.2020</li>-->
-<!--                                    <li><i class="fas fa-map-marker-alt"></i>Akure, Nigeria</li>-->
-<!--                                </ul>-->
-<!--                            </div>-->
-<!--                        </div>-->
-<!--                    </div>-->
-<!--                </div>-->
             </div>
         </div>
     </section>
-    <!-- Featured_job_end -->
+
     <nav class="blog-pagination justify-content-center d-flex">
         <ul class="pagination mb-4">
             {% if page_obj.has_previous %}
-            <li class="page-item">
-                <a href="?page=1" class="page-link" aria-label="Previous">First</a>
-            </li>
-            <li class="page-item">
-                <a href="?page={{page_obj.previous_page_number}}" class="page-link" aria-label="Previous"><i class="ti-angle-left"></i></a>
-            </li>
+            <li class="page-item"><a href="?page=1" class="page-link" aria-label="First">First</a></li>
+            <li class="page-item"><a href="?page={{ page_obj.previous_page_number }}" class="page-link" aria-label="Previous"><i class="ti-angle-left"></i></a></li>
             {% endif %}
             {% for page in page_obj.paginator.page_range %}
             {% if page_obj.number == page %}
-            <li class="page-item active">
-                <a class="page-link" href="?page={{page}}">{{page}}</a>
-            </li>
+            <li class="page-item active"><a class="page-link" href="?page={{ page }}">{{ page }}</a></li>
             {% elif page > page_obj.number|add:'-2' and page < page_obj.number|add:'2' %}
-            <li class="page-item"><a class="page-link" href="?page={{page}}">{{page}}</a></li>
+            <li class="page-item"><a class="page-link" href="?page={{ page }}">{{ page }}</a></li>
             {% endif %}
             {% endfor %}
             {% if page_obj.has_next %}
-            <li class="page-item">
-                <a href="?page={{ page_obj.next_page_number }}" class="page-link" aria-label="Next">
-                    <i class="ti-angle-right"></i>
-                </a>
-            </li>
-            <li class="page-item">
-                <a href="?page={{ page_obj.paginator.num_pages }}" class="page-link">Last</a>
-            </li>
+            <li class="page-item"><a href="?page={{ page_obj.next_page_number }}" class="page-link" aria-label="Next"><i class="ti-angle-right"></i></a></li>
+            <li class="page-item"><a href="?page={{ page_obj.paginator.num_pages }}" class="page-link">Last</a></li>
             {% endif %}
         </ul>
     </nav>
-    </main>
+</main>
 {% endblock %}

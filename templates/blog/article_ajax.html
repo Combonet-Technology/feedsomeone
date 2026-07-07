@@ -37,4 +37,11 @@
         </ul>
     </div>
 </article>
+{% empty %}
+<div class="text-center">
+    <h3>OEF articles are being updated</h3>
+    <p>We are preparing current posts on the Feed Someone origin story, Feed Someone 1.0, Feed Someone 2.0, and OEF's grant-readiness journey.</p>
+    <a href="{% url 'mainsite:impact' %}" class="genric-btn primary">View impact</a>
+    <a href="{% url 'mainsite:gallery' %}" class="genric-btn primary-border ml-3">View gallery</a>
+</div>
 {% endfor %}

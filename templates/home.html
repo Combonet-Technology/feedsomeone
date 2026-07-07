@@ -14,14 +14,11 @@
                         <div class="col-xl-6 col-lg-6 col-md-8 col-sm-10">
                             <div class="hero__caption">
                                 <h1 data-animation="fadeInUp" data-delay=".6s">Practical support.<br>Lasting opportunity.</h1>
-                                <p data-animation="fadeInUp" data-delay=".8s">Oluwafemi Ebenezer Foundation supports underserved children, families and communities through relief, health, protection, education and access to technology.</p>
+                                <p data-animation="fadeInUp" data-delay=".8s">Oluwafemi Ebenezer Foundation is a registered Nigerian nonprofit founded from the Feed Someone movement. We support underserved children, orphanages, families and communities through practical relief, health awareness, learning support, safety, dignity and opportunity-focused programmes.</p>
                                 <!-- Hero-btn -->
                                 <div class="hero__btn">
-                                    <a href="{% url 'mainsite:donate' %}" class="btn hero-btn mb-10"  data-animation="fadeInLeft" data-delay=".8s">Donate</a>
-                                    <a href="tel:+2348170838856" class="cal-btn ml-15" data-animation="fadeInRight" data-delay="1.0s">
-                                        <i class="flaticon-null"></i>
-                                        <p>+2348170838856</p>
-                                    </a>
+                                    <a href="{% url 'mainsite:impact' %}" class="btn hero-btn mb-10"  data-animation="fadeInLeft" data-delay=".8s">View Our Impact</a>
+                                    <a href="{% url 'events' %}" class="btn hero-btn mb-10 ml-15" data-animation="fadeInRight" data-delay="1.0s">Explore Programmes</a>
                                 </div>
                             </div>
                         </div>
@@ -103,10 +100,11 @@
                             <span>About our foundation</span>
                             <h2>Building dignity, resilience and hope</h2>
                         </div>
-                        <p><strong>Mission:</strong> To improve the lives of underserved children, families and communities in Nigeria through practical relief, preventive health, protection, education, empowerment and access to technology.</p>
-                        <p><strong>Vision:</strong> A world where every child and underserved community has the health, protection, resources and opportunities required to live with dignity and build a hopeful future.</p>
+                        <p>Feed Someone began in 2019 as a practical response to hunger and hardship. OEF now carries that conviction forward as a legal foundation focused on immediate relief and longer-term opportunity.</p>
+                        <p><strong>Mission:</strong> To provide practical relief, learning support, health awareness, dignity-focused care and empowerment opportunities for underserved children, families and communities.</p>
+                        <p><strong>Vision:</strong> A society where poverty, hunger, abuse, preventable disease and lack of opportunity no longer define a person's future.</p>
                     </div>
-                    <a href="{% url 'mainsite:about-page' %}" class="btn">About US</a>
+                    <a href="{% url 'mainsite:about-page' %}" class="btn">About OEF</a>
                 </div>
                 <div class="col-lg-6 col-md-12">
                     <!-- about-img -->
@@ -252,25 +250,25 @@
                             <div class="col-lg-3 col-md-6 col-sm-6">
                                 <!-- Counter Up -->
                                 <div class="single-counter text-center">
-      				   <span class="counter color-green">{{total_amount|floatformat:0|intcomma}}</span>
+                                    <span class="counter color-green">2019</span>
                                     <span class="plus">+</span>
-                                    <p class="color-green">Donations</p>
+                                    <p class="color-green">Outreach began</p>
                                 </div>
                             </div>
                             <div class="col-lg-4 col-md-6 col-sm-6">
                                 <!-- Counter Up -->
                                 <div class="single-counter text-center">
-                                    <span class="counter color-green">{{events_done}}</span>
+                                    <span class="counter color-green">4</span>
                                     <span class="plus">+</span>
-                                    <p class="color-green">Events Done</p>
+                                    <p class="color-green">Documented activities</p>
                                 </div>
                             </div>
                             <div class="col-lg-4 col-md-6 col-sm-6">
                                 <!-- Counter Up -->
                                 <div class="single-counter text-center">
-				   <span class="counter color-green">{{total_transaction}}</span>
+				   <span class="counter color-green">2022</span>
                                     <span class="plus">+</span>
-                                    <p class="color-green">People Donated</p>
+                                    <p class="color-green">CAC incorporation</p>
                                 </div>
                             </div>
                             <div class="col-lg-4 col-md-6 col-sm-6">
@@ -336,7 +334,7 @@
                 <div class="row align-items-center justify-content-between">
                     <div class="col-xl-7 col-lg-8 col-md-7">
                         <div class="wantToWork-caption wantToWork-caption2">
-                            <h2>Together We can Change The world with Humanity</h2>
+                            <h2>Volunteer, partner, or help us prepare stronger evidence for our next outreach.</h2>
                         </div>
                     </div>
                     <div class="col-xl-2 col-lg-2 col-md-3">

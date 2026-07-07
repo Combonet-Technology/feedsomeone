@@ -5,8 +5,8 @@ from django.views.generic import CreateView, DetailView, ListView
 
 from events.models import Events
 from mainsite.services.cloudinary_gallery import (get_gallery_assets,
-                                                   get_gallery_definition,
-                                                   resolve_event_gallery_slug)
+                                                  get_gallery_definition,
+                                                  resolve_event_gallery_slug)
 from user.models import Volunteer
 
 
@@ -16,6 +16,17 @@ class AllEventsList(ListView):
     context_object_name = 'events'
     ordering = ['event_date']
     paginate_by = 4
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title_head'] = "Programmes and Events"
+        context['page_title_sub'] = "OEF programme pipeline"
+        context['page_title_content'] = "Completed outreach and planned work"
+        context['page_intro'] = (
+            "Explore OEF's documented outreach history and the programme areas "
+            "we are formalising for future grants and partnerships."
+        )
+        return context
 
 
 class UpcomingEventsList(ListView):
@@ -33,9 +44,13 @@ class UpcomingEventsList(ListView):
         # Call the base implementation first to get a context
         context = super().get_context_data(**kwargs)
         # Add in a QuerySet of all the books
-        context['page_title_head'] = "Upcoming Charity Events"
-        context['page_title_sub'] = "Events Coming Soon"
-        context['page_title_content'] = "Where we will be impacting soon, join us!"
+        context['page_title_head'] = "Upcoming Programmes"
+        context['page_title_sub'] = "Planned work"
+        context['page_title_content'] = "Future relief, learning, health and dignity projects"
+        context['page_intro'] = (
+            "Upcoming records represent planned or proposed activities. We keep them "
+            "separate from completed impact until delivery is verified."
+        )
         return context
 
 
@@ -53,9 +68,13 @@ class PastEventsList(ListView):
         # Call the base implementation first to get a context
         context = super().get_context_data(**kwargs)
         # Add in a QuerySet of all the books
-        context['page_title_head'] = "Past Charity Events"
-        context['page_title_sub'] = "Events we did in the past"
-        context['page_title_content'] = "Review the events we organized in the past"
+        context['page_title_head'] = "Past Outreach"
+        context['page_title_sub'] = "Completed work"
+        context['page_title_content'] = "Documented Feed Someone and OEF outreach history"
+        context['page_intro'] = (
+            "These records describe completed activities and link to approved "
+            "evidence where available."
+        )
         return context
 
 

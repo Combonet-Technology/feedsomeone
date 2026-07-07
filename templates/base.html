@@ -161,6 +161,16 @@ margin: 0 23.5% !important;
 margin-top:100px
 }
 
+.oef-site-logo {
+    max-width: 230px;
+    width: 100%;
+    height: auto;
+}
+
+.footer-logo .oef-site-logo {
+    max-width: 260px;
+}
+
 
 
     </style>
@@ -259,8 +269,9 @@ margin-top:100px
                         <!-- Logo -->
                         <div class="col-xl-2 col-lg-2">
                             <div class="logo">
-                                <a href="{% url 'mainsite:homepage' %}"><img src="{% static 'img/logo/logo.png' %}"
-                                                                             alt=""></a>
+                                <a href="{% url 'mainsite:homepage' %}"><img class="oef-site-logo"
+                                                                             src="{% static 'img/logo/oef-logo.svg' %}"
+                                                                             alt="Oluwafemi Ebenezer Foundation"></a>
                             </div>
                         </div>
                         <div class="col-xl-10 col-lg-10">
@@ -335,7 +346,9 @@ margin-top:100px
             <div class="col-md-4">
                 <div class="footer">
                     <div class="footer-logo">
-                        <a class="logo" href="#"><img src="{% static 'img/logo/logo.png' %}" alt=""></a>
+                        <a class="logo" href="{% url 'mainsite:homepage' %}"><img class="oef-site-logo"
+                                                                                  src="{% static 'img/logo/oef-logo.svg' %}"
+                                                                                  alt="Oluwafemi Ebenezer Foundation"></a>
                     </div>
                     <p>Everyone deserves dignity, practical support and a fair opportunity to build a hopeful future.</p>
                     <ul class="footer-contact">

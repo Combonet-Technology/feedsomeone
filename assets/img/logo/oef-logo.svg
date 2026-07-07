@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 650" role="img" aria-labelledby="title desc">
+  <title id="title">Oluwafemi Ebenezer Foundation logo</title>
+  <desc id="desc">Red stepped emblem beside the words Oluwafemi Ebenezer Foundation with the tagline Touching Lives, One at a Time.</desc>
+  <defs>
+    <style>
+      .mark { fill: #ff2a2f; }
+      .name {
+        fill: #3a3937;
+        font-family: "Montserrat", "League Spartan", "Arial Black", "Arial", sans-serif;
+        font-weight: 900;
+        letter-spacing: -8px;
+      }
+      .tagline {
+        fill: #3a3937;
+        font-family: "Montserrat", "Arial", sans-serif;
+        font-weight: 800;
+        letter-spacing: 18px;
+      }
+    </style>
+  </defs>
+
+  <g transform="translate(40 40)">
+    <rect class="mark" x="0" y="0" width="455" height="88" rx="13" />
+    <rect class="mark" x="78" y="112" width="417" height="88" rx="13" />
+    <rect class="mark" x="156" y="224" width="339" height="88" rx="13" />
+    <rect class="mark" x="250" y="336" width="245" height="88" rx="13" />
+  </g>
+
+  <g transform="translate(560 40)">
+    <text class="name" x="0" y="118" font-size="127">OLUWAFEMI</text>
+    <text class="name" x="0" y="246" font-size="127">EBENEZER</text>
+    <text class="name" x="0" y="374" font-size="127">FOUNDATION</text>
+  </g>
+
+  <text class="tagline" x="220" y="565" font-size="42" textLength="1160" lengthAdjust="spacing">TOUCHING LIVES, ONE AT A TIME</text>
+</svg>
