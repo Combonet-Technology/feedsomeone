@@ -1,9 +1,9 @@
-from django.contrib.sitemaps import Sitemap
+from mainsite.sitemaps import CanonicalDomainSitemap
 
 from .models import Article
 
 
-class ArticleSitemap(Sitemap):
+class ArticleSitemap(CanonicalDomainSitemap):
     changefreq = 'weekly'
     priority = 0.9
 

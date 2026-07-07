@@ -58,3 +58,26 @@ class PublicPageTests(TestCase):
         self.assertContains(home, 'Oluwafemi Ebenezer Foundation')
         self.assertContains(about, 'flagship relief programme')
         self.assertContains(about, 'Founded from the Feed Someone outreach conceived in 2019')
+
+    def test_sitemap_uses_canonical_www_domain_and_grant_review_routes(self):
+        response = self.client.get('/sitemap.xml')
+        content = response.content.decode()
+        canonical_base = 'https://www.oluwafemiebenezerfoundation.org'
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn('https://oluwafemiebenezerfoundation.org/', content)
+        for path in (
+            '/',
+            '/about/',
+            '/impact/',
+            '/transparency/',
+            '/gallery/',
+            '/events/',
+            '/contact/',
+            '/article/all/',
+            '/volunteers/view-volunteers/',
+        ):
+            self.assertIn(
+                canonical_base + path,
+                content,
+            )
