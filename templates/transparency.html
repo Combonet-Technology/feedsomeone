@@ -1,6 +1,66 @@
 {% extends 'base.html' %}
 {% block page_title %}Transparency and Governance{% endblock %}
 {% block social_title %}Transparency | Oluwafemi Ebenezer Foundation{% endblock %}
+{% block meta_description %}Verify OEF legal identity, CAC registration number, incorporation date, public contact details, governance notes and evidence-based reporting posture.{% endblock %}
+{% block social_description %}OEF transparency page with CAC registration details, governance notes, funding history and due-diligence contact information.{% endblock %}
+{% block structured_data_extra %}
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Is Oluwafemi Ebenezer Foundation registered?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. Oluwafemi Ebenezer Foundation is registered in Nigeria with the Corporate Affairs Commission. The CAC registration number is 179189 and the incorporation date is 27 April 2022."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is Feed Someone?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Feed Someone is the foundation's flagship outreach programme. It began as a community relief movement in 2019 and now sits under Oluwafemi Ebenezer Foundation."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Where does OEF operate?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "OEF is registered in Nigeria and has documented outreach history in Akure, Ondo State, with additional founder-led and partner-supported work in other Nigerian communities."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What programmes does OEF run?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "OEF focuses on relief and dignity, orphanage support, health awareness, safe lives, learning support and future digital opportunity programmes."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How can partners verify or contact OEF?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Partners and reviewers can contact OEF through info@oluwafemiebenezerfoundation.org for due diligence, grant, partnership, volunteer or media enquiries."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does OEF publish evidence of past outreach?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. OEF publishes impact notes, programme records and approved evidence galleries, while avoiding unsupported claims where beneficiary counts or institution details are still being verified."
+          }
+        }
+      ]
+    }
+    </script>
+{% endblock %}
 {% block content %}
 <main>
     <div class="slider-area2">
@@ -37,6 +97,19 @@
                     <p>OEF's completed activities have been primarily founder-funded and volunteer-supported. Older annual-report drafts exist for internal planning and past application preparation, but they should not be treated as audited public accounts until reconciled with receipts, bank records and formal accounting review.</p>
                     <h3 class="mt-40">Contact and verification</h3>
                     <p>Organizations conducting due diligence may contact <a href="mailto:info@oluwafemiebenezerfoundation.org">info@oluwafemiebenezerfoundation.org</a>.</p>
+                    <h3 class="mt-40">Verification FAQ</h3>
+                    <h4>Is Oluwafemi Ebenezer Foundation registered?</h4>
+                    <p>Yes. OEF is registered in Nigeria with the Corporate Affairs Commission. CAC registration number: 179189. Incorporation date: 27 April 2022.</p>
+                    <h4>What is Feed Someone?</h4>
+                    <p>Feed Someone is OEF's flagship outreach programme. It began as a community relief movement in 2019 and now sits under the registered foundation.</p>
+                    <h4>Where does OEF operate?</h4>
+                    <p>OEF is registered in Nigeria and has documented outreach history in Akure, Ondo State, with additional founder-led and partner-supported work in other Nigerian communities.</p>
+                    <h4>What programmes does OEF run?</h4>
+                    <p>OEF focuses on relief and dignity, orphanage support, health awareness, safe lives, learning support and future digital opportunity programmes.</p>
+                    <h4>How can partners verify or contact OEF?</h4>
+                    <p>Partners and reviewers can contact <a href="mailto:info@oluwafemiebenezerfoundation.org">info@oluwafemiebenezerfoundation.org</a> for due diligence, grant, partnership, volunteer or media enquiries.</p>
+                    <h4>Does OEF publish evidence of past outreach?</h4>
+                    <p>Yes. OEF publishes impact notes, programme records and approved evidence galleries, while avoiding unsupported claims where beneficiary counts or institution details are still being verified.</p>
                     <a href="{% url 'mainsite:impact' %}" class="btn mt-30">Review our impact</a>
                 </div>
             </div>

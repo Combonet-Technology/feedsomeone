@@ -81,3 +81,36 @@ class PublicPageTests(TestCase):
                 canonical_base + path,
                 content,
             )
+
+    def test_key_public_pages_have_unique_meta_descriptions(self):
+        routes = (
+            'mainsite:homepage',
+            'mainsite:about-page',
+            'mainsite:impact',
+            'mainsite:transparency',
+            'mainsite:gallery',
+        )
+        descriptions = {}
+
+        for route in routes:
+            response = self.client.get(reverse(route))
+            content = response.content.decode()
+            marker = '<meta name="description" content="'
+            start = content.find(marker)
+            self.assertNotEqual(start, -1, route)
+            start += len(marker)
+            end = content.find('"', start)
+            description = content[start:end]
+            self.assertGreater(len(description), 80, route)
+            descriptions[route] = description
+
+        self.assertEqual(len(set(descriptions.values())), len(descriptions))
+
+    def test_transparency_page_exposes_faq_schema(self):
+        response = self.client.get(reverse('mainsite:transparency'))
+        content = response.content.decode()
+
+        self.assertContains(response, '"@type": "FAQPage"')
+        self.assertContains(response, 'Is Oluwafemi Ebenezer Foundation registered?')
+        self.assertContains(response, 'CAC registration number: 179189')
+        self.assertIn('info@oluwafemiebenezerfoundation.org', content)
