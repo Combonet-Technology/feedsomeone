@@ -22,6 +22,7 @@ class PublicPageTests(TestCase):
     public_routes = (
         'mainsite:homepage',
         'mainsite:about-page',
+        'mainsite:what-is-oef',
         'mainsite:impact',
         'mainsite:transparency',
         'mainsite:gallery',
@@ -54,10 +55,13 @@ class PublicPageTests(TestCase):
     def test_public_identity_and_programme_relationship_are_explicit(self):
         home = self.client.get(reverse('mainsite:homepage'))
         about = self.client.get(reverse('mainsite:about-page'))
+        explainer = self.client.get(reverse('mainsite:what-is-oef'))
 
         self.assertContains(home, 'Oluwafemi Ebenezer Foundation')
         self.assertContains(about, 'flagship relief programme')
         self.assertContains(about, 'Founded from the Feed Someone outreach conceived in 2019')
+        self.assertContains(explainer, 'OEF is not a children-only or orphanage-only charity')
+        self.assertContains(explainer, 'Feed Someone is the founding movement and flagship outreach initiative')
 
     def test_sitemap_uses_canonical_www_domain_and_grant_review_routes(self):
         response = self.client.get('/sitemap.xml')
@@ -69,6 +73,7 @@ class PublicPageTests(TestCase):
         for path in (
             '/',
             '/about/',
+            '/what-is-oluwafemi-ebenezer-foundation/',
             '/impact/',
             '/transparency/',
             '/gallery/',
@@ -86,6 +91,7 @@ class PublicPageTests(TestCase):
         routes = (
             'mainsite:homepage',
             'mainsite:about-page',
+            'mainsite:what-is-oef',
             'mainsite:impact',
             'mainsite:transparency',
             'mainsite:gallery',

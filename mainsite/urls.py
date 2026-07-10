@@ -23,6 +23,7 @@ app_name = 'mainsite'
 urlpatterns = [
     path('', views.home, name='homepage'),
     path('about/', views.about, name='about-page'),
+    path('what-is-oluwafemi-ebenezer-foundation/', views.what_is_oef, name='what-is-oef'),
     path('impact/', views.impact, name='impact'),
     path('transparency/', views.transparency, name='transparency'),
     path('robots.txt', views.robots_txt, name='robots-txt'),

@@ -34,6 +34,7 @@ class StaticViewSitemap(CanonicalDomainSitemap):
         return [
             'mainsite:homepage',
             'mainsite:about-page',
+            'mainsite:what-is-oef',
             'mainsite:impact',
             'mainsite:transparency',
             'mainsite:gallery',

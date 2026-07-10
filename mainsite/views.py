@@ -14,7 +14,7 @@ from events.models import Events
 from ext_libs.rave.payment import RavePaymentHandler
 from mainsite.models import GalleryImage, TransactionHistory
 from mainsite.services.cloudinary_gallery import (get_gallery_assets,
-                                                   get_gallery_definition)
+                                                  get_gallery_definition)
 from mainsite.utils import (create_transaction_history, get_or_create_donor,
                             get_or_create_user_profile,
                             handle_failed_transaction,
@@ -52,6 +52,10 @@ def about(request):
     }
     # return HttpResponse('welcome to feed someone')
     return render(request, 'about.html', context)
+
+
+def what_is_oef(request):
+    return render(request, 'what-is-oef.html')
 
 
 def impact(request):

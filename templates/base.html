@@ -19,13 +19,13 @@
     <meta charset="utf-8">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <title>{% block page_title %}Oluwafemi Ebenezer Foundation{% endblock %} | OEF</title>
-    <meta name="description" content="{% block meta_description %}Oluwafemi Ebenezer Foundation is a Nigerian nonprofit supporting underserved children, families and communities through relief, health, protection, education and technology programmes.{% endblock %}">
-    <meta name="robots" content="index,follow">
+    <meta name="description" content="{% block meta_description %}Oluwafemi Ebenezer Foundation is a CAC-registered Nigerian nonprofit providing practical relief, dignity-focused care, social support, health awareness, learning support and opportunity programmes for vulnerable people and underserved communities.{% endblock %}">
+    <meta name="robots" content="{% block robots %}index,follow{% endblock %}">
     <link rel="canonical" href="{{ request.build_absolute_uri }}">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Oluwafemi Ebenezer Foundation">
     <meta property="og:title" content="{% block social_title %}Oluwafemi Ebenezer Foundation{% endblock %}">
-    <meta property="og:description" content="{% block social_description %}Practical relief and lasting opportunity for underserved children, families and communities in Nigeria.{% endblock %}">
+    <meta property="og:description" content="{% block social_description %}Practical relief, dignity-focused care and community support for vulnerable people and underserved communities in Nigeria.{% endblock %}">
     <meta property="og:url" content="{{ request.build_absolute_uri }}">
     <script type="application/ld+json">
     {
@@ -34,6 +34,7 @@
       "name": "Oluwafemi Ebenezer Foundation",
       "legalName": "Oluwafemi Ebenezer Foundation",
       "alternateName": "OEF",
+      "description": "Oluwafemi Ebenezer Foundation is a CAC-registered Nigerian nonprofit providing practical relief, dignity-focused care and community support for vulnerable people and underserved communities in Nigeria.",
       "url": "https://www.oluwafemiebenezerfoundation.org/",
       "logo": "https://www.oluwafemiebenezerfoundation.org/static/img/logo/oef-logo.svg",
       "slogan": "Touching lives, one at a time",
@@ -63,6 +64,7 @@
       },
       "sameAs": [
         "https://www.instagram.com/feedsomeone_",
+        "https://x.com/feedsomeone_",
         "https://www.linkedin.com/company/feed-someone/",
         "https://www.facebook.com/oluwafemiebenezerfoundation"
       ]
@@ -254,7 +256,7 @@ margin-top:100px
                                 <div class="header-social">
                                     <ul>
                                         <li style="margin-right: 0px; padding-right: 0px"><a
-                                                href="https://www.twitter.com/feedsomeone_"><i
+                                                href="https://x.com/feedsomeone_"><i
                                                 class="fab fa-twitter"></i></a></li>
                                         <li style="margin-right: 0px; padding-right: 0px"><a
                                                 href="https://www.instagram.com/feedsomeone_"><i
@@ -419,7 +421,7 @@ margin-top:100px
                     {% newsletter_form %}
                     <ul class="footer-social" id="footer-social">
                         <li><a><i class="fa fa-arrow-right"></i></a></li>
-                        <li><a href="https://www.twitter.com/feedsomeone_"><i class="fab fa-twitter"></i></a></li>
+                        <li><a href="https://x.com/feedsomeone_"><i class="fab fa-twitter"></i></a></li>
                         <li><a href="https://www.facebook.com/oluwafemiebenezerfoundation"><i
                                 class="fab fa-facebook"></i></a></li>
                         <li><a href="https://www.instagram.com/feedsomeone_"><i class="fab fa-instagram"></i></a></li>

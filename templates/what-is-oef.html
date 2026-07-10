@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block page_title %}What Is Oluwafemi Ebenezer Foundation?{% endblock %}
+{% block social_title %}What Is Oluwafemi Ebenezer Foundation?{% endblock %}
+{% block meta_description %}Oluwafemi Ebenezer Foundation is a CAC-registered Nigerian nonprofit providing practical relief, dignity-focused care and community support for vulnerable people and underserved communities.{% endblock %}
+{% block social_description %}A clear explainer for OEF: legal identity, Feed Someone history, programme focus, beneficiaries and verification details.{% endblock %}
+{% block structured_data_extra %}
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "What Is Oluwafemi Ebenezer Foundation?",
+      "url": "https://www.oluwafemiebenezerfoundation.org/what-is-oluwafemi-ebenezer-foundation/",
+      "description": "Oluwafemi Ebenezer Foundation is a CAC-registered Nigerian nonprofit providing practical relief, dignity-focused care and community support for vulnerable people and underserved communities.",
+      "about": {
+        "@type": "NGO",
+        "name": "Oluwafemi Ebenezer Foundation",
+        "alternateName": "OEF",
+        "foundingDate": "2022-04-27",
+        "identifier": {
+          "@type": "PropertyValue",
+          "propertyID": "CAC Registration Number",
+          "value": "179189"
+        }
+      }
+    }
+    </script>
+{% endblock %}
+{% block content %}
+<main>
+    <div class="slider-area2">
+        <div class="slider-height2 d-flex align-items-center">
+            <div class="container text-center">
+                <h1>What Is Oluwafemi Ebenezer Foundation?</h1>
+            </div>
+        </div>
+    </div>
+    <section class="section-padding30">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-9">
+                    <div class="section-tittle mb-35">
+                        <span>OEF identity</span>
+                        <h2>A Nigerian nonprofit for practical relief, dignity and community support</h2>
+                    </div>
+
+                    <p>Oluwafemi Ebenezer Foundation, also known as OEF, is a CAC-registered Nigerian nonprofit providing practical relief, dignity-focused care, health awareness, learning support, social support and opportunity-focused programmes for vulnerable people and underserved communities.</p>
+
+                    <p>OEF grew from Feed Someone, a grassroots relief outreach conceived in 2019. Feed Someone remains the foundation's flagship relief programme, while OEF is the broader legal organisation responsible for the wider humanitarian and community-impact mission.</p>
+
+                    <h3 class="mt-40">Who OEF supports</h3>
+                    <p>OEF is not a children-only or orphanage-only charity. Children and children's homes are part of the foundation's early history, but the broader mandate includes families, elderly people, neglected people, displaced people, low-income communities, street-connected people, people affected by conflict or violence, and communities affected by disasters such as flooding.</p>
+
+                    <h3 class="mt-40">Programme direction</h3>
+                    <p>OEF's programme direction includes practical relief, dignity-focused care, health awareness, safeguarding, mental-health awareness, learning support, digital access, social support for isolated or neglected people, and responsible community restoration work.</p>
+
+                    <h3 class="mt-40">Legal and verification details</h3>
+                    <ul>
+                        <li>Legal name: Oluwafemi Ebenezer Foundation</li>
+                        <li>Also known as: OEF</li>
+                        <li>CAC registration number: 179189</li>
+                        <li>Date of incorporation: 27 April 2022</li>
+                        <li>Country: Nigeria</li>
+                        <li>Email: <a href="mailto:info@oluwafemiebenezerfoundation.org">info@oluwafemiebenezerfoundation.org</a></li>
+                    </ul>
+
+                    <h3 class="mt-40">How Feed Someone relates to OEF</h3>
+                    <p>Feed Someone is the founding movement and flagship outreach initiative. Oluwafemi Ebenezer Foundation is the registered foundation that now gives the work a broader legal, governance and programme structure.</p>
+
+                    <p class="mt-40">For evidence and due-diligence context, review the foundation's impact records, transparency notes and approved public gallery.</p>
+                    <a href="{% url 'mainsite:impact' %}" class="btn mt-30">Review impact</a>
+                    <a href="{% url 'mainsite:transparency' %}" class="btn mt-30 ml-3">Verify OEF</a>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+{% endblock %}

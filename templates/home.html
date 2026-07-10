@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block page_title %}Oluwafemi Ebenezer Foundation{% endblock %}
-{% block meta_description %}Oluwafemi Ebenezer Foundation is a CAC-registered Nigerian nonprofit providing relief, orphanage support, health awareness, learning support and dignity-focused programmes.{% endblock %}
-{% block social_description %}CAC-registered Nigerian nonprofit supporting underserved children, orphanages, families and communities through practical relief and lasting opportunity.{% endblock %}
+{% block meta_description %}Oluwafemi Ebenezer Foundation is a CAC-registered Nigerian nonprofit providing practical relief, dignity-focused care, health awareness, learning support and opportunity programmes for vulnerable people and underserved communities.{% endblock %}
+{% block social_description %}CAC-registered Nigerian nonprofit providing practical relief, dignity-focused care and community support for vulnerable people and underserved communities.{% endblock %}
 {% load static %}
 {% load humanize %}
 {% block content %}
@@ -16,7 +16,7 @@
                         <div class="col-xl-6 col-lg-6 col-md-8 col-sm-10">
                             <div class="hero__caption">
                                 <h1 data-animation="fadeInUp" data-delay=".6s">Practical support.<br>Lasting opportunity.</h1>
-                                <p data-animation="fadeInUp" data-delay=".8s">Oluwafemi Ebenezer Foundation is a registered Nigerian nonprofit founded from the Feed Someone movement. We support underserved children, orphanages, families and communities through practical relief, health awareness, learning support, safety, dignity and opportunity-focused programmes.</p>
+                                <p data-animation="fadeInUp" data-delay=".8s">Oluwafemi Ebenezer Foundation is a registered Nigerian nonprofit founded from the Feed Someone movement. We support vulnerable people and underserved communities through practical relief, dignity-focused care, health awareness, learning support, safety, social support and opportunity-focused programmes.</p>
                                 <!-- Hero-btn -->
                                 <div class="hero__btn">
                                     <a href="{% url 'mainsite:impact' %}" class="btn hero-btn mb-10"  data-animation="fadeInLeft" data-delay=".8s">View Our Impact</a>
@@ -50,7 +50,7 @@
                         </div>
                         <div class="cat-cap">
                             <h5><a href="{% url 'mainsite:about-page' %}#feed-someone">Feed Someone</a></h5>
-                            <p>Our flagship relief programme provides food and essential supplies to underserved communities and children's homes.</p>
+                            <p>Our flagship relief programme provides food, essential supplies and dignity support to underserved communities. Early outreach also included support for children's homes.</p>
                         </div>
                     </div>
                 </div>
@@ -72,7 +72,7 @@
                         </div>
                         <div class="cat-cap">
                             <h5><a href="{% url 'mainsite:about-page' %}#safe-lives">Safe Lives</a></h5>
-                            <p>We advance child protection, abuse prevention, mental-health awareness and trusted referral pathways.</p>
+                            <p>We advance safeguarding, abuse prevention, mental-health awareness, social support and trusted referral pathways.</p>
                         </div>
                     </div>
                 </div>
@@ -103,10 +103,12 @@
                             <h2>Building dignity, resilience and hope</h2>
                         </div>
                         <p>Feed Someone began in 2019 as a practical response to hunger and hardship. OEF now carries that conviction forward as a legal foundation focused on immediate relief and longer-term opportunity.</p>
-                        <p><strong>Mission:</strong> To provide practical relief, learning support, health awareness, dignity-focused care and empowerment opportunities for underserved children, families and communities.</p>
+                        <p><strong>Mission:</strong> To provide practical relief, learning support, health awareness, dignity-focused care and empowerment opportunities for vulnerable people and underserved communities.</p>
+                        <p>Children and orphanages are part of our story, but OEF's wider mandate also includes families, elderly people, displaced people, neglected people and communities affected by poverty, conflict, violence or disaster.</p>
                         <p><strong>Vision:</strong> A society where poverty, hunger, abuse, preventable disease and lack of opportunity no longer define a person's future.</p>
                     </div>
                     <a href="{% url 'mainsite:about-page' %}" class="btn">About OEF</a>
+                    <a href="{% url 'mainsite:what-is-oef' %}" class="btn ml-3">What is OEF?</a>
                 </div>
                 <div class="col-lg-6 col-md-12">
                     <!-- about-img -->
