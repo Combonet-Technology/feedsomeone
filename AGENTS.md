@@ -30,9 +30,11 @@ This repository is the `feedsomeone` codebase, an NGO/foundation web application
 
 Current stack:
 
-- Python 3.11
+- Python 3.10
 - Django 3.2
-- Poetry and Pipfile dependency files are present
+- Docker Compose is the primary full local app runtime
+- `uv` is used for quick local checks, test runs, and debugger-style workflows
+- Poetry and Pipfile dependency files are legacy metadata and are not the preferred runtime path
 - Main Django settings live under `config/settings/`
 - Django apps include `mainsite`, `user`, `blog`, `contact`, `events`, `payment`, `errors`, and `utils`
 - Static and template assets live in `static/`, `assets/`, `media/`, and `templates/`
@@ -53,6 +55,15 @@ C:\Users\HP\PycharmProjects\feedsomeone\feedsomeone
 - Be careful with files such as `.env`, `db.sqlite3`, `cert.key`, `cert.crt`, `media/`, `htmlcov/`, and `test-reports/`.
 - Prefer small, reviewable changes with clear verification steps.
 
+## Commit, Push, and Deploy Preferences
+
+- When Oluwafemi accepts changes on a Render-backed project, push the accepted code after verification.
+- For Render-backed projects, deploy after pushing unless he explicitly asks not to deploy.
+- Prefer small incremental commits grouped by fix or feature instead of one large mixed commit.
+- Before committing, separate unrelated local changes from the accepted work and preserve them.
+- Before deploying to Render, confirm required secret environment variables are already configured or report the missing variables clearly.
+- After deployment, verify the Render deploy status and the live site where tool access allows it.
+
 ## Architecture Preferences
 
 - Keep business rules out of views when they become non-trivial.
@@ -66,24 +77,42 @@ C:\Users\HP\PycharmProjects\feedsomeone\feedsomeone
 
 ## Development Commands
 
-Use the existing project tooling where possible.
+Use the existing project tooling where possible. Read `RUNBOOK.md` before
+starting or changing runtime setup. For this repo, prefer Docker Compose when
+running the full app because it already defines the web service and Postgres
+dependency. Use `uv` for quick local commands and debugger workflows.
 
-Common commands:
+Docker full-app commands:
 
 ```powershell
-poetry install
-poetry run python manage.py check
-poetry run python manage.py test
-poetry run python manage.py runserver
+docker compose ps
+docker compose up -d postgres web
+docker compose logs --tail 80 web
 ```
 
-If Poetry is not active in the environment, fall back to the local Python environment only after checking the available setup.
+Quick local `uv` commands:
+
+```powershell
+$env:UV_CACHE_DIR = (Resolve-Path '.uv-cache').Path
+uv run --no-project --python 3.10 python manage.py check --settings=config.settings.test
+uv run --no-project --python 3.10 python manage.py test contact --settings=config.settings.test
+```
+
+Use `--no-project` because this repository's `pyproject.toml` is Poetry-style
+and does not contain a uv/PEP 621 `[project]` table. Use the repo-local
+`.uv-cache` because the machine-level uv cache may be unavailable.
+
+When running Django from the Windows host against the Compose database, use
+`POSTGRES_HOST=127.0.0.1` and `POSTGRES_PORT=5444`. Inside Compose, use the
+service hostname `postgres` and port `5432`.
 
 The default settings module is resolved in `manage.py` from the `SETTINGS` environment variable, falling back to:
 
 ```text
 config.settings.local
 ```
+
+For detailed run/test/debug workflow, see `RUNBOOK.md`.
 
 ## Testing and Verification
 
