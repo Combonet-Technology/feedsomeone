@@ -21,13 +21,12 @@ from mainsite.utils import (create_transaction_history, get_or_create_donor,
                             handle_one_time_donation,
                             handle_recurrent_donation,
                             handle_successful_transaction)
-from user.models import UserProfile, Volunteer
+from user.models import UserProfile
 from utils.enums import SubscriptionPlan, TransactionStatus
 from utils.views import generate_hashed_string
 
 
 def home(request):
-    volunteers = Volunteer.objects.all().order_by("?")[:4]
     total_transaction = TransactionHistory.objects.aggregate(amount=Sum('amount'))
     number_of_donations = TransactionHistory.objects.count()
     events = Events.objects.filter(event_date__lt=datetime.now()).count()
@@ -35,7 +34,6 @@ def home(request):
         'total_amount': total_transaction.get('amount'),
         'events_done': events,
         'total_transaction': number_of_donations,
-        'volunteers': volunteers
     }
     # return HttpResponse('welcome to feed someone')
     return render(request, 'home.html', context)

@@ -169,10 +169,8 @@ dashboard/__pycache__
 venv
 .venv
 *_env
-**/migrations/*
-**/migrations/**
-!**/migrations
-!**/migrations/__init__.py
+# Django migration files are source code and must be committed.
+**/migrations/__pycache__/
 .settings.ini
 *.ini
 **.ini

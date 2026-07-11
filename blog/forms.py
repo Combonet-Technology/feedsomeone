@@ -9,6 +9,9 @@ class CommentForm(forms.ModelForm):
     class Meta:
         model = Comments
         fields = ('name', 'email', 'body', 'website')
+        widgets = {
+            'website': forms.URLInput(attrs={'placeholder': 'Website (optional)'}),
+        }
 
 
 class ArticleForm(forms.ModelForm):

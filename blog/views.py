@@ -1,6 +1,5 @@
 import logging
 
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
@@ -19,7 +18,7 @@ from taggit.models import Tag
 from blog.forms import ArticleForm, CommentForm, EmailShareForm, SearchForm
 from blog.models import Article, Categories
 # Get an instance of a logger
-from ext_libs.sendgrid.sengrid import send_email
+from ext_libs.email_service import send_email
 from utils.views import custom_paginator, get_actual_template
 
 logger = logging.getLogger(__name__)
@@ -283,7 +282,7 @@ def post_share(request, slug, medium=None):
             post_url = request.build_absolute_uri(post.get_absolute_url())
             subject = f"{cd['name']} recommends you read {post.article_title}"
             message = f"Read {post.article_title} at {post_url}\n\n {cd['name']}\'s comments: {cd['comments']}"
-            sent = send_email(settings.EMAIL_HOST_USER, [cd['to']], subject, message, plain=True)
+            sent = send_email(destination=cd['to'], subject=subject, content=message, plain=True)
     else:
         form = EmailShareForm()
 
