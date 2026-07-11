@@ -33,6 +33,13 @@ class NewsletterFormTests(TestCase):
 
 
 class NewsletterSignupTests(TestCase):
+    def test_homepage_renders_valid_newsletter_honeypot_field(self):
+        response = self.client.get("/")
+
+        self.assertContains(response, 'name="phonenumber"')
+        self.assertContains(response, 'value="+234812345678"')
+        self.assertContains(response, 'action="/contact/subscribe/"')
+
     @override_settings(
         BREVO_SENDER_EMAIL="updates@example.com",
         BREVO_CONTACT_RECIPIENTS=["contact@example.com"],
@@ -65,6 +72,36 @@ class NewsletterSignupTests(TestCase):
         self.assertTrue(Lead.objects.filter(email="subscriber@example.com", stage="Subscriber").exists())
         messages = [str(message) for message in get_messages(response.wsgi_request)]
         self.assertIn("You have been subscribed, but the welcome email could not be sent yet.", messages)
+
+
+class ContactViewTests(TestCase):
+    def test_contact_page_renders_valid_honeypot_field(self):
+        response = self.client.get(reverse("contact"))
+
+        self.assertContains(response, 'name="phonenumber"')
+        self.assertContains(response, 'value="+234812345678"')
+
+    @override_settings(
+        BREVO_SENDER_EMAIL="updates@example.com",
+        BREVO_CONTACT_RECIPIENTS=["contact@example.com"],
+    )
+    @patch("contact.views.send_email")
+    def test_contact_form_accepts_valid_honeypot_submission(self, mock_send_email):
+        response = self.client.post(
+            reverse("contact"),
+            {
+                "firstname": "Integration",
+                "lastname": "Tester",
+                "email": "integration.contact@example.com",
+                "subject": "Website integration test",
+                "message": "Testing the contact form delivery path.",
+                "phonenumber": "+234812345678",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Your email has been received")
+        mock_send_email.assert_called_once()
 
 
 class BrevoEmailServiceTests(TestCase):

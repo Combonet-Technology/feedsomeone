@@ -53,3 +53,7 @@ services:
         sync: false
       - key: BREVO_NEWSLETTER_LIST_ID
         value: "2"
+      - key: HONEYPOT_FIELD_NAME
+        value: phonenumber
+      - key: HONEYPOT_VALUE
+        value: "+234812345678"
