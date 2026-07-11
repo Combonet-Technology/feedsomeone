@@ -3510,7 +3510,10 @@ hr {
 @media (max-width: 575px) {
   /* line 2, C:/Users/HP/Desktop/jun-2020/277.Charity _Non-profit/assets/scss/_h1-hero.scss */
   .slider-height {
-    height: 500px;
+    min-height: 620px;
+    height: auto;
+    padding: 90px 0 40px;
+    align-items: flex-start !important;
   }
 }
 
@@ -3547,6 +3550,12 @@ hr {
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
+}
+
+@media (max-width: 575px) {
+  .slider-area .hero__caption {
+    padding-top: 0 !important;
+  }
 }
 
 /* line 39, C:/Users/HP/Desktop/jun-2020/277.Charity _Non-profit/assets/scss/_h1-hero.scss */
@@ -3589,6 +3598,7 @@ hr {
   .slider-area .hero__caption h1 {
     font-size: 35px;
     line-height: 1.2;
+    margin-bottom: 18px;
   }
 }
 
@@ -3621,6 +3631,7 @@ hr {
   /* line 77, C:/Users/HP/Desktop/jun-2020/277.Charity _Non-profit/assets/scss/_h1-hero.scss */
   .slider-area .hero__caption p {
     padding-right: 56px;
+    margin-bottom: 24px;
   }
 }
 
@@ -3637,6 +3648,22 @@ hr {
   align-items: center;
   -ms-flex-wrap: wrap;
   flex-wrap: wrap;
+}
+
+@media (max-width: 575px) {
+  .slider-area .hero__caption .hero__btn {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .slider-area .hero__caption .hero__btn .hero-btn {
+    display: block;
+    width: 180px;
+    margin-left: 0 !important;
+    margin-bottom: 10px;
+    padding: 21px 18px;
+    text-align: center;
+  }
 }
 
 /* line 94, C:/Users/HP/Desktop/jun-2020/277.Charity _Non-profit/assets/scss/_h1-hero.scss */
@@ -8678,6 +8705,46 @@ del {
     /* padding: 39px 70px 56px 68px !important; */
 	padding-left: 35px !important;
 }
+}
+
+@media (max-width: 575px) {
+  .slider-height {
+    min-height: 620px;
+    height: auto;
+    padding: 90px 0 40px;
+    align-items: flex-start !important;
+  }
+
+  .slider-area .hero__caption {
+    padding: 0 24px 0 35px !important;
+  }
+
+  .slider-area .hero__caption h1 {
+    font-size: 35px;
+    line-height: 1.2;
+    margin-bottom: 18px;
+  }
+
+  .slider-area .hero__caption p {
+    padding-right: 50px;
+    margin-bottom: 24px;
+  }
+
+  .slider-area .hero__caption .hero__btn {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .slider-area .hero__caption .hero__btn .hero-btn {
+    display: block;
+    width: 180px;
+    margin: 0 !important;
+    padding: 21px 18px;
+    line-height: 1;
+    text-align: center;
+  }
 }
 
 

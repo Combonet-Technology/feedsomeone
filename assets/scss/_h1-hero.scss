@@ -11,7 +11,10 @@
         height: 600px;
     }
     @media #{$xs}{
-        height: 500px;
+        min-height: 620px;
+        height: auto;
+        padding: 90px 0 40px;
+        align-items: flex-start !important;
     }
 }
 // Another Page
@@ -36,6 +39,9 @@
     background-position: center center;
     background-size: cover;
     .hero__caption{
+        @media #{$xs}{
+            padding-top: 0 !important;
+        }
         h1{
             font-size: 70px;
             font-weight: 800;
@@ -59,6 +65,7 @@
             @media #{$xs}{
                 font-size: 35px;
                 line-height: 1.2;
+                margin-bottom: 18px;
             }
         }
          span{
@@ -79,12 +86,28 @@
             margin-bottom: 42px;
             @media #{$xs}{
                 padding-right: 56px;
+                margin-bottom: 24px;
             }
         }
         .hero__btn {
             @include flexbox();
             @include align-items(center);
             @include flex-wrap(wrap);
+            @media #{$xs}{
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .hero-btn {
+                @media #{$xs}{
+                    display: block;
+                    width: 180px;
+                    margin-left: 0 !important;
+                    margin-bottom: 10px;
+                    padding: 21px 18px;
+                    text-align: center;
+                }
+            }
         }
     }
 
