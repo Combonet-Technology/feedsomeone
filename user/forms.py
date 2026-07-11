@@ -9,7 +9,7 @@ from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from django.utils.translation import gettext_lazy as _
 
-from ext_libs.sendgrid import sengrid
+from ext_libs.email_service import send_email
 from user.models import Volunteer
 from utils.forms import clean_email
 
@@ -56,7 +56,7 @@ class CustomPasswordResetForm(PasswordResetForm):
     def send_mail(self, context, to_email, *args, **kwargs):
         email_template_name = 'registration/password_reset_email.html'
         body = loader.render_to_string(email_template_name, context)
-        sengrid.send_email(destination=to_email, subject=f"Password reset on {context['site_name']}", content=body)
+        send_email(destination=to_email, subject=f"Password reset on {context['site_name']}", content=body)
 
     def save(self, use_https=False, request=None, *args, **kwargs):
         email = self.cleaned_data["email"]

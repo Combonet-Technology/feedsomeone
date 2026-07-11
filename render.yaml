@@ -41,9 +41,15 @@ services:
         sync: false
       - key: RECAPTCHA_PRIVATE_KEY_v3
         sync: false
-      - key: SENDGRID_API_KEY
+      - key: BREVO_API_KEY
         sync: false
-      - key: EMAIL_HOST_USER
+      - key: BREVO_SENDER_EMAIL
         sync: false
-      - key: EMAIL_NO_REPLY
+      - key: BREVO_SENDER_NAME
+        value: Oluwafemi Ebenezer Foundation
+      - key: BREVO_REPLY_TO_EMAIL
         sync: false
+      - key: BREVO_CONTACT_RECIPIENTS
+        sync: false
+      - key: BREVO_NEWSLETTER_LIST_ID
+        value: "2"

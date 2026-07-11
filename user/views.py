@@ -1,13 +1,13 @@
 import logging
 
 from django.conf import settings
-from django.core.cache import cache
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.views import PasswordResetView
 from django.contrib.sites.shortcuts import get_current_site
+from django.core.cache import cache
 from django.db import transaction
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
@@ -23,8 +23,8 @@ from social_core.exceptions import AuthCanceled
 from social_django.utils import psa
 from social_django.views import NAMESPACE
 
+from ext_libs.email_service import send_email
 from ext_libs.python_social import social_auth_backends
-from ext_libs.sendgrid import sengrid
 from utils.auth import check_validity_token, get_user, set_password_and_login
 from utils.decorators import ajax_required
 from utils.views import custom_paginator, get_actual_template, verify_recaptcha
@@ -39,12 +39,12 @@ logger = logging.getLogger(__name__)
 
 
 def _client_ip(request):
-    forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR', '')
+    forwarded_for = request.headers.get('x-forwarded-for', '')
     return forwarded_for.split(',')[0].strip() if forwarded_for else request.META.get('REMOTE_ADDR', 'unknown')
 
 
 def _registration_is_rate_limited(request):
-    key = f"registration:{_client_ip(request)}"
+    key = "registration:" + _client_ip(request)
     if cache.add(key, 1, timeout=settings.REGISTRATION_RATE_LIMIT_WINDOW):
         return False
     try:
@@ -96,13 +96,13 @@ def register(request, template='registration/register.html'):
             with transaction.atomic():
                 user = user_form.save(commit=False)
                 current_site = get_current_site(request)
-                sengrid.send_email(source=settings.EMAIL_NO_REPLY, destination=user_form.cleaned_data.get('email'),
-                                   subject='Activation link has been sent to your email id',
-                                   content=render_to_string('acc_activation_email.html', {
-                                       'username': user.username,
-                                       'domain': current_site.domain,
-                                       'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-                                       'token': account_activation_token.make_token(user)}))
+                send_email(source=settings.BREVO_SENDER_EMAIL, destination=user_form.cleaned_data.get('email'),
+                           subject='Activation link has been sent to your email id',
+                           content=render_to_string('acc_activation_email.html', {
+                               'username': user.username,
+                               'domain': current_site.domain,
+                               'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+                               'token': account_activation_token.make_token(user)}))
                 username = user_form.cleaned_data.get('username')
                 volunteer = volunteer_form.save(commit=False)
                 volunteer.user = user
@@ -166,7 +166,7 @@ class VolunteerDetailView(DetailView):
 
 @never_cache
 @csrf_exempt
-@psa(f"{NAMESPACE}:complete")
+@psa(NAMESPACE + ":complete")
 def social_auth_complete(request, backend, *args, **kwargs):
     response = social_auth_backends.do_complete(request.backend, user=request.user, *args, **kwargs)
     try:

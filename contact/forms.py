@@ -1,6 +1,6 @@
-import requests
 from django import forms
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.forms import ModelForm
 
 from contact.models import Contact
@@ -28,8 +28,9 @@ class NewsletterForm(forms.ModelForm):
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
-        if get_user_model().objects.get(email):
-            raise Exception('Email already registered to another user')
-        resp = requests.get(email.split('@')[-1])
-        if resp.status_code != 200:
-            raise Exception('Email invalid')
+        clean_email(email)
+        if get_user_model().objects.filter(email=email).exists():
+            raise ValidationError('Email already registered to another user')
+        if Lead.objects.filter(email=email).exists():
+            raise ValidationError('Email already subscribed')
+        return email

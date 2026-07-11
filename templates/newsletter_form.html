@@ -1,7 +1,9 @@
+{% load honeypot %}
 <form id="subscribenow" class="footer-newsletter"
       action="{% url 'newsletter'%}"
-      method="post" target="_blank" novalidate>
+      method="post" novalidate>
     {% csrf_token %}
-    <input class="input" id="footer-input" type="email" name="EMAIL" placeholder="Enter your email">
+    {% render_honeypot_field %}
+    <input class="input" id="footer-input" type="email" name="email" placeholder="Enter your email">
     <button class="primary-button">Subscribe</button>
 </form>

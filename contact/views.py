@@ -1,11 +1,12 @@
 import logging
 
 from django.conf import settings
+from django.contrib import messages
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from honeypot.decorators import check_honeypot
 
-from ext_libs.sendgrid.sengrid import send_email
+from ext_libs.email_service import send_email, upsert_newsletter_contact
 
 from .forms import ContactForm, NewsletterForm
 
@@ -27,7 +28,7 @@ def contact(request):
                 'title': contact_form.data.get('subject'),
             }
             try:
-                send_email(source=settings.EMAIL_HOST_USER, destination=settings.GMAIL_EMAIL,
+                send_email(source=settings.BREVO_SENDER_EMAIL, destination=settings.BREVO_CONTACT_RECIPIENTS,
                            subject='FEEDSOMEONE CONTACT FORM', content=render_to_string('new_email.html', context))
                 new_message.received = True
             except Exception as e:
@@ -55,12 +56,19 @@ def thanks(request):
 
 @check_honeypot
 def newsletter_signup(request):
+    if request.method != 'POST':
+        return redirect('/')
+
     new_lead = NewsletterForm(request.POST)
     if new_lead.is_valid():
+        lead = new_lead.save(commit=False)
+        lead.stage = 'Subscriber'
+        lead.source = 'Website'
+        lead.save()
         try:
-            new_lead.save(commit=False)
-            send_email(source=settings.EMAIL_HOST_USER,
-                       destination=new_lead.data.get('email'),
+            upsert_newsletter_contact(lead.email, attributes={"SOURCE": "Website"})
+            send_email(source=settings.BREVO_SENDER_EMAIL,
+                       destination=lead.email,
                        subject='Welcome to the family',
                        content='''
                        Thank you for subscribing to our newsletter,
@@ -68,17 +76,13 @@ def newsletter_signup(request):
                         causes, outreaches, and articles from our team
                         of brilliant volunteer writers. <br><br>Regards<br>
                         Oluwafemi Ebenezer<Founder>
-                        ''',
-                       plain=True
-                       )
+                        ''')
         except Exception as e:
-            print('AAAA')
-            # handle already subscribed exception or any other exception
-            print('email cannot be added', str(e))
+            logger.error('Newsletter provider sync failed for %s: %s', lead.email, str(e))
+            messages.warning(request, 'You have been subscribed, but the welcome email could not be sent yet.')
         else:
-            # send welcome email for campaign
-            print('BBB')
-            new_lead.save()
-        finally:
-            print('CCC')
-            return redirect('/')
+            messages.success(request, 'Thank you for subscribing to OEF updates.')
+    else:
+        logger.error('Newsletter signup failed: %s', new_lead.errors)
+        messages.error(request, 'Please enter a valid email address.')
+    return redirect('/')
