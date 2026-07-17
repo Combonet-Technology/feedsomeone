@@ -94,6 +94,46 @@ class ProfileViewTestCase(TestCase):
         self.assertRedirects(response, '/login/?next=/volunteers/profile/')
 
 
+class LogoutViewTestCase(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email='logout@example.com',
+            password='testpassword',
+        )
+        self.url = reverse('logout')
+        self.client.force_login(self.user)
+
+    def test_get_does_not_log_out_authenticated_user(self):
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 405)
+        self.assertIn('_auth_user_id', self.client.session)
+
+    def test_post_logs_out_authenticated_user(self):
+        response = self.client.post(self.url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'registration/logged_out.html')
+        self.assertNotIn('_auth_user_id', self.client.session)
+
+    def test_logout_controls_are_post_forms(self):
+        response = self.client.get(reverse('mainsite:homepage'))
+        content = response.content.decode()
+
+        self.assertEqual(content.count(f'action="{self.url}"'), 2)
+        self.assertNotContains(response, f'href="{self.url}"')
+        self.assertGreaterEqual(content.count('name="csrfmiddlewaretoken"'), 2)
+
+    def test_logout_post_requires_csrf_token(self):
+        csrf_client = Client(enforce_csrf_checks=True)
+        csrf_client.force_login(self.user)
+
+        response = csrf_client.post(self.url)
+
+        self.assertEqual(response.status_code, 403)
+        self.assertIn('_auth_user_id', csrf_client.session)
+
+
 class ActivateTestCase(TestCase):
     def setUp(self):
         self.host = 'google.com'
@@ -140,28 +180,30 @@ class ActivateTestCase(TestCase):
         self.assertContains(response, 'Activation link is invalid or expired!')
 
 
-@patch('user.views.verify_recaptcha')
 @patch('user.views.get_current_site')
-@patch('ext_libs.sendgrid.sengrid.send_email')
+@patch('user.views.send_email')
 class RegisterTestCase(TestCase):
     def setUp(self):
         cache.clear()
         self.client = Client()
         self.user = RegisterUser()
 
-    def test_post_request(self, mock_send_email, mock_get_current_site, mock_verify_recaptcha):
-        mock_verify_recaptcha.return_value = True
+    def test_post_request(self, mock_send_email, mock_get_current_site):
         mock_send_email.return_value = True
         mock_get_current_site.return_value.domain = 'example.com'
         data = self.user.spawn
-        data.update({'g-recaptcha-response': 'valid_captcha'})
+        data[settings.HONEYPOT_FIELD_NAME] = settings.HONEYPOT_VALUE
         response = self.client.post(reverse('register'), data)
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'thank-you.html')
         self.assertTrue(all(True if key in response.context else False for key in ['subject', 'msg', 'title']))
+        created_user = User.objects.get(email=self.user.email)
+        self.assertFalse(created_user.is_active)
+        self.assertTrue(created_user.check_password(self.user.password))
+        mock_send_email.assert_called_once()
 
-    def test_get_request(self, mock_send_email, mock_get_current_site, mock_verify_recaptcha):
+    def test_get_request(self, mock_send_email, mock_get_current_site):
         response = self.client.get(reverse('register'))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'registration/register.html')
@@ -170,22 +212,20 @@ class RegisterTestCase(TestCase):
         self.assertEqual(list(response.context['forms'].fields), ['email', 'password'])
         for backend in ['twitter', 'facebook', 'linkedin-oauth2', 'google-oauth2']:
             self.assertContains(response, reverse('social:begin', args=[backend]))
-        self.assertEqual(response.context['secret'], f'{settings.RECAPTCHA_PUBLIC_KEY}')  # why assertContains fail here
+        self.assertNotContains(response, 'google.com/recaptcha/api.js')
 
-    def test_unverified_recaptcha(self, mock_send_email, mock_get_current_site, mock_verify_recaptcha):
-        mock_verify_recaptcha.return_value = False
+    def test_tampered_honeypot_is_rejected(self, mock_send_email, mock_get_current_site):
         data = self.user.spawn
-        data.update({'g-recaptcha-response': 'invalid_captcha'})
+        data[settings.HONEYPOT_FIELD_NAME] = 'tampered'
         response = self.client.post(reverse('register'), data)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'robot_response.html')
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(User.objects.filter(email=self.user.email).exists())
+        mock_send_email.assert_not_called()
 
     @override_settings(REGISTRATION_RATE_LIMIT=1, REGISTRATION_RATE_LIMIT_WINDOW=3600)
     def test_rate_limits_repeated_registration_attempts(
-            self, mock_send_email, mock_get_current_site, mock_verify_recaptcha):
-        mock_verify_recaptcha.return_value = False
-        data = self.user.spawn
-        data.update({'g-recaptcha-response': 'invalid_captcha'})
+            self, mock_send_email, mock_get_current_site):
+        data = {settings.HONEYPOT_FIELD_NAME: settings.HONEYPOT_VALUE}
 
         first_response = self.client.post(reverse('register'), data, REMOTE_ADDR='203.0.113.20')
         second_response = self.client.post(reverse('register'), data, REMOTE_ADDR='203.0.113.20')
@@ -194,8 +234,11 @@ class RegisterTestCase(TestCase):
         self.assertEqual(second_response.status_code, 429)
         self.assertTemplateUsed(second_response, 'robot_response.html')
 
-    def test_invalid_post_forms(self, *args):
-        response = self.client.post(reverse('register'), {})
+    def test_invalid_post_forms(self, mock_send_email, mock_get_current_site):
+        response = self.client.post(
+            reverse('register'),
+            {settings.HONEYPOT_FIELD_NAME: settings.HONEYPOT_VALUE},
+        )
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'registration/register.html')
         self.assertIsInstance(response.context['forms'], UserRegistrationForm)

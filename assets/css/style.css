@@ -8461,6 +8461,40 @@ del {
   color: #83ba09;
 }
 
+.logout-form {
+  display: inline;
+}
+
+.logout-button {
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  line-height: inherit;
+  padding: 0;
+}
+
+.header-area .header-top .header-info-right .logout-button-header {
+  color: #687693;
+  border-left: 1px solid #687693;
+  font-size: 14px;
+  line-height: 1;
+  padding-left: 21px;
+  margin-left: 10px;
+  font-weight: 400;
+}
+
+#footer-bottom .footer-nav .logout-button-footer {
+  color: #5f646b;
+}
+
+.header-area .header-top .header-info-right .logout-button-header:hover,
+.header-area .header-top .header-info-right .logout-button-header:focus,
+#footer-bottom .footer-nav .logout-button-footer:hover,
+#footer-bottom .footer-nav .logout-button-footer:focus {
+  color: #83ba09;
+}
+
 
 /*=========================================================
 	FOOTER

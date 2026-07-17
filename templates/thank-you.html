@@ -14,16 +14,9 @@
     <p>
         Still in haste? <a href="tel:08170838856">call us</a>
     </p>
-<!--    <p>This page will be automatically redirected after 9 seconds.</p>-->
     <p class="lead">
         <a class="btn btn-primary btn-sm" href="{%url 'mainsite:homepage'%}" role="button">Continue to homepage</a>
     </p>
 </div>
-<script charset="utf-8">
-            setTimeout(function(){
-                window.location.href = "{% url 'mainsite:homepage' %}"
-            }, 9000)
-
-</script>
 </body>
 </html>

@@ -19,6 +19,7 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, ListView
+from honeypot.decorators import check_honeypot
 from social_core.exceptions import AuthCanceled
 from social_django.utils import psa
 from social_django.views import NAMESPACE
@@ -27,7 +28,7 @@ from ext_libs.email_service import send_email
 from ext_libs.python_social import social_auth_backends
 from utils.auth import check_validity_token, get_user, set_password_and_login
 from utils.decorators import ajax_required
-from utils.views import custom_paginator, get_actual_template, verify_recaptcha
+from utils.views import custom_paginator, get_actual_template
 
 from .forms import (CustomPasswordResetForm, UsernameForm,
                     UserRegistrationForm, VolunteerUpdateForm)
@@ -43,7 +44,7 @@ def _client_ip(request):
 
 
 def _registration_is_rate_limited(request):
-    key = "registration:" + _client_ip(request)
+    key = _registration_rate_limit_key(request)
     if cache.add(key, 1, timeout=settings.REGISTRATION_RATE_LIMIT_WINDOW):
         return False
     try:
@@ -52,6 +53,10 @@ def _registration_is_rate_limited(request):
         cache.set(key, 1, timeout=settings.REGISTRATION_RATE_LIMIT_WINDOW)
         return False
     return attempts > settings.REGISTRATION_RATE_LIMIT
+
+
+def _registration_rate_limit_key(request):
+    return "registration:" + _client_ip(request)
 
 
 @login_required()
@@ -77,22 +82,20 @@ def profile(request):
     return render(request, 'profile.html', context)
 
 
+@check_honeypot
 def register(request, template='registration/register.html'):
     if request.method == 'POST':
         if _registration_is_rate_limited(request):
             logger.warning('Volunteer registration rate limit exceeded for IP %s', _client_ip(request))
             return render(request, 'robot_response.html', {'is_robot': True}, status=429)
 
-        g_captcha = request.POST.get('g-recaptcha-response')
         user_form = UserRegistrationForm(request.POST)
-
-        # verify recaptcha
-        if not verify_recaptcha(g_captcha, remote_ip=_client_ip(request)):
-            return render(request, 'robot_response.html', {'is_robot': True})
 
         if user_form.is_valid():
             with transaction.atomic():
                 user = user_form.save(commit=False)
+                user.is_active = False
+                user.save()
                 current_site = get_current_site(request)
                 send_email(source=settings.BREVO_SENDER_EMAIL, destination=user_form.cleaned_data.get('email'),
                            subject='Activation link has been sent to your email id',
@@ -101,8 +104,8 @@ def register(request, template='registration/register.html'):
                                'domain': current_site.domain,
                                'uid': urlsafe_base64_encode(force_bytes(user.pk)),
                                'token': account_activation_token.make_token(user)}))
-                user.save()
 
+            cache.delete(_registration_rate_limit_key(request))
             data = {
                 'msg': 'Please check your inbox or spam folder for next steps on how to complete the registration',
                 'subject': 'Your account creation has started',
@@ -113,7 +116,7 @@ def register(request, template='registration/register.html'):
             messages.error(request, 'INVALID USER INPUTS')
     else:
         user_form = UserRegistrationForm()
-    return render(request, template, {'forms': user_form, 'secret': settings.RECAPTCHA_PUBLIC_KEY})
+    return render(request, template, {'forms': user_form})
 
 
 def activate(request, uidb64, token):

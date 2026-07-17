@@ -18,6 +18,12 @@
         padding: 60px 0 42px;
     }
 
+    .registration-row {
+        width: 100%;
+        margin-left: 0;
+        margin-right: 0;
+    }
+
     @media (max-width: 767px) {
         .registration-column {
             max-width: calc(100% - 30px);
@@ -34,7 +40,7 @@
 </style>
 <div id="colorlib-main">
     <div id="container">
-        <div class="row justify-content-center">
+        <div class="row justify-content-center registration-row">
             <div class="col-lg-6 registration-column">
                 <div class="row d-flex mb-5 contact-info">
                     <div class="col-sm-12">
@@ -44,9 +50,6 @@
                                 <legend class="border-bottom mb-4">Create your account</legend>
                                 {{forms|crispy}}
                                 {% render_honeypot_field %}
-                            {% render_honeypot_field 'state' %}
-                            {% render_honeypot_field 'website' %}
-                                <input type="hidden" name="g-recaptcha-response" id='recaptcha'>
                             </fieldset>
                             <div class="form-group">
                                 <input type="submit" class="btn btn-primary" value="Create account">
@@ -64,23 +67,4 @@
         </div>
     </div>
 </div>
-{% endblock %}
-{% block extra_script %}
-<script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
-        crossorigin="anonymous"></script>
-<script src="https://www.google.com/recaptcha/api.js?render={{secret}}"></script>
-<script>
-          grecaptcha.ready(function() {
-              $('#registrationForm').submit(function(e){
-                  var form = this;
-                  e.preventDefault()
-                  grecaptcha.execute('{{secret}}', {action: 'registrationForm'}).then(function(token) {
-                      $('#recaptcha').val(token)
-                      form.submit()
-                  });
-              })
-          });
-
-
-</script>
 {% endblock %}
