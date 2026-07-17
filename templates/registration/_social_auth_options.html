@@ -1,0 +1,79 @@
+<style>
+    .social-login-options {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .login-social-options {
+        margin: 14px 0 42px 12px;
+    }
+
+    .registration-social-options {
+        margin: 14px 0 24px;
+    }
+
+    .social-login-options h2 {
+        margin: 0 4px 0 0;
+        white-space: nowrap;
+    }
+
+    .social-login-options ul {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0;
+        padding: 0;
+    }
+
+    .social-login-options li,
+    .social-login-options form {
+        display: inline-flex;
+        margin: 0;
+    }
+
+    .social-login-options button {
+        width: 45px;
+        height: 45px;
+        padding: 0;
+        border: 1px solid #e6e6ea;
+        border-radius: 50%;
+        color: #5f646b;
+        background: #fff;
+        line-height: 45px;
+        text-align: center;
+        cursor: pointer;
+    }
+
+    .social-login-options button:hover,
+    .social-login-options button:focus {
+        border-color: #83ba09;
+    }
+
+    @media (max-width: 767px) {
+        .social-login-options {
+            display: block;
+            margin-left: 0;
+            padding: 0 15px;
+            text-align: center;
+        }
+
+        .social-login-options h2 {
+            margin-bottom: 10px;
+        }
+
+        .social-login-options ul {
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+    }
+</style>
+<div class="social-login-options {{ social_auth_class }}">
+    <h2>{{ social_auth_label }} <i class="fas fa-arrow-right"></i></h2>
+    <ul>
+        <li><form method="post" action="{% url 'social:begin' 'twitter' %}">{% csrf_token %}<button type="submit" aria-label="Continue with X"><i class="fab fa-twitter"></i></button></form></li>
+        <li><form method="post" action="{% url 'social:begin' 'facebook' %}">{% csrf_token %}<button type="submit" aria-label="Continue with Facebook"><i class="fab fa-facebook"></i></button></form></li>
+        <li><form method="post" action="{% url 'social:begin' 'linkedin-oauth2' %}">{% csrf_token %}<button type="submit" aria-label="Continue with LinkedIn"><i class="fab fa-linkedin"></i></button></form></li>
+        <li><form method="post" action="{% url 'social:begin' 'google-oauth2' %}">{% csrf_token %}<button type="submit" aria-label="Continue with Google"><i class="fab fa-google-plus-g"></i></button></form></li>
+    </ul>
+</div>

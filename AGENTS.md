@@ -48,6 +48,13 @@ C:\Users\HP\PycharmProjects\feedsomeone\feedsomeone
 ## Operating Rules
 
 - Read the existing code before changing behavior.
+- Use Graphify as the first repository-context step for every coding task:
+  - From the repository root, check `graphify-out/graph.json` and run a focused
+    `graphify query "..."` for the task when the index exists.
+  - If the index does not exist, build it with `graphify .` before inspecting
+    application code in depth.
+  - Treat Graphify results as navigation context, then verify important details
+    against the source files before editing.
 - Preserve current project structure unless a change clearly improves modularity or maintainability.
 - Do not introduce unrelated refactors while fixing a focused issue.
 - Do not overwrite local changes you did not make.
@@ -120,6 +127,17 @@ For detailed run/test/debug workflow, see `RUNBOOK.md`.
 - Run `python manage.py check` after settings, model, URL, view, or template changes.
 - For payment, auth, donation, user, or data migration work, prefer explicit tests and manual verification notes.
 - If tests cannot be run because dependencies, network, secrets, or local services are unavailable, state that clearly.
+
+## UI Verification Hook
+
+For every template, CSS, or frontend behavior change:
+
+1. Run `powershell -ExecutionPolicy Bypass -File scripts\verify_ui.ps1 -Url http://127.0.0.1:8000/<route>/`.
+2. Inspect both generated screenshots with the visual inspection tool at desktop and mobile sizes.
+3. Fix any clipping, overflow, alignment, or responsive regressions found.
+4. Do not report a UI fix as complete based only on an HTTP 200 response or Django checks.
+
+The script is the project UI-verification hook; its screenshots are written to the system temporary directory by default.
 
 ## Security Notes
 

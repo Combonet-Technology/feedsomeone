@@ -288,7 +288,7 @@ margin-top:100px
                                 </ul>
                                 {% else %}
                                 <ul class="contact-now">
-                                    <li><a href="{% url 'register' %}">Register</a> <a
+                                    <li><a href="{% url 'register' %}">Create account</a> <a
                                             href="{% url 'login' %}">Login</a></li>
                                 </ul>
                                 {% endif %}
@@ -450,7 +450,7 @@ margin-top:100px
                     <li><a href="{% url 'profile' %}"> Edit Profile</a></li>
                     <li><a href="{% url 'logout' %}">Logout</a></li>
                     {% else %}
-                    <li><a href="{% url 'register' %}">Register</a></li>
+                    <li><a href="{% url 'register' %}">Create account</a></li>
                     <li><a href="{% url 'login' %}">Login</a></li>
                     {% endif %}
                     <li><a href="{% url 'article:article_feed' %}">Subscribe to our RSS feed</a></li>

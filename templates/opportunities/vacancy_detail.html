@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block page_title %}{{ vacancy.title }}{% endblock %}
+{% block content %}
+<main class="container py-5">
+    <h1>{{ vacancy.title }}</h1>
+    <p class="lead">{{ vacancy.summary }}</p>
+    <h2>About the opportunity</h2><div>{{ vacancy.description|linebreaks }}</div>
+    <h2>Who we are looking for</h2><div>{{ vacancy.who_we_are_looking_for|linebreaks }}</div>
+    <h2>Core responsibilities</h2><div>{{ vacancy.responsibilities|linebreaks }}</div>
+    <h2>Expectations</h2><div>{{ vacancy.expectations|linebreaks }}</div>
+    <h2>Benefits and perks</h2><div>{{ vacancy.benefits|linebreaks }}</div>
+    {% if user.is_authenticated %}
+        {% if already_applied %}
+        <p class="alert alert-info">You have already applied for this opportunity.</p>
+        {% else %}
+        <h2>Apply</h2>
+        <form method="post" enctype="multipart/form-data" action="{% url 'opportunities:apply' vacancy.slug %}">
+            {% csrf_token %}
+            {{ application_form|crispy }}
+            <button class="btn btn-primary" type="submit">Submit application</button>
+        </form>
+        {% endif %}
+    {% else %}
+        <p><a href="{% url 'login' %}?next={{ request.path|urlencode }}">Sign in to apply.</a></p>
+    {% endif %}
+</main>
+{% endblock %}

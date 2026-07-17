@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'blog.apps.BlogConfig',
     'events.apps.EventsConfig',
     'contact.apps.ContactConfig',
+    'opportunities.apps.OpportunitiesConfig',
     'django.contrib.postgres',
     'crispy_forms',
     'imagefit',
@@ -52,9 +53,6 @@ INSTALLED_APPS = [
     # 'cms',
     'admin_honeypot',
     'honeypot',
-    'menus',
-    'treebeard',
-    'sekizai',
     'social_django',
     'django_extensions',
     'ckeditor',
@@ -91,7 +89,6 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'sekizai.context_processors.sekizai',
                 # 'cms.context_processors.cms_settings',
                 'django.template.context_processors.i18n',
             ],
@@ -265,7 +262,6 @@ AUTHENTICATION_BACKENDS = [
     'social_core.backends.facebook.FacebookOAuth2',
     'social_core.backends.twitter.TwitterOAuth',
     'social_core.backends.google.GoogleOAuth2',
-    'social_core.backends.google.GooglePlusAuth',
     'social_core.backends.linkedin.LinkedinOAuth2',
     'django.contrib.auth.backends.ModelBackend',
 ]
@@ -284,7 +280,7 @@ HONEYPOT_FIELD_NAME = os.environ.get('HONEYPOT_FIELD_NAME', 'phonenumber')
 HONEYPOT_VALUE = os.environ.get('HONEYPOT_VALUE', '+234812345678')
 
 SOCIAL_AUTH_FACEBOOK_KEY = os.environ.get('FACEBOOK_KEY')
-SOCIAL_AUTH_FACEBOOK_SECRET = os.environ.get('FACEBOOK_KEY')
+SOCIAL_AUTH_FACEBOOK_SECRET = os.environ.get('FACEBOOK_SECRET')
 SOCIAL_AUTH_FACEBOOK_SCOPE = ['email']
 SOCIAL_AUTH_FACEBOOK_PROFILE_EXTRA_PARAMS = {
     'locale': 'ru_RU',

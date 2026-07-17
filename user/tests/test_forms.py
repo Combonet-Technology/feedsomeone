@@ -1,8 +1,8 @@
 import random
 from unittest.mock import patch
 
-from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import RequestFactory, TestCase
 
 from user.forms import (CustomPasswordResetForm, UsernameForm,
@@ -30,15 +30,14 @@ class FormsTestCase(TestCase):
 
     def test_user_registration_form(self):
         form_data = {
-            'first_name': 'John',
-            'last_name': 'Doe',
-            'username': 'johndoe',
             'email': 'johndoe@example.com',
-            'password1': 'testpassword',
-            'password2': 'testpassword',
+            'password': 'A-secure-test-password-2026',
         }
         form = UserRegistrationForm(data=form_data)
         self.assertTrue(form.is_valid())
+        user = form.save()
+        self.assertEqual(user.email, form_data['email'])
+        self.assertTrue(user.check_password(form_data['password']))
 
     def test_user_update_form(self):
         user_data = {
@@ -79,7 +78,7 @@ class FormsTestCase(TestCase):
 
     @patch('django.contrib.sites.shortcuts.get_current_site')
     @patch('django.template.loader.render_to_string')
-    @patch('ext_libs.sendgrid.sengrid.send_email')
+    @patch('user.forms.send_email')
     def test_custom_password_reset_form(self, mock_send_email, mock_render_to_string, mock_get_current_site):
         form_data = {
             'email': 'testuser@example.com',

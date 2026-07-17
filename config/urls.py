@@ -37,6 +37,7 @@ urlpatterns = [
     path('', include('events.urls')),
     path('contact/', include('contact.urls')),
     path('volunteers/', include('user.urls')),
+    path('opportunities/', include('opportunities.urls', namespace='opportunities')),
     path('article/', include('blog.urls', namespace='article')),
     path('imagefit/', include('imagefit.urls')),
     path('sitemap.xml', sitemap, {'sitemaps': sitemaps},

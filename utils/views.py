@@ -12,6 +12,10 @@ from django.utils.http import urlsafe_base64_encode
 logger = logging.getLogger(__name__)
 
 
+def is_ajax_request(request):
+    return request.headers.get('x-requested-with') == 'XMLHttpRequest'
+
+
 def custom_paginator(request, page_size, queryset):
     paginator = Paginator(queryset, page_size)
     page = request.GET.get('page')
@@ -20,7 +24,7 @@ def custom_paginator(request, page_size, queryset):
     except PageNotAnInteger:
         results = paginator.page(1)
     except EmptyPage:
-        if request.is_ajax():
+        if is_ajax_request(request):
             return HttpResponse('')
         results = paginator.page(paginator.num_pages)
     is_paginated = len(results) > 0
@@ -28,7 +32,7 @@ def custom_paginator(request, page_size, queryset):
 
 
 def get_actual_template(view_obj, extra_template):
-    if view_obj.request.is_ajax():
+    if is_ajax_request(view_obj.request):
         return [extra_template]
     return []
 
@@ -79,6 +83,6 @@ def generate_hashed_string(customer_data):
     hash_one = hashlib.sha256(data_string.encode()).hexdigest()
     current_timestamp = str(int(time.time()))
     hash_two = hashlib.sha256(current_timestamp.encode()).hexdigest()
-    combined_hash = f"{hash_one}:{hash_two}"
+    combined_hash = hash_one + ":" + hash_two
 
     return combined_hash

@@ -30,8 +30,7 @@ from utils.decorators import ajax_required
 from utils.views import custom_paginator, get_actual_template, verify_recaptcha
 
 from .forms import (CustomPasswordResetForm, UsernameForm,
-                    UserRegistrationForm, VolunteerRegistrationForm,
-                    VolunteerUpdateForm)
+                    UserRegistrationForm, VolunteerUpdateForm)
 from .models import UserProfile, Volunteer
 from .token import account_activation_token
 
@@ -57,7 +56,7 @@ def _registration_is_rate_limited(request):
 
 @login_required()
 def profile(request):
-    current_user_profile = request.user.volunteer
+    current_user_profile, _ = Volunteer._base_manager.get_or_create(user=request.user)
     if request.method == 'POST':
         update_form_volunteer = VolunteerUpdateForm(
             request.POST, request.FILES, instance=current_user_profile)
@@ -69,7 +68,7 @@ def profile(request):
     else:
         initial_data = {field_name: getattr(current_user_profile, field_name) for field_name in
                         VolunteerUpdateForm.Meta.fields}
-        update_form_volunteer = VolunteerUpdateForm(instance=request.user, initial=initial_data)
+        update_form_volunteer = VolunteerUpdateForm(instance=current_user_profile, initial=initial_data)
     context = {
         'user_update_form': update_form_volunteer,
         'user': current_user_profile,
@@ -86,13 +85,12 @@ def register(request, template='registration/register.html'):
 
         g_captcha = request.POST.get('g-recaptcha-response')
         user_form = UserRegistrationForm(request.POST)
-        volunteer_form = VolunteerRegistrationForm(request.POST)
 
         # verify recaptcha
         if not verify_recaptcha(g_captcha, remote_ip=_client_ip(request)):
             return render(request, 'robot_response.html', {'is_robot': True})
 
-        if user_form.is_valid() and volunteer_form.is_valid():
+        if user_form.is_valid():
             with transaction.atomic():
                 user = user_form.save(commit=False)
                 current_site = get_current_site(request)
@@ -103,25 +101,19 @@ def register(request, template='registration/register.html'):
                                'domain': current_site.domain,
                                'uid': urlsafe_base64_encode(force_bytes(user.pk)),
                                'token': account_activation_token.make_token(user)}))
-                username = user_form.cleaned_data.get('username')
-                volunteer = volunteer_form.save(commit=False)
-                volunteer.user = user
                 user.save()
-                volunteer.save()
 
             data = {
                 'msg': 'Please check your inbox or spam folder for next steps on how to complete the registration',
-                'subject': f'Account creation for {username} started!',
-                'title': 'Feedsomeone - registration next step',
+                'subject': 'Your account creation has started',
+                'title': 'OEF - registration next step',
             }
             return render(request, 'thank-you.html', data)
         else:
             messages.error(request, 'INVALID USER INPUTS')
     else:
         user_form = UserRegistrationForm()
-        volunteer_form = VolunteerRegistrationForm()
-    return render(request, template,
-                  {'forms': user_form, 'volunteer_form': volunteer_form, 'secret': settings.RECAPTCHA_PUBLIC_KEY})
+    return render(request, template, {'forms': user_form, 'secret': settings.RECAPTCHA_PUBLIC_KEY})
 
 
 def activate(request, uidb64, token):
@@ -168,22 +160,24 @@ class VolunteerDetailView(DetailView):
 @csrf_exempt
 @psa(NAMESPACE + ":complete")
 def social_auth_complete(request, backend, *args, **kwargs):
-    response = social_auth_backends.do_complete(request.backend, user=request.user, *args, **kwargs)
     try:
-        pass
+        response = social_auth_backends.do_complete(request.backend, user=request.user, *args, **kwargs)
     except AuthCanceled:
         return redirect('login')
-
-    except Exception as e:
-        print(str(e))
+    except Exception:
+        logger.exception('Social authentication failed for backend %s', backend)
         return redirect('login')
-    else:
-        if response.status_code == 302 and request.user.is_authenticated:
-            user = request.user
-            if hasattr(user, 'volunteer'):
-                if user.has_usable_password():
-                    return redirect('profile')
-            return redirect('create_private_pass')
+
+    if response.status_code != 302 or not request.user.is_authenticated:
+        return response
+
+    user = request.user
+    Volunteer._base_manager.get_or_create(user=user)
+    if not user.has_usable_password():
+        return redirect('create_private_pass')
+    if not user.username:
+        return redirect('create_username')
+    return redirect('profile')
 
 
 class InitiatePasswordReset(PasswordResetView):

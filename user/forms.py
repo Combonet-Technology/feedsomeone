@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth import get_user_model
-from django.contrib.auth.forms import PasswordResetForm, UserCreationForm
+from django.contrib.auth.forms import PasswordResetForm
+from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites import shortcuts
 from django.forms import FileInput, ImageField, Textarea
@@ -14,15 +15,38 @@ from user.models import Volunteer
 from utils.forms import clean_email
 
 
-class UserRegistrationForm(UserCreationForm):
+class UserRegistrationForm(forms.ModelForm):
+    email = forms.EmailField(
+        label='Email',
+        required=True,
+        widget=forms.EmailInput(attrs={'autocomplete': 'email'}),
+    )
+    password = forms.CharField(
+        label='Password',
+        strip=False,
+        widget=forms.PasswordInput(attrs={'autocomplete': 'new-password'}),
+    )
+
     class Meta:
         model = get_user_model()
-        fields = ['first_name', 'last_name', 'username', 'email']
+        fields = ['email']
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
         clean_email(email)
         return email
+
+    def clean_password(self):
+        password = self.cleaned_data.get('password')
+        validate_password(password)
+        return password
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.set_password(self.cleaned_data['password'])
+        if commit:
+            user.save()
+        return user
 
 
 class UserUpdateForm(forms.ModelForm):

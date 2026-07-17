@@ -53,6 +53,22 @@ services:
         sync: false
       - key: BREVO_NEWSLETTER_LIST_ID
         value: "2"
+      - key: FACEBOOK_KEY
+        sync: false
+      - key: FACEBOOK_SECRET
+        sync: false
+      - key: GOOGLE_OAUTH2_KEY
+        sync: false
+      - key: GOOGLE_OAUTH2_SECRET
+        sync: false
+      - key: LINKEDIN_OAUTH2_KEY
+        sync: false
+      - key: LINKEDIN_OAUTH2_SECRET
+        sync: false
+      - key: TWITTER_API_KEY
+        sync: false
+      - key: TWITTER_API_SECRET
+        sync: false
       - key: HONEYPOT_FIELD_NAME
         value: phonenumber
       - key: HONEYPOT_VALUE

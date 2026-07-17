@@ -3,15 +3,14 @@ import json
 from unittest import mock
 from unittest.mock import MagicMock, patch
 
-import social_core
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.messages import get_messages
 from django.core.cache import cache
 from django.core.paginator import Paginator
 from django.forms import ImageField
-from django.test import TestCase
-from django.test import override_settings
+from django.http import HttpResponse
+from django.test import TestCase, override_settings
 from django.test.client import Client, RequestFactory
 from django.urls import reverse
 from django.utils.encoding import force_bytes
@@ -19,8 +18,7 @@ from django.utils.http import urlsafe_base64_encode
 from social_core.exceptions import AuthCanceled
 
 from user import views
-from user.forms import (UsernameForm, UserRegistrationForm,
-                        VolunteerRegistrationForm)
+from user.forms import UsernameForm, UserRegistrationForm
 from user.management.services import SiteService
 from user.mocks import MockUser, RegisterUser, mock_decorator
 from user.models import Volunteer
@@ -168,9 +166,10 @@ class RegisterTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'registration/register.html')
         self.assertIsInstance(response.context['forms'], UserRegistrationForm)
-        self.assertIsInstance(response.context['volunteer_form'], VolunteerRegistrationForm)
         self.assertFalse(response.context['forms'].is_bound)
-        self.assertFalse(response.context['volunteer_form'].is_bound)
+        self.assertEqual(list(response.context['forms'].fields), ['email', 'password'])
+        for backend in ['twitter', 'facebook', 'linkedin-oauth2', 'google-oauth2']:
+            self.assertContains(response, reverse('social:begin', args=[backend]))
         self.assertEqual(response.context['secret'], f'{settings.RECAPTCHA_PUBLIC_KEY}')  # why assertContains fail here
 
     def test_unverified_recaptcha(self, mock_send_email, mock_get_current_site, mock_verify_recaptcha):
@@ -182,8 +181,8 @@ class RegisterTestCase(TestCase):
         self.assertTemplateUsed(response, 'robot_response.html')
 
     @override_settings(REGISTRATION_RATE_LIMIT=1, REGISTRATION_RATE_LIMIT_WINDOW=3600)
-    def test_rate_limits_repeated_registration_attempts(self, mock_send_email, mock_get_current_site,
-                                                         mock_verify_recaptcha):
+    def test_rate_limits_repeated_registration_attempts(
+            self, mock_send_email, mock_get_current_site, mock_verify_recaptcha):
         mock_verify_recaptcha.return_value = False
         data = self.user.spawn
         data.update({'g-recaptcha-response': 'invalid_captcha'})
@@ -200,11 +199,8 @@ class RegisterTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'registration/register.html')
         self.assertIsInstance(response.context['forms'], UserRegistrationForm)
-        self.assertIsInstance(response.context['volunteer_form'], VolunteerRegistrationForm)
         self.assertTrue(response.context['forms'].is_bound)
-        self.assertTrue(response.context['volunteer_form'].is_bound)
         self.assertFalse(response.context['forms'].is_valid())
-        self.assertFalse(response.context['volunteer_form'].is_valid())
         messages = get_messages(response.wsgi_request)
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(list(messages)[0]), 'INVALID USER INPUTS')
@@ -394,24 +390,36 @@ class SocialAuthCompleteTestCase(TestCase):
 
     def test_social_auth_complete_auth_canceled(self, mock_do_complete):
         mock_do_complete.side_effect = AuthCanceled(self.request.backend)
-        with self.assertRaises(social_core.exceptions.AuthCanceled):
-            response = views.social_auth_complete(self.request, backend='backend')
-            self.assertRedirects(response, reverse('login'))
+        response = views.social_auth_complete(self.request, backend='backend')
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse('login'))
 
     def test_social_auth_complete_other_exception(self, mock_do_complete):
         mock_do_complete.side_effect = Exception('Some error')
-        with self.assertRaises(Exception):
-            response = views.social_auth_complete(self.request, backend='backend')
-            self.assertRedirects(response, reverse('login'))
+        response = views.social_auth_complete(self.request, backend='backend')
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse('login'))
 
-    def test_social_auth_complete_successful_unauntheticated_user(self, mock_do_complete):
+    def test_social_auth_complete_returns_non_redirect_response(self, mock_do_complete):
+        mock_do_complete.return_value = HttpResponse(status=200)
+        response = views.social_auth_complete(self.request, backend='backend')
+        self.assertEqual(response.status_code, 200)
+
+    def test_social_auth_complete_creates_missing_volunteer_profile(self, mock_do_complete):
+        mock_do_complete.return_value.status_code = 302
+        response = views.social_auth_complete(self.request, backend='backend')
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse('create_private_pass'))
+        self.assertTrue(Volunteer._base_manager.filter(user=self.user).exists())
+
+    def test_social_auth_complete_successful_user_without_password(self, mock_do_complete):
         mock_do_complete.return_value.status_code = 302
         response = views.social_auth_complete(self.request, backend='backend')
         mock_do_complete.assert_called_once()
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, reverse('create_private_pass'))
 
-    def test_social_auth_complete_successful_auntheticated_user(self, mock_do_complete):
+    def test_social_auth_complete_successful_user_with_password(self, mock_do_complete):
         mock_do_complete.return_value.status_code = 302
         Volunteer.objects.create(user=self.user, is_verified=True)
         self.request.user.set_password('Password123.')

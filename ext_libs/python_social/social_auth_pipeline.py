@@ -6,7 +6,7 @@ def create_volunteer(user=None, *args, **kwargs):
         if hasattr(user, 'volunteer'):
             return {"is_new": False}
 
-    volunteer, _ = Volunteer.objects.get_or_create(user=user)
+    volunteer, _ = Volunteer._base_manager.get_or_create(user=user)
     return {'user': user}
 
 

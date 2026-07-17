@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block page_title %}Vacancies{% endblock %}
+{% block content %}
+<main class="container py-5">
+    <h1>Open opportunities</h1>
+    {% for vacancy in vacancies %}
+    <article class="border-bottom py-4">
+        <h2><a href="{{ vacancy.get_absolute_url }}">{{ vacancy.title }}</a></h2>
+        <p>{{ vacancy.summary }}</p>
+        <a class="btn btn-primary" href="{{ vacancy.get_absolute_url }}">View opportunity</a>
+    </article>
+    {% empty %}
+    <p>There are no open opportunities at the moment.</p>
+    {% endfor %}
+</main>
+{% endblock %}
