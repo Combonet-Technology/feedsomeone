@@ -38,6 +38,8 @@ class StaticViewSitemap(CanonicalDomainSitemap):
             'mainsite:impact',
             'mainsite:transparency',
             'mainsite:gallery',
+            'mainsite:services',
+            'mainsite:privacy',
             'events',
             'contact',
             'article:all-articles',

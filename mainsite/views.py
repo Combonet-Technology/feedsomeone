@@ -216,7 +216,7 @@ def callback(request):
 
 
 def services(request):
-    pass
+    return render(request, 'terms_of_service.html')
 
 
 def privacy(request):

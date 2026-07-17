@@ -26,6 +26,7 @@ class PublicPageTests(TestCase):
         'mainsite:impact',
         'mainsite:transparency',
         'mainsite:gallery',
+        'mainsite:services',
         'mainsite:privacy',
     )
 
@@ -72,6 +73,17 @@ class PublicPageTests(TestCase):
         self.assertContains(response, reverse('login'))
         self.assertContains(response, reverse('register'))
         self.assertContains(response, reverse('mainsite:privacy'))
+        self.assertContains(response, reverse('mainsite:services'))
+
+    def test_terms_of_service_is_public_and_identifies_account_terms(self):
+        response = self.client.get(reverse('mainsite:services'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Terms of Service for Oluwafemi Ebenezer Foundation')
+        self.assertContains(response, 'Social sign-in')
+        self.assertContains(response, 'Acceptable use')
+        self.assertContains(response, 'Governing law')
+        self.assertContains(response, 'info@oluwafemiebenezerfoundation.org')
 
     def test_sitemap_uses_canonical_www_domain_and_grant_review_routes(self):
         response = self.client.get('/sitemap.xml')
@@ -87,6 +99,8 @@ class PublicPageTests(TestCase):
             '/impact/',
             '/transparency/',
             '/gallery/',
+            '/services/',
+            '/privacy-policy/',
             '/events/',
             '/contact/',
             '/article/all/',

@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block page_title %}Terms of Service{% endblock %}
+{% block meta_description %}Read the Terms of Service governing access to the Oluwafemi Ebenezer Foundation website, accounts, social sign-in, participation features, donations and published content.{% endblock %}
+{% block content %}
+<main>
+    <div class="slider-area2">
+        <div class="slider-height2 d-flex align-items-center">
+            <div class="container">
+                <div class="row">
+                    <div class="col-xl-12">
+                        <div class="hero-cap hero-cap2 pt-20 text-center">
+                            <h1>Terms of Service</h1>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section class="about-low-area section-padding2">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12 col-md-10">
+                    <div class="about-caption mb-50">
+                        <div class="section-tittle mb-35">
+                            <span>Effective date: 17 July 2026</span>
+                            <h2>Terms of Service for Oluwafemi Ebenezer Foundation</h2>
+                        </div>
+
+                        <p>These Terms of Service govern your use of the Oluwafemi Ebenezer Foundation ("OEF", "we", "us" or "our") website and its account, communication, participation and donation features. By using the website, you agree to these terms. If you do not agree, please do not use authenticated or transactional features.</p>
+
+                        <ol>
+                            <li>
+                                <h2>Purpose of the website</h2>
+                                <p>The website provides information about OEF, its programmes, evidence, news, participation opportunities and ways to support its work. Some features allow visitors to create an account, manage a profile, communicate with OEF or express interest in participating.</p>
+                            </li>
+                            <li>
+                                <h2>Accounts</h2>
+                                <p>You must provide accurate information, keep your credentials secure and promptly notify OEF if you believe your account has been accessed without permission. You are responsible for activity performed through your account unless applicable law provides otherwise.</p>
+                                <p>Creating an account does not guarantee selection for a role, programme, opportunity, benefit or partnership.</p>
+                            </li>
+                            <li>
+                                <h2>Social sign-in</h2>
+                                <p>You may sign in through supported identity providers such as Google, Facebook, LinkedIn or X. When you choose social sign-in, the provider sends OEF the identity information you authorize, such as your name, email address and provider account identifier, so we can create or match your OEF account and sign you in.</p>
+                                <p>Your use of an identity provider is also governed by that provider's terms and privacy practices. OEF does not receive your social-media password.</p>
+                            </li>
+                            <li>
+                                <h2>Acceptable use</h2>
+                                <p>You must not misuse the website, impersonate another person, submit unlawful or deceptive material, interfere with security or availability, attempt unauthorized access, distribute malicious code, scrape protected information, or use the website to harm OEF, its beneficiaries, partners or other users.</p>
+                            </li>
+                            <li>
+                                <h2>Participation and opportunities</h2>
+                                <p>Descriptions of volunteer, employment, partnership or programme opportunities are provided for information and may be changed, paused or withdrawn. Applications and expressions of interest may be evaluated against the requirements stated for the relevant opportunity.</p>
+                            </li>
+                            <li>
+                                <h2>Donations and payments</h2>
+                                <p>Payments may be processed by third-party payment providers under their own terms. You are responsible for providing accurate payment information. Contact OEF promptly if you believe a transaction was unauthorized, duplicated or processed incorrectly.</p>
+                            </li>
+                            <li>
+                                <h2>Content and intellectual property</h2>
+                                <p>Unless otherwise stated, OEF owns or is authorized to use the website's original text, branding, programme materials and media. You may view and share public pages for lawful, non-commercial purposes with appropriate attribution. You may not falsely present OEF content as your own or imply an endorsement that OEF has not given.</p>
+                            </li>
+                            <li>
+                                <h2>Third-party services and links</h2>
+                                <p>The website may use or link to services operated by other organizations. OEF does not control those services and is not responsible for their availability, content or independent data practices. Review their terms before using them.</p>
+                            </li>
+                            <li>
+                                <h2>Availability and changes</h2>
+                                <p>We may maintain, update, suspend or discontinue website features when reasonably necessary. We aim to keep public information accurate, but programme details, dates, opportunities and external links may change.</p>
+                            </li>
+                            <li>
+                                <h2>Account restriction or termination</h2>
+                                <p>OEF may restrict or close an account when reasonably necessary to protect users, beneficiaries, the website or the Foundation; respond to unlawful activity; enforce these terms; or comply with legal obligations. Where appropriate, we may provide notice or an opportunity to clarify the issue.</p>
+                            </li>
+                            <li>
+                                <h2>Disclaimers</h2>
+                                <p>The website is provided on an "as available" basis. Public information is not legal, medical, financial or other professional advice. Nothing on the website creates an employment, volunteer, partnership, beneficiary or donor relationship unless OEF confirms that relationship separately.</p>
+                            </li>
+                            <li>
+                                <h2>Limitation of responsibility</h2>
+                                <p>To the extent permitted by applicable law, OEF is not responsible for indirect or consequential loss resulting from use of the website, inability to access it, reliance on outdated third-party information, or conduct outside OEF's reasonable control. Nothing in these terms excludes responsibility that cannot legally be excluded.</p>
+                            </li>
+                            <li>
+                                <h2>Privacy</h2>
+                                <p>Our <a href="{% url 'mainsite:privacy' %}">Privacy Policy</a> explains how OEF collects, uses, shares and protects personal information. It forms part of these terms where applicable.</p>
+                            </li>
+                            <li>
+                                <h2>Governing law</h2>
+                                <p>These terms are governed by the laws of the Federal Republic of Nigeria. The parties should first attempt to resolve concerns in good faith through the contact details below before pursuing any formal remedy.</p>
+                            </li>
+                            <li>
+                                <h2>Changes to these terms</h2>
+                                <p>We may update these terms to reflect changes to the website, our operations or applicable requirements. The effective date above will be updated when revised terms are published.</p>
+                            </li>
+                            <li>
+                                <h2>Contact us</h2>
+                                <p>Questions about these terms may be sent to <a href="mailto:info@oluwafemiebenezerfoundation.org">info@oluwafemiebenezerfoundation.org</a>.</p>
+                            </li>
+                        </ol>
+                    </div>
+                    <a href="{% url 'mainsite:homepage' %}" class="btn">Return home</a>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+{% endblock %}
