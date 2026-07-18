@@ -262,7 +262,7 @@ AUTHENTICATION_BACKENDS = [
     'social_core.backends.facebook.FacebookOAuth2',
     'social_core.backends.twitter.TwitterOAuth',
     'social_core.backends.google.GoogleOAuth2',
-    'social_core.backends.linkedin.LinkedinOAuth2',
+    'ext_libs.python_social.backends.LinkedinOAuth2',
     'django.contrib.auth.backends.ModelBackend',
 ]
 IMAGEFIT_PRESETS = {
@@ -317,6 +317,10 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = [
 
 SOCIAL_AUTH_LINKEDIN_OAUTH2_KEY = os.environ.get('LINKEDIN_OAUTH2_KEY')
 SOCIAL_AUTH_LINKEDIN_OAUTH2_SECRET = os.environ.get('LINKEDIN_OAUTH2_SECRET')
+SOCIAL_AUTH_LINKEDIN_OAUTH2_REDIRECT_URI = os.environ.get(
+    'LINKEDIN_OAUTH2_REDIRECT_URI',
+    'https://oluwafemiebenezerfoundation.org/social-auth/complete/linkedin-oauth2/'
+)
 SOCIAL_AUTH_LINKEDIN_OAUTH2_SCOPE = ['r_liteprofile', 'r_emailaddress']
 SOCIAL_AUTH_LINKEDIN_OAUTH2_EXTRA_DATA = [('id', 'id'),
                                           ('firstName', 'first_name'),
