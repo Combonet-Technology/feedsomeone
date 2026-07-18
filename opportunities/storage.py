@@ -34,9 +34,9 @@ class AuthenticatedRawCloudinaryStorage(RawMediaCloudinaryStorage):
 
     def _get_url(self, name):
         name = self._prepend_prefix(name)
-        public_id, extension = os.path.splitext(name)
+        _, extension = os.path.splitext(name)
         return cloudinary.utils.private_download_url(
-            public_id,
+            name,
             extension.lstrip('.'),
             resource_type='raw',
             type='authenticated',

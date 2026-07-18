@@ -499,7 +499,7 @@ class VacancyCVStorageTests(TestCase):
             'https://cloudinary.test/signed-cv',
         )
         mock_private_download_url.assert_called_once_with(
-            'media/vacancy_applications/private_cv/application',
+            'media/vacancy_applications/private_cv/application.pdf',
             'pdf',
             resource_type='raw',
             type='authenticated',
@@ -533,7 +533,7 @@ class VacancyCVStorageTests(TestCase):
             'https://cloudinary.test/signed-existing-cv',
         )
         mock_private_download_url.assert_called_once_with(
-            'media/vacancy_applications/private_cv/application',
+            'media/vacancy_applications/private_cv/application.pdf',
             'pdf',
             resource_type='raw',
             type='authenticated',
