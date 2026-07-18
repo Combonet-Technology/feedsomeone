@@ -10,6 +10,15 @@ from django.core.files.storage import (FileSystemStorage, Storage,
 from django.utils.deconstruct import deconstructible
 
 PRIVATE_CV_PREFIX = 'vacancy_applications/private_cv/'
+CLOUDINARY_MEDIA_PREFIX = 'media/'
+
+
+def _normalise_private_cv_name(name):
+    normalised_name = str(name).replace('\\', '/')
+    prefixed_private_cv = f'{CLOUDINARY_MEDIA_PREFIX}{PRIVATE_CV_PREFIX}'
+    if normalised_name.startswith(prefixed_private_cv):
+        return normalised_name[len(CLOUDINARY_MEDIA_PREFIX):]
+    return normalised_name
 
 
 class AuthenticatedRawCloudinaryStorage(RawMediaCloudinaryStorage):
@@ -56,7 +65,7 @@ class VacancyCVStorage(Storage):
         )
 
     def _backend(self, name):
-        if name.startswith(PRIVATE_CV_PREFIX):
+        if _normalise_private_cv_name(name).startswith(PRIVATE_CV_PREFIX):
             if self._cloudinary_is_configured():
                 return AuthenticatedRawCloudinaryStorage()
             return FileSystemStorage(
@@ -66,19 +75,26 @@ class VacancyCVStorage(Storage):
         return default_storage
 
     def _open(self, name, mode='rb'):
-        return self._backend(name).open(name, mode)
+        backend_name = _normalise_private_cv_name(name)
+        return self._backend(backend_name).open(backend_name, mode)
 
     def _save(self, name, content):
-        return self._backend(name).save(name, content)
+        backend_name = _normalise_private_cv_name(name)
+        saved_name = self._backend(backend_name).save(backend_name, content)
+        return _normalise_private_cv_name(saved_name)
 
     def delete(self, name):
-        return self._backend(name).delete(name)
+        backend_name = _normalise_private_cv_name(name)
+        return self._backend(backend_name).delete(backend_name)
 
     def exists(self, name):
-        return self._backend(name).exists(name)
+        backend_name = _normalise_private_cv_name(name)
+        return self._backend(backend_name).exists(backend_name)
 
     def size(self, name):
-        return self._backend(name).size(name)
+        backend_name = _normalise_private_cv_name(name)
+        return self._backend(backend_name).size(backend_name)
 
     def url(self, name):
-        return self._backend(name).url(name)
+        backend_name = _normalise_private_cv_name(name)
+        return self._backend(backend_name).url(backend_name)

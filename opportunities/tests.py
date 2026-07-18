@@ -508,6 +508,67 @@ class VacancyCVStorageTests(TestCase):
         )
         mock_time.assert_called_once()
 
+    @override_settings(
+        CLOUDINARY_STORAGE={
+            'CLOUD_NAME': 'test-cloud',
+            'API_KEY': 'test-key',
+            'API_SECRET': 'test-secret',
+        },
+        VACANCY_CV_LINK_TTL_SECONDS=604800,
+    )
+    @patch(
+        'opportunities.storage.cloudinary.utils.private_download_url',
+        return_value='https://cloudinary.test/signed-existing-cv',
+    )
+    @patch('opportunities.storage.time.time', return_value=1000)
+    def test_media_prefixed_private_cv_still_uses_cloudinary_signed_url(
+        self,
+        mock_time,
+        mock_private_download_url,
+    ):
+        storage = VacancyCVStorage()
+
+        self.assertEqual(
+            storage.url('media/vacancy_applications/private_cv/application.pdf'),
+            'https://cloudinary.test/signed-existing-cv',
+        )
+        mock_private_download_url.assert_called_once_with(
+            'media/vacancy_applications/private_cv/application',
+            'pdf',
+            resource_type='raw',
+            type='authenticated',
+            attachment=True,
+            expires_at=605800,
+        )
+        mock_time.assert_called_once()
+
+    @override_settings(
+        CLOUDINARY_STORAGE={
+            'CLOUD_NAME': 'test-cloud',
+            'API_KEY': 'test-key',
+            'API_SECRET': 'test-secret',
+        },
+    )
+    @patch(
+        'opportunities.storage.AuthenticatedRawCloudinaryStorage.save',
+        return_value='media/vacancy_applications/private_cv/application.pdf',
+    )
+    def test_save_stores_canonical_private_cv_name(self, mock_save):
+        storage = VacancyCVStorage()
+        content = ContentFile(b'example cv', name='application.pdf')
+
+        self.assertEqual(
+            storage._save(
+                'vacancy_applications/private_cv/application.pdf',
+                content,
+            ),
+            'vacancy_applications/private_cv/application.pdf',
+        )
+        mock_save.assert_called_once_with(
+            'vacancy_applications/private_cv/application.pdf',
+            content,
+        )
+
 
 class SeedVacanciesTests(TestCase):
     def setUp(self):
