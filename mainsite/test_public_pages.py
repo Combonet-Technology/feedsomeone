@@ -101,6 +101,7 @@ class PublicPageTests(TestCase):
             '/gallery/',
             '/services/',
             '/privacy-policy/',
+            '/opportunities/',
             '/events/',
             '/contact/',
             '/article/all/',

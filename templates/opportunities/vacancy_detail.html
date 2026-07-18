@@ -1,28 +1,87 @@
 {% extends 'base.html' %}
-{% load crispy_forms_tags %}
+{% load crispy_forms_tags static %}
+
 {% block page_title %}{{ vacancy.title }}{% endblock %}
+{% block meta_description %}{{ vacancy.summary }}{% endblock %}
+{% block social_title %}{{ vacancy.title }} | OEF{% endblock %}
+{% block social_description %}{{ vacancy.summary }}{% endblock %}
+{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/opportunities.css' %}">{% endblock %}
+
 {% block content %}
-<main class="container py-5">
-    <h1>{{ vacancy.title }}</h1>
-    <p class="lead">{{ vacancy.summary }}</p>
-    <h2>About the opportunity</h2><div>{{ vacancy.description|linebreaks }}</div>
-    <h2>Who we are looking for</h2><div>{{ vacancy.who_we_are_looking_for|linebreaks }}</div>
-    <h2>Core responsibilities</h2><div>{{ vacancy.responsibilities|linebreaks }}</div>
-    <h2>Expectations</h2><div>{{ vacancy.expectations|linebreaks }}</div>
-    <h2>Benefits and perks</h2><div>{{ vacancy.benefits|linebreaks }}</div>
-    {% if user.is_authenticated %}
-        {% if already_applied %}
-        <p class="alert alert-info">You have already applied for this opportunity.</p>
-        {% else %}
-        <h2>Apply</h2>
-        <form method="post" enctype="multipart/form-data" action="{% url 'opportunities:apply' vacancy.slug %}">
-            {% csrf_token %}
-            {{ application_form|crispy }}
-            <button class="btn btn-primary" type="submit">Submit application</button>
-        </form>
-        {% endif %}
-    {% else %}
-        <p><a href="{% url 'login' %}?next={{ request.path|urlencode }}">Sign in to apply.</a></p>
-    {% endif %}
+<main class="opportunities-page">
+    <section class="vacancy-detail-hero">
+        <div class="container">
+            <a class="vacancy-back" href="{% url 'opportunities:list' %}"><i class="fas fa-arrow-left" aria-hidden="true"></i> All opportunities</a>
+            <div class="vacancy-detail-title">
+                <div>
+                    <p class="opportunities-eyebrow">Volunteer core team</p>
+                    <h1>{{ vacancy.title }}</h1>
+                    <p>{{ vacancy.summary }}</p>
+                </div>
+                <span class="vacancy-status vacancy-status-{{ vacancy.status }}">{{ vacancy.get_status_display }}</span>
+            </div>
+            <ul class="vacancy-meta vacancy-detail-meta">
+                <li><i class="fas fa-map-marker-alt" aria-hidden="true"></i> Remote / Nigeria</li>
+                {% if vacancy.is_open %}
+                <li><i class="fas fa-users" aria-hidden="true"></i> {{ vacancy.positions_available }} position{{ vacancy.positions_available|pluralize }}</li>
+                {% endif %}
+            </ul>
+        </div>
+    </section>
+
+    <section class="vacancy-detail-body">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-7">
+                    <div class="vacancy-copy">
+                        <section>
+                            <h2>About the opportunity</h2>
+                            {{ vacancy.description|linebreaks }}
+                        </section>
+                        <section>
+                            <h2>Who we are looking for</h2>
+                            {{ vacancy.who_we_are_looking_for|linebreaks }}
+                        </section>
+                        <section>
+                            <h2>Core responsibilities</h2>
+                            {{ vacancy.responsibilities|linebreaks }}
+                        </section>
+                        <section>
+                            <h2>Expectations</h2>
+                            {{ vacancy.expectations|linebreaks }}
+                        </section>
+                        <section>
+                            <h2>Benefits and experience</h2>
+                            {{ vacancy.benefits|linebreaks }}
+                        </section>
+                    </div>
+                </div>
+                <div class="col-lg-5">
+                    <aside class="application-panel" id="apply">
+                        {% if vacancy.is_open %}
+                            {% if already_applied %}
+                            <h2>Application received</h2>
+                            <p>We already have an application from your account for this opportunity.</p>
+                            {% else %}
+                            <h2>Apply for this role</h2>
+                            <p>No account is required. Submit your details and CV for the OEF team to review.</p>
+                            <form method="post" enctype="multipart/form-data" action="{% url 'opportunities:apply' vacancy.slug %}">
+                                {% csrf_token %}
+                                {{ application_form|crispy }}
+                                <p class="application-file-note">Accepted CV formats: PDF, DOC or DOCX, up to 5 MB.</p>
+                                <button class="btn application-submit" type="submit">Submit application</button>
+                            </form>
+                            <p class="application-privacy">Your information is used only to assess this application. Read our <a href="{% url 'mainsite:privacy' %}">Privacy Policy</a>.</p>
+                            {% endif %}
+                        {% else %}
+                        <h2>Applications closed</h2>
+                        <p>This role is currently {{ vacancy.get_status_display|lower }} and is not accepting applications.</p>
+                        <a class="application-secondary-link" href="{% url 'opportunities:list' %}">See open opportunities</a>
+                        {% endif %}
+                    </aside>
+                </div>
+            </div>
+        </div>
+    </section>
 </main>
 {% endblock %}

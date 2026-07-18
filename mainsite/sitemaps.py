@@ -40,6 +40,7 @@ class StaticViewSitemap(CanonicalDomainSitemap):
             'mainsite:gallery',
             'mainsite:services',
             'mainsite:privacy',
+            'opportunities:list',
             'events',
             'contact',
             'article:all-articles',

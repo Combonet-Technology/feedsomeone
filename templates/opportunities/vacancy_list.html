@@ -1,16 +1,63 @@
 {% extends 'base.html' %}
-{% block page_title %}Vacancies{% endblock %}
+{% load static %}
+
+{% block page_title %}Core Team Opportunities{% endblock %}
+{% block meta_description %}Explore volunteer core-team opportunities with Oluwafemi Ebenezer Foundation, including writing, design and programme roles.{% endblock %}
+{% block social_title %}Core Team Opportunities | OEF{% endblock %}
+{% block social_description %}Use your skills to help OEF communicate clearly, coordinate programmes and support communities with dignity.{% endblock %}
+{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/opportunities.css' %}">{% endblock %}
+
 {% block content %}
-<main class="container py-5">
-    <h1>Open opportunities</h1>
-    {% for vacancy in vacancies %}
-    <article class="border-bottom py-4">
-        <h2><a href="{{ vacancy.get_absolute_url }}">{{ vacancy.title }}</a></h2>
-        <p>{{ vacancy.summary }}</p>
-        <a class="btn btn-primary" href="{{ vacancy.get_absolute_url }}">View opportunity</a>
-    </article>
-    {% empty %}
-    <p>There are no open opportunities at the moment.</p>
-    {% endfor %}
+<main class="opportunities-page">
+    <section class="opportunities-hero">
+        <div class="container">
+            <p class="opportunities-eyebrow">Work with OEF</p>
+            <h1>Core team opportunities</h1>
+            <p>Contribute professional skills to a growing Nigerian nonprofit focused on practical relief, dignity and lasting opportunity.</p>
+        </div>
+    </section>
+
+    <section class="opportunities-listing">
+        <div class="container">
+            <div class="opportunities-intro">
+                <div>
+                    <h2>Current vacancies</h2>
+                    <p>These roles support OEF's ongoing operations. Outreach-specific volunteer calls are announced separately and may use a Google Form.</p>
+                </div>
+                <a class="opportunities-contact" href="{% url 'contact' %}">General enquiries</a>
+            </div>
+
+            <div class="vacancy-list">
+                {% for vacancy in vacancies %}
+                <article class="vacancy-row">
+                    <div class="vacancy-main">
+                        <div class="vacancy-heading">
+                            <h3><a href="{{ vacancy.get_absolute_url }}">{{ vacancy.title }}</a></h3>
+                            <span class="vacancy-status vacancy-status-{{ vacancy.status }}">{{ vacancy.get_status_display }}</span>
+                        </div>
+                        <p>{{ vacancy.summary }}</p>
+                        <ul class="vacancy-meta">
+                            <li><i class="fas fa-hands-helping" aria-hidden="true"></i> Volunteer core team</li>
+                            <li><i class="fas fa-map-marker-alt" aria-hidden="true"></i> Remote / Nigeria</li>
+                            {% if vacancy.is_open %}
+                            <li><i class="fas fa-users" aria-hidden="true"></i> {{ vacancy.positions_available }} position{{ vacancy.positions_available|pluralize }}</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    <div class="vacancy-action">
+                        <a class="btn vacancy-view-button" href="{{ vacancy.get_absolute_url }}">
+                            {% if vacancy.is_open %}View and apply{% else %}View role{% endif %}
+                        </a>
+                    </div>
+                </article>
+                {% empty %}
+                <div class="vacancy-empty">
+                    <h2>No current vacancies</h2>
+                    <p>There are no published core-team opportunities at the moment. Please check again later.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
 </main>
 {% endblock %}

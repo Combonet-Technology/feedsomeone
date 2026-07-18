@@ -96,6 +96,8 @@
     <!--	<link rel="stylesheet" href="{% static 'css/main.css' %}">-->
     <!--	<link rel="stylesheet" href="{% static 'css/donatestyle.css' %}">-->
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    {% block extra_styles %}
+    {% endblock %}
     {% block error_styles %}
     {% endblock %}
     {% if p_form %}
@@ -323,6 +325,7 @@ margin-top:100px
                                             <li><a href="{% url 'mainsite:homepage' %}">Home</a></li>
                                             <li><a href="{% url 'mainsite:about-page' %}">About</a></li>
                                             <li><a href="{% url 'mainsite:impact' %}">Impact</a></li>
+                                            <li><a href="{% url 'opportunities:list' %}">Careers</a></li>
                                             <li><a href="{% url 'article:all-articles' %}">News</a>
                                                 <ul style="width: 190px;" class="submenu">
                                                     <li><a href="{% url 'article:articles-by-category' 'Briefings' %}">Briefings</a></li>
@@ -447,6 +450,7 @@ margin-top:100px
                     <li><a href="{% url 'mainsite:about-page' %}">About</a></li>
                     <li><a href="{% url 'mainsite:impact' %}">Impact</a></li>
                     <li><a href="{% url 'mainsite:transparency' %}">Transparency</a></li>
+                    <li><a href="{% url 'opportunities:list' %}">Careers</a></li>
                     <li><a href="{% url 'article:all-articles' %}">News</a></li>
                     <li><a href="{% url 'article:articles-by-category' 'Briefings' %}">Briefings</a></li>
                     <li><a href="{% url 'article:articles-by-category' 'Articles' %}">Articles</a></li>
