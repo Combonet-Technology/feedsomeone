@@ -1,10 +1,16 @@
+import logging
+
 from django.contrib import messages
 from django.db.models import Case, IntegerField, Value, When
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.generic import DetailView, ListView
 
 from .forms import VacancyApplicationForm
 from .models import Vacancy, VacancyApplication
+from .notifications import notify_new_application
+
+logger = logging.getLogger(__name__)
 
 
 class VacancyListView(ListView):
@@ -20,7 +26,7 @@ class VacancyListView(ListView):
                 default=Value(2),
                 output_field=IntegerField(),
             )
-        ).order_by('status_order', '-published_at', '-created_at')
+        ).order_by('status_order', 'display_order', '-published_at', '-created_at')
 
 
 class VacancyDetailView(DetailView):
@@ -80,6 +86,22 @@ def apply(request, slug):
         if request.user.is_authenticated:
             application.applicant = request.user
         application.save()
+        try:
+            notify_new_application(
+                application,
+                site_url=request.build_absolute_uri('/'),
+                admin_url=request.build_absolute_uri(
+                    reverse(
+                        'admin:opportunities_vacancyapplication_change',
+                        args=(application.pk,),
+                    )
+                ),
+            )
+        except Exception:
+            logger.exception(
+                'Unexpected vacancy notification failure for application %s',
+                application.pk,
+            )
         messages.success(request, 'Your application has been received.')
         return redirect(vacancy.get_absolute_url())
 

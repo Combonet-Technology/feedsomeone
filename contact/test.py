@@ -6,6 +6,7 @@ from django.urls import reverse
 
 from contact.forms import NewsletterForm
 from ext_libs.email_service import (EmailProviderError, send_email,
+                                    send_template_email,
                                     upsert_newsletter_contact)
 from user.models import Lead
 
@@ -132,6 +133,41 @@ class BrevoEmailServiceTests(TestCase):
                 "subject": "Subject",
                 "replyTo": {"email": "reply@example.com"},
                 "htmlContent": "<p>Hello</p>",
+            },
+            timeout=3,
+        )
+
+    @override_settings(
+        BREVO_API_KEY="test-api-key",
+        BREVO_API_BASE_URL="https://api.brevo.com/v3",
+        BREVO_TIMEOUT_SECONDS=3,
+    )
+    @patch("ext_libs.email_service.requests.post")
+    def test_send_template_email_posts_template_and_params(self, mock_post):
+        mock_post.return_value = Mock(status_code=201, text='{"messageId":"abc"}')
+
+        self.assertTrue(
+            send_template_email(
+                "person@example.com",
+                template_id=42,
+                params={"first_name": "Ayo", "role_title": "Writer"},
+            )
+        )
+
+        mock_post.assert_called_once_with(
+            "https://api.brevo.com/v3/smtp/email",
+            headers={
+                "accept": "application/json",
+                "api-key": "test-api-key",
+                "content-type": "application/json",
+            },
+            json={
+                "to": [{"email": "person@example.com"}],
+                "templateId": 42,
+                "params": {
+                    "first_name": "Ayo",
+                    "role_title": "Writer",
+                },
             },
             timeout=3,
         )

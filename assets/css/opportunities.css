@@ -3,37 +3,24 @@
   background: #fff;
 }
 
-.opportunities-hero,
-.vacancy-detail-hero {
-  padding: 88px 0 72px;
-  background: #f4f7f8;
-  border-bottom: 1px solid #e0e7ea;
+.opportunities-page .container {
+  max-width: 1040px;
 }
 
-.opportunities-hero h1,
-.vacancy-detail-hero h1 {
+.vacancy-detail-title h1 {
   max-width: 900px;
   margin: 0 0 20px;
   color: #002d72;
-  font-size: 48px;
+  font-size: 40px;
   line-height: 1.15;
 }
 
-.opportunities-hero > .container > p:last-child,
 .vacancy-detail-title p {
   max-width: 760px;
   margin: 0;
   color: #53657a;
   font-size: 19px;
   line-height: 1.7;
-}
-
-.opportunities-eyebrow {
-  margin: 0 0 12px;
-  color: #008f5d;
-  font-size: 14px;
-  font-weight: 700;
-  text-transform: uppercase;
 }
 
 .opportunities-listing,
@@ -67,6 +54,16 @@
 .vacancy-back {
   color: #008f5d;
   font-weight: 700;
+}
+
+.opportunities-contact:hover,
+.opportunities-contact:focus,
+.application-secondary-link:hover,
+.application-secondary-link:focus,
+.vacancy-back:hover,
+.vacancy-back:focus {
+  color: #006b45;
+  text-decoration: underline;
 }
 
 .vacancy-list {
@@ -167,7 +164,13 @@
 
 .vacancy-back {
   display: inline-block;
-  margin-bottom: 36px;
+  margin-bottom: 28px;
+}
+
+.vacancy-overview {
+  padding-bottom: 36px;
+  margin-bottom: 48px;
+  border-bottom: 1px solid #e0e7ea;
 }
 
 .vacancy-detail-title {
@@ -204,6 +207,19 @@
   line-height: 1.8;
 }
 
+.vacancy-content-list {
+  margin: 0;
+  padding-left: 0;
+  color: #4f6173;
+  list-style: none;
+}
+
+.vacancy-content-list li {
+  padding-left: 0;
+  margin-bottom: 10px;
+  line-height: 1.75;
+}
+
 .application-panel {
   position: sticky;
   top: 120px;
@@ -233,7 +249,32 @@
 }
 
 .application-panel input[type="checkbox"] {
-  width: auto;
+  width: 18px;
+}
+
+.application-panel .form-check {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  column-gap: 10px;
+  align-items: start;
+  padding-left: 0;
+  margin-bottom: 14px;
+}
+
+.application-panel .form-check-input {
+  position: static;
+  width: 18px;
+  height: 18px;
+  margin: 4px 0 0;
+}
+
+.application-panel .form-check-label {
+  min-width: 0;
+  margin: 0;
+  color: #33465a;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.5;
 }
 
 .application-panel textarea {
@@ -250,16 +291,16 @@
   font-size: 13px;
 }
 
+.application-privacy a {
+  color: #007a4d;
+  font-weight: 700;
+}
+
 .vacancy-empty {
   padding: 48px 0;
 }
 
 @media (max-width: 991px) {
-  .opportunities-hero,
-  .vacancy-detail-hero {
-    padding: 64px 0 56px;
-  }
-
   .application-panel {
     position: static;
     margin-top: 32px;
@@ -267,9 +308,16 @@
 }
 
 @media (max-width: 767px) {
-  .opportunities-hero h1,
-  .vacancy-detail-hero h1 {
-    font-size: 34px;
+  .opportunities-page .container {
+    padding-right: 20px;
+    padding-left: 20px;
+  }
+
+  .vacancy-detail-title h1 {
+    max-width: 100%;
+    font-size: 30px;
+    line-height: 1.25;
+    overflow-wrap: break-word;
   }
 
   .opportunities-listing,
@@ -295,6 +343,21 @@
 
   .vacancy-action {
     margin-top: 22px;
+  }
+
+  .vacancy-main,
+  .vacancy-detail-title > div {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .vacancy-meta {
+    display: block;
+  }
+
+  .vacancy-meta li {
+    margin-bottom: 10px;
+    overflow-wrap: break-word;
   }
 
   .vacancy-view-button {

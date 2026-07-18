@@ -75,6 +75,14 @@ class PublicPageTests(TestCase):
         self.assertContains(response, reverse('mainsite:privacy'))
         self.assertContains(response, reverse('mainsite:services'))
 
+    def test_homepage_does_not_claim_a_facebook_page(self):
+        response = self.client.get(reverse('mainsite:homepage'))
+
+        self.assertNotContains(
+            response,
+            'facebook.com/oluwafemiebenezerfoundation',
+        )
+
     def test_terms_of_service_is_public_and_identifies_account_terms(self):
         response = self.client.get(reverse('mainsite:services'))
 

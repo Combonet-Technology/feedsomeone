@@ -63,6 +63,33 @@ def send_email(destination, subject, content, source=None, plain=False):
     return True
 
 
+def send_template_email(destination, template_id, params=None):
+    if not template_id:
+        raise EmailProviderError("Brevo transactional template ID is not configured")
+
+    payload = {
+        "to": _recipients(destination),
+        "templateId": int(template_id),
+        "params": params or {},
+    }
+    response = requests.post(
+        f"{settings.BREVO_API_BASE_URL}/smtp/email",
+        headers=_brevo_headers(),
+        json=payload,
+        timeout=settings.BREVO_TIMEOUT_SECONDS,
+    )
+    if response.status_code >= 400:
+        logger.error(
+            "Brevo template email send failed: %s %s",
+            response.status_code,
+            response.text,
+        )
+        raise EmailProviderError(
+            f"Brevo template email send failed with status {response.status_code}"
+        )
+    return True
+
+
 def upsert_newsletter_contact(email, attributes=None):
     payload = {
         "email": email,

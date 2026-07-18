@@ -9,13 +9,19 @@
 
 {% block content %}
 <main class="opportunities-page">
-    <section class="opportunities-hero">
-        <div class="container">
-            <p class="opportunities-eyebrow">Work with OEF</p>
-            <h1>Core team opportunities</h1>
-            <p>Contribute professional skills to a growing Nigerian nonprofit focused on practical relief, dignity and lasting opportunity.</p>
+    <div class="slider-area2">
+        <div class="slider-height2 d-flex align-items-center">
+            <div class="container">
+                <div class="row">
+                    <div class="col-xl-12">
+                        <div class="hero-cap hero-cap2 pt-20 text-center">
+                            <h2>Careers</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-    </section>
+    </div>
 
     <section class="opportunities-listing">
         <div class="container">
@@ -37,17 +43,21 @@
                         </div>
                         <p>{{ vacancy.summary }}</p>
                         <ul class="vacancy-meta">
-                            <li><i class="fas fa-hands-helping" aria-hidden="true"></i> Volunteer core team</li>
-                            <li><i class="fas fa-map-marker-alt" aria-hidden="true"></i> Remote / Nigeria</li>
+                            {% if vacancy.team %}
+                            <li><i class="fas fa-users-cog" aria-hidden="true"></i> {{ vacancy.team }}</li>
+                            {% endif %}
+                            <li><i class="fas fa-hands-helping" aria-hidden="true"></i> {{ vacancy.get_engagement_type_display }}</li>
+                            <li><i class="fas fa-map-marker-alt" aria-hidden="true"></i> {{ vacancy.get_work_mode_display }} / {{ vacancy.location }}</li>
+                            {% if vacancy.time_commitment %}
+                            <li><i class="far fa-clock" aria-hidden="true"></i> {{ vacancy.time_commitment }}</li>
+                            {% endif %}
                             {% if vacancy.is_open %}
                             <li><i class="fas fa-users" aria-hidden="true"></i> {{ vacancy.positions_available }} position{{ vacancy.positions_available|pluralize }}</li>
                             {% endif %}
                         </ul>
                     </div>
                     <div class="vacancy-action">
-                        <a class="btn vacancy-view-button" href="{{ vacancy.get_absolute_url }}">
-                            {% if vacancy.is_open %}View and apply{% else %}View role{% endif %}
-                        </a>
+                        <a class="btn vacancy-view-button" href="{{ vacancy.get_absolute_url }}">View More</a>
                     </div>
                 </article>
                 {% empty %}

@@ -7,10 +7,24 @@ class VacancyApplicationForm(forms.ModelForm):
     consent = forms.BooleanField(
         label='I consent to OEF using these details to assess this application.',
     )
+    newsletter_opt_in = forms.BooleanField(
+        required=False,
+        label=(
+            'Send me OEF news and programme updates. '
+            'I can unsubscribe at any time.'
+        ),
+    )
 
     class Meta:
         model = VacancyApplication
-        fields = ('full_name', 'email', 'phone', 'cv', 'cover_letter')
+        fields = (
+            'full_name',
+            'email',
+            'phone',
+            'cv',
+            'cover_letter',
+            'newsletter_opt_in',
+        )
         labels = {
             'full_name': 'Full name',
             'phone': 'Phone number (optional)',

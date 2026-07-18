@@ -53,6 +53,10 @@ services:
         sync: false
       - key: BREVO_NEWSLETTER_LIST_ID
         value: "2"
+      - key: BREVO_VACANCY_ACK_TEMPLATE_ID
+        sync: false
+      - key: SLACK_VACANCIES_WEBHOOK_URL
+        sync: false
       - key: FACEBOOK_KEY
         sync: false
       - key: FACEBOOK_SECRET

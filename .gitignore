@@ -194,6 +194,7 @@ coverage.xml
 /config/settings/testtt.py
 .onboarding-backups/
 graphify-out/
+/local-data/
 *.backup
 *.backup.gz
 *.dump
