@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <body style="margin:0; padding:0; background:#f4f4f4; color:#272727; font-family:Arial, Helvetica, sans-serif;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f4f4f4; padding:24px 12px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:620px; background:#ffffff; border-top:4px solid #ff2a2f;">
+            <tr>
+              <td align="center" style="padding:28px 28px 18px; border-bottom:1px solid #e5e5e5;">
+                <img src="{{ document.logo_url }}" width="250" alt="Oluwafemi Ebenezer Foundation" style="display:block; width:100%; max-width:250px; height:auto; border:0;">
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:30px 34px 34px; font-size:15px; line-height:24px;">
+                <p style="margin:0 0 18px;">Dear {{ document.recipient_first_name }},</p>
+                <p style="margin:0 0 18px;">Following your interview, we are pleased to inform you that you have been selected for the role of <strong>{{ document.offer.role_title }}</strong> with Oluwafemi Ebenezer Foundation.</p>
+                <p style="margin:0 0 18px;">Please find your volunteer engagement offer letter attached. It contains the engagement details and next steps.</p>
+                <p style="margin:0 0 22px;">Kindly reply to this email to confirm your acceptance. We will then send the Volunteer Agreement for your review and signature.</p>
+                <p style="margin:0 0 20px;">We look forward to welcoming you to OEF.</p>
+                <p style="margin:0;">Yours sincerely,<br><strong>{{ document.sender_name }}</strong><br>{{ document.sender_title }}<br>Oluwafemi Ebenezer Foundation</p>
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="padding:18px 24px; background:#272727; color:#ffffff; font-size:12px; line-height:18px;">
+                <a href="https://www.oluwafemiebenezerfoundation.org" style="color:#ffffff; text-decoration:none;">www.oluwafemiebenezerfoundation.org</a>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

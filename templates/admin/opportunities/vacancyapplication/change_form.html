@@ -1,0 +1,8 @@
+{% extends "admin/change_form.html" %}
+
+{% block object-tools-items %}
+  {{ block.super }}
+  {% if show_send_volunteer_offer %}
+    <li><a href="{{ send_volunteer_offer_url }}">Prepare and send offer</a></li>
+  {% endif %}
+{% endblock %}

@@ -1,0 +1,113 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block extrahead %}
+  {{ block.super }}
+  <style>
+    .offer-page { max-width: 920px; }
+    .offer-summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1px;
+      margin: 0 0 24px;
+      overflow: hidden;
+      background: #d9dde0;
+      border: 1px solid #d9dde0;
+    }
+    .offer-summary__item { min-width: 0; padding: 14px 16px; background: #fff; }
+    .offer-summary__label {
+      display: block;
+      margin-bottom: 4px;
+      color: #687078;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .offer-summary__value { overflow-wrap: anywhere; color: #252a2e; font-size: 14px; }
+    .offer-form fieldset.module { margin-bottom: 20px; }
+    .offer-form .form-row { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 18px; padding: 14px 16px; }
+    .offer-form .field-label label { float: none; width: auto; margin: 0; color: #252a2e; font-weight: 700; }
+    .offer-form .field-control { min-width: 0; }
+    .offer-form input[type="text"],
+    .offer-form input[type="date"],
+    .offer-form textarea {
+      display: block;
+      width: 100%;
+      max-width: 620px;
+      min-height: 38px;
+      padding: 8px 10px;
+      color: #252a2e;
+      background: #fff;
+      border: 1px solid #b8bec4;
+      border-radius: 2px;
+    }
+    .offer-form textarea { resize: vertical; }
+    .offer-form .help { max-width: 620px; margin: 6px 0 0; color: #687078; }
+    .offer-form .confirmation-row { display: block; }
+    .offer-form .confirmation-row .field-control { display: flex; align-items: flex-start; gap: 10px; max-width: 760px; }
+    .offer-form .confirmation-row input { flex: 0 0 auto; margin-top: 3px; }
+    .offer-form .confirmation-row label { color: #252a2e; font-weight: 600; line-height: 1.45; }
+    .offer-form .errorlist { margin: 0 0 8px 238px; }
+    .offer-form .submit-row { display: flex; align-items: center; gap: 14px; padding: 12px 16px; }
+    @media (max-width: 760px) {
+      .offer-summary { grid-template-columns: 1fr; }
+      .offer-form .form-row { grid-template-columns: 1fr; gap: 7px; }
+      .offer-form .errorlist { margin-left: 0; }
+      .offer-form input[type="text"],
+      .offer-form input[type="date"],
+      .offer-form textarea { max-width: none; }
+      .offer-form .submit-row { align-items: stretch; flex-direction: column; }
+      .offer-form .submit-row input, .offer-form .submit-row a { width: 100%; text-align: center; }
+    }
+  </style>
+{% endblock %}
+
+{% block breadcrumbs %}
+  <div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
+    &rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+    &rsaquo; <a href="{% url 'admin:opportunities_vacancyapplication_changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+    &rsaquo; <a href="{{ change_url }}">{{ application.full_name }}</a>
+    &rsaquo; Prepare and send offer
+  </div>
+{% endblock %}
+
+{% block content %}
+  <div id="content-main" class="offer-page">
+    <div class="offer-summary" aria-label="Recipient and role">
+      <div class="offer-summary__item"><span class="offer-summary__label">Applicant</span><span class="offer-summary__value">{{ application.full_name }}</span></div>
+      <div class="offer-summary__item"><span class="offer-summary__label">Email</span><span class="offer-summary__value">{{ application.email }}</span></div>
+      <div class="offer-summary__item"><span class="offer-summary__label">Role</span><span class="offer-summary__value">{{ application.vacancy.title }}</span></div>
+    </div>
+
+    <form method="post" class="offer-form" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+        <p class="errornote">{{ form.non_field_errors }}</p>
+      {% endif %}
+
+      <fieldset class="module aligned">
+        <h2>Engagement terms</h2>
+        {% for field in form %}
+          <div class="form-row{% if field.errors %} errors{% endif %}{% if field.name == 'confirm_send' %} confirmation-row{% endif %}">
+            {{ field.errors }}
+            {% if field.name == 'confirm_send' %}
+              <div class="field-control">{{ field }}{{ field.label_tag }}</div>
+            {% else %}
+              <div class="field-label">{{ field.label_tag }}</div>
+              <div class="field-control">
+                {{ field }}
+                {% if field.help_text %}<div class="help">{{ field.help_text }}</div>{% endif %}
+              </div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </fieldset>
+
+      <div class="submit-row">
+        <input type="submit" value="Generate and send offer" class="default">
+        <a href="{{ change_url }}" class="closelink">Cancel</a>
+      </div>
+    </form>
+  </div>
+{% endblock %}

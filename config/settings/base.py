@@ -352,6 +352,18 @@ BREVO_VACANCY_ACK_TEMPLATE_ID = (
     else None
 )
 OEF_PUBLIC_SITE_URL = 'https://www.oluwafemiebenezerfoundation.org'
+OEF_VOLUNTEER_OFFER_SIGNATORY_NAME = os.environ.get(
+    'OEF_VOLUNTEER_OFFER_SIGNATORY_NAME',
+    'Olanrewaju Oluwafemi Ebenezer',
+)
+OEF_VOLUNTEER_OFFER_SIGNATORY_TITLE = os.environ.get(
+    'OEF_VOLUNTEER_OFFER_SIGNATORY_TITLE',
+    'Founder and Trustee',
+)
+OEF_VOLUNTEER_REPORTING_CONTACT = os.environ.get(
+    'OEF_VOLUNTEER_REPORTING_CONTACT',
+    'Olanrewaju Oluwafemi Ebenezer, Founder and Trustee',
+)
 VACANCY_APPLICATION_RESPONSE_WINDOW = '5-7 working days'
 VACANCY_CV_LINK_TTL_SECONDS = int(
     os.environ.get('VACANCY_CV_LINK_TTL_SECONDS', str(7 * 24 * 60 * 60))

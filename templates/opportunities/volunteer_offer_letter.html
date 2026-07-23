@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <style>
+      @page {
+        size: A4;
+        margin: 14mm 18mm 16mm;
+        @bottom-center {
+          content: "www.oluwafemiebenezerfoundation.org  |  info@oluwafemiebenezerfoundation.org";
+          color: #666666;
+          font-family: Arial, sans-serif;
+          font-size: 7.5pt;
+          border-top: 0.7pt solid #ff2a2f;
+          padding-top: 3mm;
+        }
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        color: #272727;
+        font-family: Arial, sans-serif;
+        font-size: 10pt;
+        line-height: 1.38;
+      }
+      .brand {
+        border-bottom: 1.4pt solid #ff2a2f;
+        padding-bottom: 3mm;
+        text-align: center;
+      }
+      .brand img { width: 74mm; height: auto; }
+      .date { margin: 4mm 0 3mm; color: #666666; text-align: right; font-size: 9pt; }
+      p { margin: 0 0 2.6mm; }
+      .muted { color: #666666; font-size: 9pt; }
+      h1 {
+        color: #ff2a2f;
+        font-size: 11.4pt;
+        line-height: 1.25;
+        margin: 4mm 0 3mm;
+        padding-bottom: 2.3mm;
+        border-bottom: 0.6pt solid #d7d7d7;
+      }
+      h2 { color: #ff2a2f; font-size: 10.4pt; margin: 3.5mm 0 1.5mm; }
+      table { width: 100%; border-collapse: collapse; margin: 2.5mm 0 3.5mm; }
+      th, td { border: 0.5pt solid #d7d7d7; padding: 1.8mm 2.3mm; text-align: left; vertical-align: top; }
+      th { width: 34%; background: #f2f2f2; font-size: 9pt; }
+      td { font-size: 9pt; }
+      .signature { margin-top: 4mm; }
+    </style>
+  </head>
+  <body>
+    <div class="brand">
+      {% if document.logo_data_uri %}<img src="{{ document.logo_data_uri }}" alt="Oluwafemi Ebenezer Foundation">{% else %}<strong>OLUWAFEMI EBENEZER FOUNDATION</strong>{% endif %}
+    </div>
+
+    <p class="date">{{ document.formatted_letter_date }}</p>
+    <p><strong>{{ document.offer.recipient_name }}</strong><br><span class="muted">By email</span></p>
+    <p>Dear {{ document.recipient_first_name }},</p>
+
+    <h1>VOLUNTEER ENGAGEMENT OFFER - {{ document.offer.role_title|cut:"Volunteer "|upper }}</h1>
+    <p>Following your interview, we are pleased to confirm that you were successful in our selection process and to offer you the role of <strong>{{ document.offer.role_title }}</strong> with Oluwafemi Ebenezer Foundation (OEF).</p>
+
+    <table>
+      <tr><th>Role</th><td>{{ document.offer.role_title }}</td></tr>
+      <tr><th>Engagement type</th><td>Volunteer (unpaid)</td></tr>
+      <tr><th>Start date</th><td>{{ document.formatted_start_date }}</td></tr>
+      <tr><th>Initial engagement</th><td>{{ document.offer.initial_period }}</td></tr>
+      <tr><th>Weekly commitment</th><td>{{ document.offer.weekly_commitment }}</td></tr>
+      <tr><th>Work arrangement</th><td>{{ document.offer.work_arrangement }}</td></tr>
+      <tr><th>Reporting to</th><td>{{ document.offer.reporting_contact }}</td></tr>
+    </table>
+
+    <h2>About the engagement</h2>
+    <p>{{ document.offer.role_contribution }} This contribution will support OEF's humanitarian and community-impact work.</p>
+    <p>The Volunteer Agreement will contain the detailed responsibilities, working standards and other terms governing the engagement.</p>
+
+    <h2>Acceptance and next steps</h2>
+    <p>To accept this offer, please reply to the accompanying email confirming your acceptance. OEF will then send the Volunteer Agreement for your review and signature. Your onboarding details and access to the relevant OEF workspaces will follow once the agreement has been signed by both parties.{% if document.formatted_acceptance_deadline %} Please send your acceptance by {{ document.formatted_acceptance_deadline }}.{% endif %}</p>
+    <p>We look forward to welcoming you to OEF and to the contribution you will make through this role.</p>
+
+    <div class="signature">
+      <p>Yours sincerely,</p>
+      <p><strong>{{ document.sender_name }}</strong><br><span class="muted">{{ document.sender_title }}<br>Oluwafemi Ebenezer Foundation</span></p>
+    </div>
+  </body>
+</html>

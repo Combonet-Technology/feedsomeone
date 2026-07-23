@@ -1,3 +1,4 @@
+import base64
 import logging
 
 import requests
@@ -31,7 +32,34 @@ def _recipients(destination):
     return [{"email": destination}]
 
 
-def send_email(destination, subject, content, source=None, plain=False):
+def _attachments(attachments):
+    encoded = []
+    for attachment in attachments or ():
+        name = attachment.get("name")
+        content = attachment.get("content")
+        if not name or content is None:
+            raise EmailProviderError("Each attachment requires a name and content")
+        if isinstance(content, str):
+            content = content.encode("utf-8")
+        encoded.append(
+            {
+                "name": name,
+                "content": base64.b64encode(content).decode("ascii"),
+            }
+        )
+    return encoded
+
+
+def send_email(
+    destination,
+    subject,
+    content,
+    source=None,
+    plain=False,
+    text_content=None,
+    attachments=None,
+    message_headers=None,
+):
     sender_email = source or settings.BREVO_SENDER_EMAIL
     if not sender_email:
         raise EmailProviderError("BREVO_SENDER_EMAIL is not configured")
@@ -50,6 +78,13 @@ def send_email(destination, subject, content, source=None, plain=False):
         payload["textContent"] = content
     else:
         payload["htmlContent"] = content
+        if text_content:
+            payload["textContent"] = text_content
+    encoded_attachments = _attachments(attachments)
+    if encoded_attachments:
+        payload["attachment"] = encoded_attachments
+    if message_headers:
+        payload["headers"] = message_headers
 
     response = requests.post(
         f"{settings.BREVO_API_BASE_URL}/smtp/email",
@@ -60,7 +95,10 @@ def send_email(destination, subject, content, source=None, plain=False):
     if response.status_code >= 400:
         logger.error("Brevo email send failed: %s %s", response.status_code, response.text)
         raise EmailProviderError(f"Brevo email send failed with status {response.status_code}")
-    return True
+    try:
+        return response.json().get("messageId", "") or True
+    except ValueError:
+        return True
 
 
 def send_template_email(destination, template_id, params=None):

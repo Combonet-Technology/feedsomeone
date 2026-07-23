@@ -55,6 +55,12 @@ services:
         value: "2"
       - key: BREVO_VACANCY_ACK_TEMPLATE_ID
         sync: false
+      - key: OEF_VOLUNTEER_OFFER_SIGNATORY_NAME
+        value: Olanrewaju Oluwafemi Ebenezer
+      - key: OEF_VOLUNTEER_OFFER_SIGNATORY_TITLE
+        value: Founder and Trustee
+      - key: OEF_VOLUNTEER_REPORTING_CONTACT
+        value: Olanrewaju Oluwafemi Ebenezer, Founder and Trustee
       - key: SLACK_VACANCIES_WEBHOOK_URL
         sync: false
       - key: FACEBOOK_KEY

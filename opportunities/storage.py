@@ -10,15 +10,21 @@ from django.core.files.storage import (FileSystemStorage, Storage,
 from django.utils.deconstruct import deconstructible
 
 PRIVATE_CV_PREFIX = 'vacancy_applications/private_cv/'
+PRIVATE_OFFER_PREFIX = 'vacancy_applications/private_offers/'
+PRIVATE_DOCUMENT_PREFIXES = (PRIVATE_CV_PREFIX, PRIVATE_OFFER_PREFIX)
 CLOUDINARY_MEDIA_PREFIX = 'media/'
 
 
-def _normalise_private_cv_name(name):
+def _normalise_private_document_name(name):
     normalised_name = str(name).replace('\\', '/')
-    prefixed_private_cv = f'{CLOUDINARY_MEDIA_PREFIX}{PRIVATE_CV_PREFIX}'
-    if normalised_name.startswith(prefixed_private_cv):
-        return normalised_name[len(CLOUDINARY_MEDIA_PREFIX):]
+    for prefix in PRIVATE_DOCUMENT_PREFIXES:
+        if normalised_name.startswith(f'{CLOUDINARY_MEDIA_PREFIX}{prefix}'):
+            return normalised_name[len(CLOUDINARY_MEDIA_PREFIX):]
     return normalised_name
+
+
+def _normalise_private_cv_name(name):
+    return _normalise_private_document_name(name)
 
 
 class AuthenticatedRawCloudinaryStorage(RawMediaCloudinaryStorage):
@@ -55,7 +61,7 @@ class AuthenticatedRawCloudinaryStorage(RawMediaCloudinaryStorage):
 
 
 @deconstructible
-class VacancyCVStorage(Storage):
+class VacancyPrivateDocumentStorage(Storage):
     @staticmethod
     def _cloudinary_is_configured():
         configuration = getattr(settings, 'CLOUDINARY_STORAGE', {})
@@ -65,7 +71,8 @@ class VacancyCVStorage(Storage):
         )
 
     def _backend(self, name):
-        if _normalise_private_cv_name(name).startswith(PRIVATE_CV_PREFIX):
+        normalised_name = _normalise_private_document_name(name)
+        if normalised_name.startswith(PRIVATE_DOCUMENT_PREFIXES):
             if self._cloudinary_is_configured():
                 return AuthenticatedRawCloudinaryStorage()
             return FileSystemStorage(
@@ -75,26 +82,31 @@ class VacancyCVStorage(Storage):
         return default_storage
 
     def _open(self, name, mode='rb'):
-        backend_name = _normalise_private_cv_name(name)
+        backend_name = _normalise_private_document_name(name)
         return self._backend(backend_name).open(backend_name, mode)
 
     def _save(self, name, content):
-        backend_name = _normalise_private_cv_name(name)
+        backend_name = _normalise_private_document_name(name)
         saved_name = self._backend(backend_name).save(backend_name, content)
-        return _normalise_private_cv_name(saved_name)
+        return _normalise_private_document_name(saved_name)
 
     def delete(self, name):
-        backend_name = _normalise_private_cv_name(name)
+        backend_name = _normalise_private_document_name(name)
         return self._backend(backend_name).delete(backend_name)
 
     def exists(self, name):
-        backend_name = _normalise_private_cv_name(name)
+        backend_name = _normalise_private_document_name(name)
         return self._backend(backend_name).exists(backend_name)
 
     def size(self, name):
-        backend_name = _normalise_private_cv_name(name)
+        backend_name = _normalise_private_document_name(name)
         return self._backend(backend_name).size(backend_name)
 
     def url(self, name):
-        backend_name = _normalise_private_cv_name(name)
+        backend_name = _normalise_private_document_name(name)
         return self._backend(backend_name).url(backend_name)
+
+
+@deconstructible
+class VacancyCVStorage(VacancyPrivateDocumentStorage):
+    pass
