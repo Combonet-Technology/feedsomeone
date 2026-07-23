@@ -1,0 +1,17 @@
+/* Baton anchors its footer to the content area but underestimates the clearance
+   required by some forms. Reserve stable space without leaving the footer mid-page. */
+#content {
+  padding-bottom: 120px !important;
+}
+
+#footer.site-footer {
+  position: absolute;
+  bottom: 0;
+  margin-top: 0;
+}
+
+@media (max-width: 575.98px) {
+  #content {
+    padding-bottom: 190px !important;
+  }
+}

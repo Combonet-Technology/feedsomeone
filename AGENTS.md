@@ -64,6 +64,9 @@ C:\Users\HP\PycharmProjects\feedsomeone\feedsomeone
 
 ## Commit, Push, and Deploy Preferences
 
+- For any substantial feature, migration, cross-module change, or large refactor, stop at a local acceptance checkpoint before release. The required sequence is: implement locally, apply local migrations, rebuild the relevant Docker image when image or dependency inputs changed, run targeted checks/tests, present the locally verified result to Oluwafemi, and wait for his explicit approval before committing, pushing, or deploying.
+- Never infer release approval from the original implementation request, prior deployment habits, or a successful local test. Approval to build is not approval to commit, push, or deploy.
+- After presenting the local acceptance checkpoint, treat commit, push, and production deployment as a separate release phase that begins only when Oluwafemi expressly authorises it.
 - When Oluwafemi accepts changes on a Render-backed project, push the accepted code after verification.
 - For Render-backed projects, deploy after pushing unless he explicitly asks not to deploy.
 - Prefer small incremental commits grouped by fix or feature instead of one large mixed commit.
