@@ -51,7 +51,7 @@ class FormsTestCase(TestCase):
     def test_volunteer_registration_form(self):
         form_data = {
             'phone_number': '1234567890',
-            'state_of_residence': random.choice(list(StateEnum)).value,
+            'state_of_residence': StateEnum.FCT.name,
         }
         form = VolunteerRegistrationForm(data=form_data)
         self.assertTrue(form.is_valid())
