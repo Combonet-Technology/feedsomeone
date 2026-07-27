@@ -1,3 +1,5 @@
+from datetime import timezone as datetime_timezone
+
 from django.contrib.auth import get_user_model
 from django.contrib.messages import get_messages
 from django.test import TestCase
@@ -34,7 +36,7 @@ class ArticleCommentViewTests(TestCase):
             article_content='Article body',
             article_author=self.author,
             is_published=True,
-            publish_date=timezone.datetime(2026, 7, 7, tzinfo=timezone.utc),
+            publish_date=timezone.datetime(2026, 7, 7, tzinfo=datetime_timezone.utc),
         )
         self.url = reverse('article:article_detail', kwargs={
             'year': 2026,

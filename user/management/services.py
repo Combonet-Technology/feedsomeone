@@ -2,6 +2,7 @@ import logging
 
 from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
+from django.utils.crypto import get_random_string
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -38,7 +39,7 @@ class CreateSuperUserService:
         try:
             user = User.objects.get(email=email)
             if not password:
-                password = User.objects.make_random_password()
+                password = get_random_string(12)
                 logger.info(f'New password generated for superuser {email}: {password}')
             user.set_password(password)
             user.save()

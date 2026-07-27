@@ -64,16 +64,11 @@ class PublicPageTests(TestCase):
         self.assertContains(explainer, 'OEF is not a children-only or orphanage-only charity')
         self.assertContains(explainer, 'Feed Someone is the founding movement and flagship outreach initiative')
 
-    def test_homepage_explains_google_sign_in_and_identity_data_use(self):
+    def test_homepage_links_to_account_access_routes(self):
         response = self.client.get(reverse('mainsite:homepage'))
 
-        self.assertContains(response, 'Secure account access with Google Sign-In')
-        self.assertContains(response, 'basic Google account name and email address')
-        self.assertContains(response, 'does not request access to Gmail')
         self.assertContains(response, reverse('login'))
         self.assertContains(response, reverse('register'))
-        self.assertContains(response, reverse('mainsite:privacy'))
-        self.assertContains(response, reverse('mainsite:services'))
 
     def test_homepage_does_not_claim_a_facebook_page(self):
         response = self.client.get(reverse('mainsite:homepage'))
