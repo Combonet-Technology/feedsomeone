@@ -9,11 +9,15 @@ from django.urls import path, reverse
 from django.utils import timezone
 from django.utils.html import format_html
 
-from .forms import VolunteerOfferForm
+from user.models import TeamMember
+
+from .forms import (StaffAccessGrantForm, StaffAccessRevocationForm,
+                    VolunteerOfferForm)
 from .models import Vacancy, VacancyApplication, VolunteerOffer
 from .notifications import notify_new_application
-from .offers import (OfferAlreadySent, OfferDeliveryInProgress,
-                     send_volunteer_offer)
+from .offers import OfferDeliveryInProgress, send_volunteer_offer
+from .staff_access import (ELIGIBLE_APPLICATION_STATUSES, StaffAccessError,
+                           grant_staff_access, revoke_staff_access)
 
 logger = logging.getLogger(__name__)
 
@@ -91,13 +95,14 @@ class VacancyApplicationAdmin(admin.ModelAdmin):
         'email',
         'status',
         'offer_delivery_status',
+        'team_access_status',
         'newsletter_opt_in',
         'newsletter_subscribed_at',
         'acknowledgement_sent_at',
         'slack_notified_at',
         'created_at',
     )
-    list_filter = ('status', 'vacancy')
+    list_filter = ('status', 'vacancy', 'newsletter_opt_in')
     search_fields = ('vacancy__title', 'full_name', 'email')
     readonly_fields = (
         'acknowledgement_sent_at',
@@ -109,6 +114,10 @@ class VacancyApplicationAdmin(admin.ModelAdmin):
         'offer_sent_by',
         'offer_letter',
         'offer_delivery_error',
+        'team_access_status',
+        'team_access_account',
+        'team_access_invited_at',
+        'team_access_error',
         'created_at',
         'updated_at',
     )
@@ -153,12 +162,45 @@ class VacancyApplicationAdmin(admin.ModelAdmin):
                 ),
             },
         ),
+        (
+            'Team access',
+            {
+                'classes': ('collapse',),
+                'fields': (
+                    'team_access_status',
+                    'team_access_account',
+                    'team_access_invited_at',
+                    'team_access_error',
+                ),
+            },
+        ),
         ('Record', {'classes': ('collapse',), 'fields': ('created_at', 'updated_at')}),
     )
     actions = ('retry_notifications',)
 
+    applicant_submitted_fields = (
+        'vacancy',
+        'applicant',
+        'full_name',
+        'email',
+        'phone',
+        'cv',
+        'cover_letter',
+        'newsletter_opt_in',
+    )
+
+    def get_readonly_fields(self, request, obj=None):
+        readonly_fields = list(super().get_readonly_fields(request, obj))
+        if not request.user.is_superuser:
+            readonly_fields.extend(self.applicant_submitted_fields)
+        return tuple(dict.fromkeys(readonly_fields))
+
     def get_queryset(self, request):
-        return super().get_queryset(request).select_related('vacancy', 'volunteer_offer')
+        return super().get_queryset(request).select_related(
+            'vacancy',
+            'volunteer_offer',
+            'team_member__user',
+        )
 
     def get_urls(self):
         custom_urls = [
@@ -167,6 +209,11 @@ class VacancyApplicationAdmin(admin.ModelAdmin):
                 self.admin_site.admin_view(self.send_volunteer_offer_view),
                 name='opportunities_vacancyapplication_send_offer',
             ),
+            path(
+                '<path:object_id>/staff-access/',
+                self.admin_site.admin_view(self.staff_access_view),
+                name='opportunities_vacancyapplication_staff_access',
+            ),
         ]
         return custom_urls + super().get_urls()
 
@@ -174,10 +221,21 @@ class VacancyApplicationAdmin(admin.ModelAdmin):
         return request.user.has_perm('opportunities.send_volunteer_offer')
 
     @staticmethod
+    def has_manage_staff_access_permission(request):
+        return request.user.is_active and request.user.is_superuser
+
+    @staticmethod
     def _offer_for(obj):
         try:
             return obj.volunteer_offer
         except VolunteerOffer.DoesNotExist:
+            return None
+
+    @staticmethod
+    def _team_member_for(obj):
+        try:
+            return obj.team_member
+        except TeamMember.DoesNotExist:
             return None
 
     @admin.display(description='Offer')
@@ -207,19 +265,92 @@ class VacancyApplicationAdmin(admin.ModelAdmin):
         offer = self._offer_for(obj)
         return offer.delivery_error if offer else ''
 
+    @admin.display(description='Staff access')
+    def team_access_status(self, obj):
+        team_member = self._team_member_for(obj)
+        return team_member.get_status_display() if team_member else 'Not granted'
+
+    @admin.display(description='Staff account')
+    def team_access_account(self, obj):
+        team_member = self._team_member_for(obj)
+        return team_member.user.email if team_member else ''
+
+    @admin.display(description='Invitation sent at')
+    def team_access_invited_at(self, obj):
+        team_member = self._team_member_for(obj)
+        return team_member.invitation_sent_at if team_member else None
+
+    @admin.display(description='Invitation error')
+    def team_access_error(self, obj):
+        team_member = self._team_member_for(obj)
+        return team_member.invitation_error if team_member else ''
+
     def render_change_form(self, request, context, *args, **kwargs):
         application = context.get('original')
         offer = self._offer_for(application) if application else None
-        context['show_send_volunteer_offer'] = bool(
+        team_member = self._team_member_for(application) if application else None
+        staff_access_is_current = bool(
+            team_member and team_member.status in {'invited', 'onboarding', 'active'}
+        )
+        can_send_offer = bool(
+            application and self.has_send_offer_permission(request, application)
+        )
+        can_manage_staff_access = bool(
             application
-            and self.has_send_offer_permission(request, application)
-            and not (offer and offer.sent_at)
+            and self.has_manage_staff_access_permission(request)
+            and (application.status in ELIGIBLE_APPLICATION_STATUSES or team_member)
+        )
+        context['show_recruitment_actions'] = bool(application)
+        context['can_send_volunteer_offer'] = can_send_offer
+        context['send_volunteer_offer_label'] = (
+            'Resend offer' if offer and offer.sent_at else 'Send offer'
+        )
+        context['send_volunteer_offer_disabled_reason'] = (
+            '' if can_send_offer else 'You do not have permission to send volunteer offers.'
+        )
+        context['can_manage_staff_access'] = can_manage_staff_access
+        context['staff_access_is_current'] = staff_access_is_current
+        if staff_access_is_current:
+            context['staff_access_label'] = 'Resend access email'
+        elif team_member:
+            context['staff_access_label'] = 'Restore staff access'
+        else:
+            context['staff_access_label'] = 'Grant staff access'
+        context['show_revoke_staff_access'] = staff_access_is_current
+        context['can_revoke_staff_access'] = bool(
+            staff_access_is_current
+            and self.has_manage_staff_access_permission(request)
+        )
+        if not self.has_manage_staff_access_permission(request):
+            context['staff_access_disabled_reason'] = (
+                'Only the OEF superuser can grant or revoke staff access.'
+            )
+        elif (
+            application
+            and not team_member
+            and application.status not in ELIGIBLE_APPLICATION_STATUSES
+        ):
+            context['staff_access_disabled_reason'] = (
+                'The volunteer agreement must be signed before staff access is granted.'
+            )
+        else:
+            context['staff_access_disabled_reason'] = ''
+        context['revoke_staff_access_disabled_reason'] = (
+            ''
+            if context['can_revoke_staff_access']
+            else 'Only the OEF superuser can revoke staff access.'
         )
         if application:
             context['send_volunteer_offer_url'] = reverse(
                 'admin:opportunities_vacancyapplication_send_offer',
                 args=(application.pk,),
             )
+            context['staff_access_url'] = reverse(
+                'admin:opportunities_vacancyapplication_staff_access',
+                args=(application.pk,),
+            )
+            context['resend_staff_access_url'] = f"{context['staff_access_url']}#resend-access"
+            context['revoke_staff_access_url'] = f"{context['staff_access_url']}#revoke-access"
         return super().render_change_form(request, context, *args, **kwargs)
 
     @staticmethod
@@ -262,27 +393,21 @@ class VacancyApplicationAdmin(admin.ModelAdmin):
             raise PermissionDenied
 
         existing_offer = self._offer_for(application)
-        if existing_offer and existing_offer.sent_at:
-            self.message_user(
-                request,
-                'An offer has already been sent to this applicant.',
-                level=messages.WARNING,
-            )
-            return HttpResponseRedirect(
-                reverse(
-                    'admin:opportunities_vacancyapplication_change',
-                    args=(application.pk,),
-                )
-            )
+        is_resend = bool(existing_offer and existing_offer.sent_at)
 
         form = VolunteerOfferForm(
             request.POST or None,
             initial=self._offer_initial(application),
         )
+        if is_resend:
+            form.fields['confirm_send'].label = (
+                'I have reviewed the recipient and engagement terms and confirm that '
+                'this offer should be resent.'
+            )
         if request.method == 'POST' and form.is_valid():
             try:
                 offer = send_volunteer_offer(application, form.cleaned_data, request.user)
-            except (OfferAlreadySent, OfferDeliveryInProgress) as error:
+            except OfferDeliveryInProgress as error:
                 form.add_error(None, str(error))
             except Exception:
                 logger.exception(
@@ -297,7 +422,11 @@ class VacancyApplicationAdmin(admin.ModelAdmin):
             else:
                 self.message_user(
                     request,
-                    f'Volunteer offer sent to {offer.recipient_email}.',
+                    (
+                        f'Volunteer offer resent to {offer.recipient_email}.'
+                        if is_resend
+                        else f'Volunteer offer sent to {offer.recipient_email}.'
+                    ),
                     level=messages.SUCCESS,
                 )
                 return HttpResponseRedirect(
@@ -310,8 +439,15 @@ class VacancyApplicationAdmin(admin.ModelAdmin):
         context = {
             **self.admin_site.each_context(request),
             'opts': self.model._meta,
-            'title': 'Prepare and send volunteer offer',
+            'title': (
+                'Resend volunteer offer'
+                if is_resend
+                else 'Send volunteer offer'
+            ),
             'application': application,
+            'existing_offer': existing_offer,
+            'is_resend': is_resend,
+            'submit_label': 'Resend offer' if is_resend else 'Send offer',
             'form': form,
             'media': self.media + form.media,
             'change_url': reverse(
@@ -322,6 +458,123 @@ class VacancyApplicationAdmin(admin.ModelAdmin):
         return TemplateResponse(
             request,
             'admin/opportunities/vacancyapplication/send_offer.html',
+            context,
+        )
+
+    def _staff_access_initial(self, application, team_member):
+        return {
+            'role_title': (
+                team_member.role_title if team_member else application.vacancy.title
+            ),
+            'engagement_type': (
+                team_member.engagement_type
+                if team_member
+                else application.vacancy.engagement_type
+            ),
+            'start_date': team_member.start_date if team_member else None,
+        }
+
+    def staff_access_view(self, request, object_id):
+        application = self.get_object(request, object_id)
+        if application is None:
+            return HttpResponseRedirect(
+                reverse('admin:opportunities_vacancyapplication_changelist')
+            )
+        if not self.has_manage_staff_access_permission(request):
+            raise PermissionDenied
+
+        team_member = self._team_member_for(application)
+        action = request.POST.get('action', 'grant')
+        grant_form = StaffAccessGrantForm(
+            request.POST if request.method == 'POST' and action == 'grant' else None,
+            initial=self._staff_access_initial(application, team_member),
+        )
+        revoke_form = StaffAccessRevocationForm(
+            request.POST if request.method == 'POST' and action == 'revoke' else None,
+        )
+
+        if request.method == 'POST' and action == 'grant' and grant_form.is_valid():
+            try:
+                result = grant_staff_access(
+                    application,
+                    grant_form.cleaned_data,
+                    request.user,
+                    request.build_absolute_uri('/'),
+                )
+            except StaffAccessError as error:
+                grant_form.add_error(None, str(error))
+            except Exception:
+                logger.exception(
+                    'Staff access invitation failed for application %s',
+                    application.pk,
+                )
+                grant_form.add_error(
+                    None,
+                    'The account was prepared, but the invitation could not be sent. '
+                    'Review the recorded error and retry when email delivery is available.',
+                )
+            else:
+                message = 'Staff access granted and invitation sent.'
+                if not result.password_setup_required:
+                    message = 'Staff access granted and login notification sent.'
+                self.message_user(request, message, level=messages.SUCCESS)
+                return HttpResponseRedirect(
+                    reverse(
+                        'admin:opportunities_vacancyapplication_change',
+                        args=(application.pk,),
+                    )
+                )
+
+        if request.method == 'POST' and action == 'revoke' and revoke_form.is_valid():
+            try:
+                revoke_staff_access(application, request.user)
+            except StaffAccessError as error:
+                revoke_form.add_error(None, str(error))
+            else:
+                self.message_user(
+                    request,
+                    'Recruitment Manager access revoked. The user and team record were retained.',
+                    level=messages.SUCCESS,
+                )
+                return HttpResponseRedirect(
+                    reverse(
+                        'admin:opportunities_vacancyapplication_change',
+                        args=(application.pk,),
+                    )
+                )
+
+        team_member = self._team_member_for(
+            self.get_queryset(request).get(pk=application.pk)
+        )
+        access_is_current = bool(
+            team_member and team_member.status in {'invited', 'onboarding', 'active'}
+        )
+        context = {
+            **self.admin_site.each_context(request),
+            'opts': self.model._meta,
+            'title': 'Manage staff access',
+            'application': application,
+            'team_member': team_member,
+            'access_is_current': access_is_current,
+            'grant_form': grant_form,
+            'revoke_form': revoke_form,
+            'staff_access_submit_label': (
+                'Resend access email'
+                if access_is_current
+                else (
+                    'Restore access and send email'
+                    if team_member
+                    else 'Grant access and send invitation'
+                )
+            ),
+            'change_url': reverse(
+                'admin:opportunities_vacancyapplication_change',
+                args=(application.pk,),
+            ),
+        }
+        return TemplateResponse(
+            request,
+            'admin/opportunities/vacancyapplication/staff_access.html',
             context,
         )
 

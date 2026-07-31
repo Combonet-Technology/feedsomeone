@@ -1,8 +1,45 @@
 {% extends "admin/change_form.html" %}
 
+{% block extrastyle %}
+  {{ block.super }}
+  <style>
+    .object-tools .oef-action-disabled {
+      display: block;
+      padding: 3px 12px;
+      color: var(--body-quiet-color);
+      background: var(--hairline-color);
+      border-radius: 15px;
+      cursor: not-allowed;
+      opacity: .75;
+    }
+  </style>
+{% endblock %}
+
 {% block object-tools-items %}
   {{ block.super }}
-  {% if show_send_volunteer_offer %}
-    <li><a href="{{ send_volunteer_offer_url }}">Prepare and send offer</a></li>
+  {% if show_recruitment_actions %}
+    <li>
+      {% if can_send_volunteer_offer %}
+        <a href="{{ send_volunteer_offer_url }}">{{ send_volunteer_offer_label }}</a>
+      {% else %}
+        <span class="oef-action-disabled" title="{{ send_volunteer_offer_disabled_reason }}" aria-disabled="true">{{ send_volunteer_offer_label }}</span>
+      {% endif %}
+    </li>
+    <li>
+      {% if can_manage_staff_access %}
+        <a href="{{ resend_staff_access_url }}">{{ staff_access_label }}</a>
+      {% else %}
+        <span class="oef-action-disabled" title="{{ staff_access_disabled_reason }}" aria-disabled="true">{{ staff_access_label }}</span>
+      {% endif %}
+    </li>
+    {% if show_revoke_staff_access %}
+      <li>
+        {% if can_revoke_staff_access %}
+          <a href="{{ revoke_staff_access_url }}">Revoke staff access</a>
+        {% else %}
+          <span class="oef-action-disabled" title="{{ revoke_staff_access_disabled_reason }}" aria-disabled="true">Revoke staff access</span>
+        {% endif %}
+      </li>
+    {% endif %}
   {% endif %}
 {% endblock %}

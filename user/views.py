@@ -9,7 +9,7 @@ from django.contrib.auth.views import PasswordResetView
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.cache import cache
 from django.db import transaction
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.utils.encoding import (DjangoUnicodeDecodeError, force_bytes,
@@ -26,6 +26,7 @@ from social_django.views import NAMESPACE
 
 from ext_libs.email_service import send_email
 from ext_libs.python_social import social_auth_backends
+from opportunities.staff_access import mark_staff_invitation_accepted
 from utils.auth import check_validity_token, get_user, set_password_and_login
 from utils.decorators import ajax_required
 from utils.views import custom_paginator, get_actual_template
@@ -201,6 +202,34 @@ def set_password_view(request, uidb64=None, token=None):
         # return redirect('profile')
     return render(request, 'registration/password_change_form.html',
                   context={'form': form, 'motive': motive})
+
+
+def staff_access_activate(request, uidb64, token):
+    user = get_user(uidb64=uidb64)
+    if user is None:
+        return HttpResponse('This staff invitation is invalid or expired.', status=400)
+
+    validity = check_validity_token(request, user, token)
+    if isinstance(validity, HttpResponseRedirect):
+        return validity
+    if not validity:
+        return HttpResponse('This staff invitation is invalid or expired.', status=400)
+
+    form, done = set_password_and_login(
+        user,
+        request,
+        SetPasswordForm,
+        authenticated=False,
+    )
+    if done:
+        mark_staff_invitation_accepted(user)
+        messages.success(request, 'Your OEF administration access is ready.')
+        return redirect('admin:index')
+    return render(
+        request,
+        'registration/staff_access_password_form.html',
+        {'form': form},
+    )
 
 
 def reset_from_source(request, token, uidb64):

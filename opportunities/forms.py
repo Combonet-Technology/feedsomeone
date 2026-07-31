@@ -1,5 +1,7 @@
 from django import forms
 
+from user.models import TeamMember
+
 from .models import VacancyApplication
 
 
@@ -74,5 +76,29 @@ class VolunteerOfferForm(forms.Form):
         label=(
             'I have reviewed the recipient, role and engagement terms and confirm '
             'that this offer is ready to send.'
+        ),
+    )
+
+
+class StaffAccessGrantForm(forms.Form):
+    role_title = forms.CharField(max_length=255)
+    engagement_type = forms.ChoiceField(choices=TeamMember.ENGAGEMENT_TYPE_CHOICES)
+    start_date = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={'type': 'date'}),
+    )
+    confirm_grant = forms.BooleanField(
+        label=(
+            'I confirm that this person should receive Recruitment Manager access '
+            'to OEF vacancy applications and volunteer offers.'
+        ),
+    )
+
+
+class StaffAccessRevocationForm(forms.Form):
+    confirm_revoke = forms.BooleanField(
+        label=(
+            'I confirm that Recruitment Manager access should be removed. '
+            'The application and team-member record will be retained.'
         ),
     )

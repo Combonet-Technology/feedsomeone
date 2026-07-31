@@ -1,0 +1,78 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block extrahead %}
+  {{ block.super }}
+  <style>
+    .staff-access-page { max-width: 900px; }
+    .access-summary { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;margin-bottom:24px;background:#d9dde0;border:1px solid #d9dde0; }
+    .access-summary > div { min-width:0;padding:14px 16px;background:#fff;overflow-wrap:anywhere; }
+    .access-summary strong { display:block;margin-bottom:4px;color:#687078;font-size:12px;text-transform:uppercase; }
+    .access-form .form-row { display:grid;grid-template-columns:220px minmax(0,1fr);gap:18px;padding:14px 16px; }
+    .access-form .field-control { min-width:0; }
+    .access-form input[type="text"], .access-form input[type="date"], .access-form select { width:100%;max-width:580px;min-height:38px; }
+    .access-form .confirmation-row { display:block; }
+    .access-form .confirmation-row .field-control { display:flex;gap:10px;align-items:flex-start;max-width:720px; }
+    .access-form .submit-row { display:flex;gap:14px;align-items:center;padding:12px 16px; }
+    .revoke-panel { margin-top:28px;border-top:1px solid #d9dde0;padding-top:20px; }
+    @media (max-width:760px) {
+      .access-summary { grid-template-columns:1fr; }
+      .access-form .form-row { grid-template-columns:1fr;gap:7px; }
+      .access-form .submit-row { align-items:stretch;flex-direction:column; }
+    }
+  </style>
+{% endblock %}
+
+{% block breadcrumbs %}
+  <div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
+    &rsaquo; <a href="{% url 'admin:opportunities_vacancyapplication_changelist' %}">Vacancy applications</a>
+    &rsaquo; <a href="{{ change_url }}">{{ application.full_name }}</a>
+    &rsaquo; Manage staff access
+  </div>
+{% endblock %}
+
+{% block content %}
+  <div id="content-main" class="staff-access-page">
+    <div class="access-summary">
+      <div><strong>Applicant</strong>{{ application.full_name }}</div>
+      <div><strong>Email</strong>{{ application.email }}</div>
+      <div><strong>Application status</strong>{{ application.get_status_display }}</div>
+    </div>
+
+    {% if team_member %}
+      <div class="access-summary" aria-label="Current staff access">
+        <div><strong>Staff account</strong>{{ team_member.user.email }}</div>
+        <div><strong>Access status</strong>{{ team_member.get_status_display }}</div>
+        <div><strong>Last access email</strong>{{ team_member.invitation_sent_at|default:"Not sent" }}</div>
+      </div>
+    {% endif %}
+
+    <form method="post" class="access-form" id="resend-access" novalidate>
+      {% csrf_token %}<input type="hidden" name="action" value="grant">
+      {% if grant_form.non_field_errors %}<p class="errornote">{{ grant_form.non_field_errors }}</p>{% endif %}
+      <fieldset class="module aligned">
+        <h2>{% if access_is_current %}Resend staff access email{% elif team_member %}Restore Recruitment Manager access{% else %}Grant Recruitment Manager access{% endif %}</h2>
+        {% for field in grant_form %}
+          <div class="form-row{% if field.errors %} errors{% endif %}{% if field.name == 'confirm_grant' %} confirmation-row{% endif %}">
+            {{ field.errors }}
+            {% if field.name == 'confirm_grant' %}<div class="field-control">{{ field }} {{ field.label_tag }}</div>{% else %}<div>{{ field.label_tag }}</div><div class="field-control">{{ field }}</div>{% endif %}
+          </div>
+        {% endfor %}
+      </fieldset>
+      <div class="submit-row"><input type="submit" value="{{ staff_access_submit_label }}" class="default"><a href="{{ change_url }}">Cancel</a></div>
+    </form>
+
+    {% if access_is_current %}
+      <form method="post" class="access-form revoke-panel" id="revoke-access" novalidate>
+        {% csrf_token %}<input type="hidden" name="action" value="revoke">
+        <fieldset class="module aligned">
+          <h2>Revoke application-management access</h2>
+          {{ revoke_form.non_field_errors }}
+          <div class="form-row confirmation-row">{{ revoke_form.confirm_revoke.errors }}<div class="field-control">{{ revoke_form.confirm_revoke }} {{ revoke_form.confirm_revoke.label_tag }}</div></div>
+        </fieldset>
+        <div class="submit-row"><input type="submit" value="Revoke access" class="deletelink"></div>
+      </form>
+    {% endif %}
+  </div>
+{% endblock %}

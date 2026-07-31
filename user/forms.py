@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth import get_user_model
-from django.contrib.auth.forms import PasswordResetForm
+from django.contrib.auth.forms import (PasswordResetForm, UserChangeForm,
+                                       UserCreationForm)
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites import shortcuts
@@ -13,6 +14,18 @@ from django.utils.translation import gettext_lazy as _
 from ext_libs.email_service import send_email
 from user.models import Volunteer
 from utils.forms import clean_email
+
+
+class UserProfileAdminCreationForm(UserCreationForm):
+    class Meta(UserCreationForm.Meta):
+        model = get_user_model()
+        fields = ('email', 'first_name', 'last_name')
+
+
+class UserProfileAdminChangeForm(UserChangeForm):
+    class Meta(UserChangeForm.Meta):
+        model = get_user_model()
+        fields = '__all__'
 
 
 class UserRegistrationForm(forms.ModelForm):

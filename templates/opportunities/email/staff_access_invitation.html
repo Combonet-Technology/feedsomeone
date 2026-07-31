@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <body style="margin:0;padding:0;background:#f4f6f7;color:#202428;font-family:Arial,sans-serif;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f4f6f7;padding:24px 12px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:620px;background:#ffffff;border:1px solid #dfe3e6;">
+            <tr><td style="height:6px;background:#ef3338;"></td></tr>
+            <tr>
+              <td style="padding:32px;">
+                <p style="margin:0 0 18px;">Hello {{ recipient_name }},</p>
+                <p style="margin:0 0 18px;line-height:1.6;">Your OEF administration access has been prepared for your role as <strong>{{ role_title }}</strong>.</p>
+                <p style="margin:0 0 24px;line-height:1.6;">{% if password_setup_required %}Set your password using the secure link below, then you will be taken to the administration workspace.{% else %}Use the link below to open the administration workspace.{% endif %}</p>
+                <p style="margin:0 0 24px;"><a href="{{ access_url }}" style="display:inline-block;padding:12px 18px;background:#16794a;color:#ffffff;text-decoration:none;font-weight:700;">{{ action_label }}</a></p>
+                <p style="margin:0;color:#5f686f;font-size:13px;line-height:1.5;">This link is intended only for you. Please do not forward it.</p>
+              </td>
+            </tr>
+            <tr><td style="padding:18px 32px;background:#182329;color:#ffffff;font-size:12px;">Oluwafemi Ebenezer Foundation</td></tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

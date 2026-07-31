@@ -10,7 +10,7 @@ from ext_libs.email_service import EmailProviderError, send_email
 from user.models import UserProfile
 
 from .models import Vacancy, VacancyApplication, VolunteerOffer
-from .offers import OfferAlreadySent, render_offer_pdf, send_volunteer_offer
+from .offers import render_offer_pdf, send_volunteer_offer
 
 
 class BrevoAttachmentTests(TestCase):
@@ -155,13 +155,73 @@ class VolunteerOfferWorkflowTests(TestCase):
 
     @patch('opportunities.offers.send_email', return_value='brevo-message-123')
     @patch('opportunities.offers.render_offer_pdf', return_value=b'%PDF-test-offer')
-    def test_sent_offer_cannot_be_sent_again(self, mock_render_pdf, mock_send_email):
+    def test_sent_offer_can_be_resent_with_a_new_delivery_key(
+        self,
+        mock_render_pdf,
+        mock_send_email,
+    ):
+        first_offer = send_volunteer_offer(self.application, self.form_data, self.sender)
+        first_delivery_key = first_offer.delivery_key
+
+        resent_offer = send_volunteer_offer(self.application, self.form_data, self.sender)
+
+        self.assertNotEqual(resent_offer.delivery_key, first_delivery_key)
+        self.assertEqual(mock_send_email.call_count, 2)
+
+    @patch('opportunities.offers.send_email', return_value='brevo-message-456')
+    @patch(
+        'opportunities.offers.render_offer_pdf',
+        side_effect=(b'%PDF-first-offer', b'%PDF-updated-offer'),
+    )
+    def test_resending_updates_terms_and_replaces_the_pdf(
+        self,
+        mock_render_pdf,
+        mock_send_email,
+    ):
+        first_offer = send_volunteer_offer(
+            self.application,
+            self.form_data,
+            self.sender,
+        )
+        first_pdf_name = first_offer.letter_pdf.name
+        updated_form_data = {
+            **self.form_data,
+            'role_contribution': 'Prepare the first qualified institutional grant application.',
+        }
+
+        resent_offer = send_volunteer_offer(
+            self.application,
+            updated_form_data,
+            self.sender,
+        )
+
+        self.assertEqual(resent_offer.pk, first_offer.pk)
+        self.assertEqual(
+            resent_offer.role_contribution,
+            'Prepare the first qualified institutional grant application.',
+        )
+        self.assertNotEqual(resent_offer.letter_pdf.name, first_pdf_name)
+        self.assertFalse(resent_offer.letter_pdf.storage.exists(first_pdf_name))
+        with resent_offer.letter_pdf.open('rb') as letter:
+            self.assertEqual(letter.read(), b'%PDF-updated-offer')
+        self.assertEqual(mock_render_pdf.call_count, 2)
+        self.assertEqual(mock_send_email.call_count, 2)
+
+    @patch('opportunities.offers.send_email', return_value='brevo-message-456')
+    @patch('opportunities.offers.render_offer_pdf', return_value=b'%PDF-test-offer')
+    def test_resending_offer_does_not_regress_advanced_application_status(
+        self,
+        mock_render_pdf,
+        mock_send_email,
+    ):
+        send_volunteer_offer(self.application, self.form_data, self.sender)
+        self.application.status = 'agreement_signed'
+        self.application.save(update_fields=('status', 'updated_at'))
+
         send_volunteer_offer(self.application, self.form_data, self.sender)
 
-        with self.assertRaises(OfferAlreadySent):
-            send_volunteer_offer(self.application, self.form_data, self.sender)
-
-        mock_send_email.assert_called_once()
+        self.application.refresh_from_db()
+        self.assertEqual(self.application.status, 'agreement_signed')
 
     def test_admin_offer_screen_requires_send_permission(self):
         staff = UserProfile.objects.create_user(
@@ -195,7 +255,35 @@ class VolunteerOfferWorkflowTests(TestCase):
         self.assertContains(response, self.application.email)
         self.assertContains(response, self.vacancy.title)
         self.assertContains(response, '10 hours per week')
-        self.assertContains(response, 'Generate and send offer')
+        self.assertContains(response, 'Send offer')
+
+    @patch('opportunities.offers.send_email', return_value='brevo-message-123')
+    @patch('opportunities.offers.render_offer_pdf', return_value=b'%PDF-test-offer')
+    def test_sent_offer_action_remains_visible_and_opens_resend_screen(
+        self,
+        mock_render_pdf,
+        mock_send_email,
+    ):
+        send_volunteer_offer(self.application, self.form_data, self.sender)
+        self.client.force_login(self.sender)
+
+        application_response = self.client.get(
+            reverse(
+                'admin:opportunities_vacancyapplication_change',
+                args=(self.application.pk,),
+            )
+        )
+        resend_response = self.client.get(
+            reverse(
+                'admin:opportunities_vacancyapplication_send_offer',
+                args=(self.application.pk,),
+            )
+        )
+
+        self.assertContains(application_response, 'Resend offer')
+        self.assertEqual(resend_response.status_code, 200)
+        self.assertContains(resend_response, 'Resend offer')
+        self.assertContains(resend_response, 'This offer was last sent on')
 
     def test_real_pdf_renderer_produces_a_pdf_document(self):
         offer = VolunteerOffer(

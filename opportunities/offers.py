@@ -4,6 +4,7 @@ import re
 from dataclasses import dataclass
 from datetime import timedelta
 from pathlib import Path
+from uuid import uuid4
 
 from django.conf import settings
 from django.contrib.staticfiles import finders
@@ -18,10 +19,6 @@ from django.utils.html import strip_tags
 from ext_libs.email_service import send_email
 
 from .models import VacancyApplication, VolunteerOffer
-
-
-class OfferAlreadySent(Exception):
-    pass
 
 
 class OfferDeliveryInProgress(Exception):
@@ -128,8 +125,7 @@ def send_volunteer_offer(application, form_data, sent_by):
             .filter(application=application)
             .first()
         )
-        if offer and offer.sent_at:
-            raise OfferAlreadySent('A volunteer offer has already been sent to this applicant.')
+        previously_sent = bool(offer and offer.sent_at)
         recently_started = (
             offer
             and offer.delivery_status == 'sending'
@@ -144,6 +140,8 @@ def send_volunteer_offer(application, form_data, sent_by):
         else:
             for field, value in values.items():
                 setattr(offer, field, value)
+            if previously_sent:
+                offer.delivery_key = uuid4()
         offer.delivery_status = 'sending'
         offer.delivery_error = ''
         offer.save()
@@ -193,10 +191,11 @@ def send_volunteer_offer(application, form_data, sent_by):
             sent_by=sent_by,
             updated_at=sent_at,
         )
-        VacancyApplication.objects.filter(pk=application.pk).update(
-            status='offered',
-            updated_at=sent_at,
-        )
+        if not previously_sent:
+            VacancyApplication.objects.filter(pk=application.pk).update(
+                status='offered',
+                updated_at=sent_at,
+            )
 
     offer.refresh_from_db()
     return offer

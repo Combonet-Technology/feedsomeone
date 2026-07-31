@@ -10,6 +10,11 @@ urlpatterns = [
     path('profile/', views.profile, name="profile"),
     path('change-pass/', views.set_password_view, name="create_private_pass"),
     path('change-pass/reset/<uidb64>/<token>/', views.set_password_view, name="create_private_pass"),
+    path(
+        'staff-access/activate/<uidb64>/<token>/',
+        views.staff_access_activate,
+        name='staff_access_activate',
+    ),
     path('view-volunteers/', views.VolunteerListView.as_view(), name="volunteer-list"),
     path('view-volunteers/<int:pk>/', views.VolunteerDetailView.as_view(), name="volunteer-details"),
     path('password_reset/', views.InitiatePasswordReset.as_view(), name='reset_user_password'),

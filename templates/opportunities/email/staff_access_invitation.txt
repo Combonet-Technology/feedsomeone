@@ -1,0 +1,10 @@
+Hello {{ recipient_name }},
+
+Your OEF administration access has been prepared for your role as {{ role_title }}.
+
+Use the secure link below to {% if password_setup_required %}set your password and access the workspace{% else %}open the administration workspace{% endif %}:
+{{ access_url }}
+
+This link is intended only for you. Please do not forward it.
+
+Oluwafemi Ebenezer Foundation

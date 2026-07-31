@@ -95,6 +95,74 @@ class Volunteer(models.Model):
         return self.user.email + "'s profile"
 
 
+class TeamMember(models.Model):
+    ENGAGEMENT_TYPE_CHOICES = (
+        ('volunteer', 'Volunteer'),
+        ('internship', 'Intern'),
+        ('contract', 'Contractor'),
+        ('staff', 'Employee'),
+        ('trustee', 'Trustee'),
+    )
+    STATUS_CHOICES = (
+        ('invited', 'Invited'),
+        ('onboarding', 'Onboarding'),
+        ('active', 'Active'),
+        ('inactive', 'Inactive'),
+        ('offboarded', 'Offboarded'),
+    )
+
+    user = models.OneToOneField(
+        UserProfile,
+        on_delete=models.CASCADE,
+        related_name='team_membership',
+    )
+    source_application = models.OneToOneField(
+        'opportunities.VacancyApplication',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='team_member',
+    )
+    role_title = models.CharField(max_length=255)
+    engagement_type = models.CharField(
+        max_length=20,
+        choices=ENGAGEMENT_TYPE_CHOICES,
+        default='volunteer',
+    )
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='invited')
+    start_date = models.DateField(null=True, blank=True)
+    activated_at = models.DateTimeField(null=True, blank=True, editable=False)
+    access_granted_at = models.DateTimeField(null=True, blank=True, editable=False)
+    access_granted_by = models.ForeignKey(
+        UserProfile,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        editable=False,
+        related_name='team_access_grants',
+    )
+    access_revoked_at = models.DateTimeField(null=True, blank=True, editable=False)
+    access_revoked_by = models.ForeignKey(
+        UserProfile,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        editable=False,
+        related_name='team_access_revocations',
+    )
+    invitation_sent_at = models.DateTimeField(null=True, blank=True, editable=False)
+    invitation_message_id = models.CharField(max_length=255, blank=True, editable=False)
+    invitation_error = models.TextField(blank=True, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ('user__first_name', 'user__last_name', 'user__email')
+
+    def __str__(self):
+        return f'{self.user.get_full_name() or self.user.email} - {self.role_title}'
+
+
 class Lead(models.Model):
     """mark lead as converted based on user actions and create entry
      for them in donor or volunteers as the case may be"""
