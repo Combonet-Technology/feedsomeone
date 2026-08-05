@@ -3,6 +3,7 @@ import logging
 from django.conf import settings
 from django.utils import timezone
 
+from config.public_links import get_oef_social_links
 from ext_libs.email_service import (send_template_email,
                                     upsert_newsletter_contact)
 from ext_libs.slack.api import post_slack_webhook
@@ -31,9 +32,7 @@ def _acknowledgement_params(application):
         'about_url': _site_link(public_site_url, '/about/'),
         'news_url': _site_link(public_site_url, '/article/all/'),
         'careers_url': _site_link(public_site_url, '/opportunities/'),
-        'instagram_url': 'https://www.instagram.com/feedsomeone_',
-        'linkedin_url': 'https://www.linkedin.com/company/feed-someone/',
-        'x_url': 'https://x.com/feedsomeone_',
+        **get_oef_social_links(),
     }
 
 

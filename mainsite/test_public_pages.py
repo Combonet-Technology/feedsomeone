@@ -1,7 +1,7 @@
 from html.parser import HTMLParser
 from urllib.parse import urlsplit
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import Resolver404, resolve, reverse
 
 
@@ -84,6 +84,23 @@ class PublicPageTests(TestCase):
             response,
             'facebook.com/oluwafemiebenezerfoundation',
         )
+
+    @override_settings(
+        OEF_INSTAGRAM_URL='https://social.example/instagram',
+        OEF_LINKEDIN_URL='https://social.example/linkedin',
+        OEF_X_URL='https://social.example/x',
+        OEF_YOUTUBE_URL='https://social.example/youtube',
+    )
+    def test_base_template_uses_environment_backed_social_links(self):
+        response = self.client.get(reverse('mainsite:homepage'))
+
+        for social_url in (
+            'https://social.example/instagram',
+            'https://social.example/linkedin',
+            'https://social.example/x',
+            'https://social.example/youtube',
+        ):
+            self.assertContains(response, social_url)
 
     def test_terms_of_service_is_public_and_identifies_account_terms(self):
         response = self.client.get(reverse('mainsite:services'))

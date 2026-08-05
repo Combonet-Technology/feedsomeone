@@ -190,6 +190,24 @@ Brevo is the current email provider.
 - Codex MCP token env var: `BREVO_MCP_TOKEN`
 - Verified sender: `info@oluwafemiebenezerfoundation.org`
 - Newsletter list ID: `2`
+- Volunteer onboarding template ID: `BREVO_ONBOARDING_TEMPLATE_ID` (currently `2`)
+- Volunteer rejection template ID: `BREVO_REJECTION_TEMPLATE_ID` (currently `7`)
+- Slack workspace invitation: `OEF_SLACK_INVITE_URL`
+- Public social links: `OEF_INSTAGRAM_URL`, `OEF_LINKEDIN_URL`, `OEF_X_URL`,
+  and `OEF_YOUTUBE_URL`
+
+The social-link environment variables are the shared source for the website
+header/footer and the URL parameters supplied to Brevo transactional templates.
+
+The onboarding action is available to superusers and members of the
+`Volunteer Onboarding` group. Configure the Slack invitation URL in the
+deployment environment before using the action; it is passed to the Brevo
+template at send time.
+
+The recruitment dashboard bulk rejection action is available to superusers and
+members of the `Recruitment Manager` group. It sends only to applications marked
+`Not selected`, skips records already sent, and stores the Brevo message ID and
+delivery outcome on each application.
 
 Do not confuse the Brevo MCP token with the REST API key. The MCP token is used
 by Codex tooling only; Django uses the REST API key.

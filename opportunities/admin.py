@@ -2,6 +2,7 @@ import logging
 
 from django.conf import settings
 from django.contrib import admin, messages
+from django.contrib.admin import helpers
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponseRedirect
 from django.template.response import TemplateResponse
@@ -12,10 +13,15 @@ from django.utils.html import format_html
 from user.models import TeamMember
 
 from .forms import (StaffAccessGrantForm, StaffAccessRevocationForm,
-                    VolunteerOfferForm)
-from .models import Vacancy, VacancyApplication, VolunteerOffer
+                    VolunteerOfferForm, VolunteerOnboardingEmailForm)
+from .models import (Vacancy, VacancyApplication, VolunteerOffer,
+                     VolunteerOnboarding)
 from .notifications import notify_new_application
 from .offers import OfferDeliveryInProgress, send_volunteer_offer
+from .onboarding import \
+    ELIGIBLE_APPLICATION_STATUSES as ELIGIBLE_ONBOARDING_STATUSES
+from .onboarding import OnboardingEmailError, send_onboarding_email
+from .rejections import send_rejection_email_batch
 from .staff_access import (ELIGIBLE_APPLICATION_STATUSES, StaffAccessError,
                            grant_staff_access, revoke_staff_access)
 
@@ -95,6 +101,8 @@ class VacancyApplicationAdmin(admin.ModelAdmin):
         'email',
         'status',
         'offer_delivery_status',
+        'onboarding_delivery_status',
+        'rejection_email_delivery_status',
         'team_access_status',
         'newsletter_opt_in',
         'newsletter_subscribed_at',
@@ -114,6 +122,10 @@ class VacancyApplicationAdmin(admin.ModelAdmin):
         'offer_sent_by',
         'offer_letter',
         'offer_delivery_error',
+        'onboarding_delivery_status',
+        'onboarding_email_summary',
+        'rejection_email_delivery_status',
+        'rejection_email_summary',
         'team_access_status',
         'team_access_account',
         'team_access_invited_at',
@@ -150,6 +162,24 @@ class VacancyApplicationAdmin(admin.ModelAdmin):
             },
         ),
         (
+            'Volunteer onboarding',
+            {
+                'fields': (
+                    'onboarding_delivery_status',
+                    'onboarding_email_summary',
+                ),
+            },
+        ),
+        (
+            'Application outcome email',
+            {
+                'fields': (
+                    'rejection_email_delivery_status',
+                    'rejection_email_summary',
+                ),
+            },
+        ),
+        (
             'Application notifications',
             {
                 'classes': ('collapse',),
@@ -176,7 +206,7 @@ class VacancyApplicationAdmin(admin.ModelAdmin):
         ),
         ('Record', {'classes': ('collapse',), 'fields': ('created_at', 'updated_at')}),
     )
-    actions = ('retry_notifications',)
+    actions = ('send_rejection_emails', 'retry_notifications')
 
     applicant_submitted_fields = (
         'vacancy',
@@ -199,6 +229,7 @@ class VacancyApplicationAdmin(admin.ModelAdmin):
         return super().get_queryset(request).select_related(
             'vacancy',
             'volunteer_offer',
+            'volunteer_onboarding',
             'team_member__user',
         )
 
@@ -210,6 +241,11 @@ class VacancyApplicationAdmin(admin.ModelAdmin):
                 name='opportunities_vacancyapplication_send_offer',
             ),
             path(
+                '<path:object_id>/send-onboarding-email/',
+                self.admin_site.admin_view(self.send_onboarding_email_view),
+                name='opportunities_vacancyapplication_send_onboarding',
+            ),
+            path(
                 '<path:object_id>/staff-access/',
                 self.admin_site.admin_view(self.staff_access_view),
                 name='opportunities_vacancyapplication_staff_access',
@@ -219,6 +255,12 @@ class VacancyApplicationAdmin(admin.ModelAdmin):
 
     def has_send_offer_permission(self, request, obj=None):
         return request.user.has_perm('opportunities.send_volunteer_offer')
+
+    def has_send_onboarding_permission(self, request, obj=None):
+        return request.user.has_perm('opportunities.send_onboarding_email')
+
+    def has_send_rejection_permission(self, request):
+        return request.user.has_perm('opportunities.send_rejection_email')
 
     @staticmethod
     def has_manage_staff_access_permission(request):
@@ -236,6 +278,13 @@ class VacancyApplicationAdmin(admin.ModelAdmin):
         try:
             return obj.team_member
         except TeamMember.DoesNotExist:
+            return None
+
+    @staticmethod
+    def _onboarding_for(obj):
+        try:
+            return obj.volunteer_onboarding
+        except VolunteerOnboarding.DoesNotExist:
             return None
 
     @admin.display(description='Offer')
@@ -265,6 +314,41 @@ class VacancyApplicationAdmin(admin.ModelAdmin):
         offer = self._offer_for(obj)
         return offer.delivery_error if offer else ''
 
+    @admin.display(description='Onboarding email')
+    def onboarding_delivery_status(self, obj):
+        onboarding = self._onboarding_for(obj)
+        return onboarding.get_delivery_status_display() if onboarding else 'Not sent'
+
+    @admin.display(description='Onboarding email history')
+    def onboarding_email_summary(self, obj):
+        onboarding = self._onboarding_for(obj)
+        if not onboarding:
+            return 'Not sent'
+        return format_html(
+            'Successful sends: {}<br>First sent: {}<br>Last sent: {}<br>'
+            'Last sent by: {}<br>Delivery error: {}',
+            onboarding.send_count,
+            onboarding.first_sent_at or '—',
+            onboarding.last_sent_at or '—',
+            onboarding.last_sent_by or '—',
+            onboarding.delivery_error or '—',
+        )
+
+    @admin.display(description='Outcome email')
+    def rejection_email_delivery_status(self, obj):
+        return obj.get_rejection_email_status_display()
+
+    @admin.display(description='Outcome email history')
+    def rejection_email_summary(self, obj):
+        return format_html(
+            'Sent at: {}<br>Sent by: {}<br>Brevo message ID: {}<br>'
+            'Delivery error: {}',
+            obj.rejection_email_sent_at or '—',
+            obj.rejection_email_sent_by or '—',
+            obj.rejection_email_message_id or '—',
+            obj.rejection_email_error or '—',
+        )
+
     @admin.display(description='Staff access')
     def team_access_status(self, obj):
         team_member = self._team_member_for(obj)
@@ -289,6 +373,7 @@ class VacancyApplicationAdmin(admin.ModelAdmin):
         application = context.get('original')
         offer = self._offer_for(application) if application else None
         team_member = self._team_member_for(application) if application else None
+        onboarding = self._onboarding_for(application) if application else None
         staff_access_is_current = bool(
             team_member and team_member.status in {'invited', 'onboarding', 'active'}
         )
@@ -300,6 +385,14 @@ class VacancyApplicationAdmin(admin.ModelAdmin):
             and self.has_manage_staff_access_permission(request)
             and (application.status in ELIGIBLE_APPLICATION_STATUSES or team_member)
         )
+        has_onboarding_permission = bool(
+            application
+            and self.has_send_onboarding_permission(request, application)
+        )
+        can_send_onboarding = bool(
+            has_onboarding_permission
+            and application.status in ELIGIBLE_ONBOARDING_STATUSES
+        )
         context['show_recruitment_actions'] = bool(application)
         context['can_send_volunteer_offer'] = can_send_offer
         context['send_volunteer_offer_label'] = (
@@ -308,6 +401,22 @@ class VacancyApplicationAdmin(admin.ModelAdmin):
         context['send_volunteer_offer_disabled_reason'] = (
             '' if can_send_offer else 'You do not have permission to send volunteer offers.'
         )
+        context['can_send_onboarding'] = can_send_onboarding
+        context['send_onboarding_label'] = (
+            'Resend onboarding email'
+            if onboarding and onboarding.send_count
+            else 'Start onboarding'
+        )
+        if not has_onboarding_permission:
+            context['send_onboarding_disabled_reason'] = (
+                'You do not have permission to start volunteer onboarding.'
+            )
+        elif application.status not in ELIGIBLE_ONBOARDING_STATUSES:
+            context['send_onboarding_disabled_reason'] = (
+                'Set the application status to Onboarding before starting onboarding.'
+            )
+        else:
+            context['send_onboarding_disabled_reason'] = ''
         context['can_manage_staff_access'] = can_manage_staff_access
         context['staff_access_is_current'] = staff_access_is_current
         if staff_access_is_current:
@@ -347,6 +456,10 @@ class VacancyApplicationAdmin(admin.ModelAdmin):
             )
             context['staff_access_url'] = reverse(
                 'admin:opportunities_vacancyapplication_staff_access',
+                args=(application.pk,),
+            )
+            context['send_onboarding_url'] = reverse(
+                'admin:opportunities_vacancyapplication_send_onboarding',
                 args=(application.pk,),
             )
             context['resend_staff_access_url'] = f"{context['staff_access_url']}#resend-access"
@@ -458,6 +571,89 @@ class VacancyApplicationAdmin(admin.ModelAdmin):
         return TemplateResponse(
             request,
             'admin/opportunities/vacancyapplication/send_offer.html',
+            context,
+        )
+
+    def send_onboarding_email_view(self, request, object_id):
+        application = self.get_object(request, object_id)
+        if application is None:
+            return HttpResponseRedirect(
+                reverse('admin:opportunities_vacancyapplication_changelist')
+            )
+        if not self.has_send_onboarding_permission(request, application):
+            raise PermissionDenied
+
+        onboarding = self._onboarding_for(application)
+        send_count = onboarding.send_count if onboarding else 0
+        is_resend = bool(send_count)
+        form = VolunteerOnboardingEmailForm(
+            request.POST or None,
+            initial={'expected_send_count': send_count},
+        )
+        if is_resend:
+            form.fields['confirm_send'].label = (
+                'I understand that this volunteer has already received the onboarding '
+                'email and confirm that another copy should be sent.'
+            )
+
+        if request.method == 'POST' and form.is_valid():
+            try:
+                onboarding = send_onboarding_email(
+                    application,
+                    request.user,
+                    form.cleaned_data['expected_send_count'],
+                )
+            except OnboardingEmailError as error:
+                form.add_error(None, str(error))
+            except Exception:
+                logger.exception(
+                    'Volunteer onboarding email failed for application %s',
+                    application.pk,
+                )
+                form.add_error(
+                    None,
+                    'The onboarding email could not be sent. Review the recorded '
+                    'delivery error and try again.',
+                )
+            else:
+                self.message_user(
+                    request,
+                    (
+                        f'Onboarding email resent to {application.email}.'
+                        if is_resend
+                        else f'Onboarding started for {application.email}.'
+                    ),
+                    level=messages.SUCCESS,
+                )
+                return HttpResponseRedirect(
+                    reverse(
+                        'admin:opportunities_vacancyapplication_change',
+                        args=(application.pk,),
+                    )
+                )
+
+        context = {
+            **self.admin_site.each_context(request),
+            'opts': self.model._meta,
+            'title': (
+                'Resend onboarding email' if is_resend else 'Start onboarding'
+            ),
+            'application': application,
+            'onboarding': onboarding,
+            'is_resend': is_resend,
+            'submit_label': (
+                'Resend onboarding email' if is_resend else 'Start onboarding'
+            ),
+            'form': form,
+            'media': self.media + form.media,
+            'change_url': reverse(
+                'admin:opportunities_vacancyapplication_change',
+                args=(application.pk,),
+            ),
+        }
+        return TemplateResponse(
+            request,
+            'admin/opportunities/vacancyapplication/send_onboarding.html',
             context,
         )
 
@@ -576,6 +772,53 @@ class VacancyApplicationAdmin(admin.ModelAdmin):
             request,
             'admin/opportunities/vacancyapplication/staff_access.html',
             context,
+        )
+
+    @admin.action(
+        permissions=('send_rejection',),
+        description='Send rejection emails to selected applicants',
+    )
+    def send_rejection_emails(self, request, queryset):
+        selected_count = queryset.count()
+        eligible_count = queryset.filter(
+            status='not_selected',
+        ).exclude(
+            rejection_email_status='sent',
+        ).count()
+        already_sent_count = queryset.filter(
+            rejection_email_status='sent',
+        ).count()
+        wrong_status_count = queryset.exclude(status='not_selected').count()
+
+        if 'confirm_rejection_send' not in request.POST:
+            context = {
+                **self.admin_site.each_context(request),
+                'opts': self.model._meta,
+                'title': 'Confirm rejection email send',
+                'queryset': queryset,
+                'action_checkbox_name': helpers.ACTION_CHECKBOX_NAME,
+                'selected_count': selected_count,
+                'eligible_count': eligible_count,
+                'already_sent_count': already_sent_count,
+                'wrong_status_count': wrong_status_count,
+            }
+            return TemplateResponse(
+                request,
+                'admin/opportunities/vacancyapplication/send_rejections.html',
+                context,
+            )
+
+        result = send_rejection_email_batch(queryset, request.user)
+        level = messages.ERROR if result.failed else messages.SUCCESS
+        self.message_user(
+            request,
+            (
+                f'Rejection email batch complete: {result.sent} sent, '
+                f'{result.failed} failed, {result.skipped_already_sent} already sent, '
+                f'{result.skipped_wrong_status} not eligible, and '
+                f'{result.skipped_in_progress} already processing.'
+            ),
+            level=level,
         )
 
     @admin.action(description='Send or retry missing notifications')

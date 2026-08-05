@@ -91,6 +91,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 # 'cms.context_processors.cms_settings',
                 'django.template.context_processors.i18n',
+                'config.context_processors.oef_social_links',
             ],
         },
     },
@@ -351,7 +352,27 @@ BREVO_VACANCY_ACK_TEMPLATE_ID = (
     if BREVO_VACANCY_ACK_TEMPLATE_ID
     else None
 )
+BREVO_ONBOARDING_TEMPLATE_ID = int(
+    os.environ.get('BREVO_ONBOARDING_TEMPLATE_ID', '2')
+)
+BREVO_REJECTION_TEMPLATE_ID = int(
+    os.environ.get('BREVO_REJECTION_TEMPLATE_ID', '7')
+)
+OEF_SLACK_INVITE_URL = os.environ.get('OEF_SLACK_INVITE_URL', '')
 OEF_PUBLIC_SITE_URL = 'https://www.oluwafemiebenezerfoundation.org'
+OEF_INSTAGRAM_URL = os.environ.get(
+    'OEF_INSTAGRAM_URL',
+    'https://www.instagram.com/feedsomeone_',
+)
+OEF_LINKEDIN_URL = os.environ.get(
+    'OEF_LINKEDIN_URL',
+    'https://www.linkedin.com/company/feed-someone/',
+)
+OEF_X_URL = os.environ.get('OEF_X_URL', 'https://x.com/feedsomeone_')
+OEF_YOUTUBE_URL = os.environ.get(
+    'OEF_YOUTUBE_URL',
+    'https://www.youtube.com/oluwafemiebenezerfoundation',
+)
 OEF_VOLUNTEER_OFFER_SIGNATORY_NAME = os.environ.get(
     'OEF_VOLUNTEER_OFFER_SIGNATORY_NAME',
     'Olanrewaju Oluwafemi Ebenezer',

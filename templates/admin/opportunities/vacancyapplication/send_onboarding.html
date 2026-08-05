@@ -1,0 +1,39 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+  <div id="content-main">
+    <p><strong>Volunteer:</strong> {{ application.full_name }}</p>
+    <p><strong>Email:</strong> {{ application.email }}</p>
+    <p><strong>Role:</strong> {{ application.vacancy.title }}</p>
+
+    {% if is_resend %}
+      <ul class="messagelist">
+        <li class="warning">
+          This onboarding email has already been sent {{ onboarding.send_count }}
+          time{{ onboarding.send_count|pluralize }}. The most recent successful send
+          was {{ onboarding.last_sent_at|date:"j F Y, H:i" }}. Confirm below only if
+          another copy is required.
+        </li>
+      </ul>
+    {% else %}
+      <p>
+        This will send the OEF welcome email and Slack workspace invitation using
+        the configured Brevo onboarding template.
+      </p>
+    {% endif %}
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+      {{ form.expected_send_count }}
+      <div class="form-row">
+        {{ form.confirm_send.errors }}
+        {{ form.confirm_send }} {{ form.confirm_send.label_tag }}
+      </div>
+      <div class="submit-row">
+        <input type="submit" value="{{ submit_label }}" class="default">
+        <a href="{{ change_url }}" class="closelink">Cancel</a>
+      </div>
+    </form>
+  </div>
+{% endblock %}

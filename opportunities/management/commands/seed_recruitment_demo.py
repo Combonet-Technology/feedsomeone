@@ -1,4 +1,5 @@
 from datetime import timedelta
+from uuid import NAMESPACE_URL, uuid5
 
 from django.contrib.auth.models import Group
 from django.core.files.base import ContentFile
@@ -28,7 +29,22 @@ SCENARIOS = (
     ('onboarding', 'Staff access onboarding'),
     ('active', 'Active staff access'),
     ('active', 'Staff access revoked'),
+    ('not_selected', 'Rejection email ready to send'),
+    ('not_selected', 'Rejection email already sent'),
+    ('not_selected', 'Rejection email failed; ready to retry'),
 )
+OFFER_SCENARIO_INDEXES = frozenset(range(3, 10))
+TEAM_MEMBER_STATUS_BY_SCENARIO = {
+    6: 'invited',
+    7: 'onboarding',
+    8: 'active',
+    9: 'inactive',
+}
+REJECTION_EMAIL_STATUS_BY_SCENARIO = {
+    10: 'not_sent',
+    11: 'sent',
+    12: 'failed',
+}
 
 
 class Command(BaseCommand):
@@ -57,7 +73,10 @@ class Command(BaseCommand):
                     offer.letter_pdf.delete(save=False)
             UserProfile.objects.filter(email__endswith=f'@{DEMO_DOMAIN}').delete()
             VacancyApplication.objects.filter(email__endswith=f'@{DEMO_DOMAIN}').delete()
-            Vacancy.objects.filter(slug__startswith='demo-').delete()
+            Vacancy.objects.filter(
+                slug__startswith='demo-',
+                applications__isnull=True,
+            ).delete()
 
         group = Group.objects.filter(name='Recruitment Manager').first()
         if not group:
@@ -97,6 +116,15 @@ class Command(BaseCommand):
             applicant_number = str(index).zfill(3)
             phone_suffix = str(index).zfill(4)
             email = f'applicant-{applicant_number}@{DEMO_DOMAIN}'
+            rejection_email_status = REJECTION_EMAIL_STATUS_BY_SCENARIO.get(
+                scenario_index,
+                'not_sent',
+            )
+            rejection_batch_key = (
+                uuid5(NAMESPACE_URL, f'oef-rejection-demo-{applicant_number}')
+                if rejection_email_status in {'sent', 'failed'}
+                else None
+            )
             application, _ = VacancyApplication.objects.update_or_create(
                 vacancy=vacancy,
                 email=email,
@@ -107,10 +135,30 @@ class Command(BaseCommand):
                     'cover_letter': f'DEMO DATA: {scenario}.',
                     'status': status,
                     'newsletter_opt_in': False,
+                    'rejection_email_status': rejection_email_status,
+                    'rejection_email_batch_key': rejection_batch_key,
+                    'rejection_email_message_id': (
+                        f'demo-rejection-message-{applicant_number}'
+                        if rejection_email_status == 'sent'
+                        else ''
+                    ),
+                    'rejection_email_sent_at': (
+                        now - timedelta(days=1)
+                        if rejection_email_status == 'sent'
+                        else None
+                    ),
+                    'rejection_email_sent_by': (
+                        owner if rejection_email_status == 'sent' else None
+                    ),
+                    'rejection_email_error': (
+                        'Demonstration provider failure; safe to retry.'
+                        if rejection_email_status == 'failed'
+                        else ''
+                    ),
                 },
             )
 
-            if scenario_index >= 3:
+            if scenario_index in OFFER_SCENARIO_INDEXES:
                 offer, _ = VolunteerOffer.objects.update_or_create(
                     application=application,
                     defaults={
@@ -137,7 +185,7 @@ class Command(BaseCommand):
                         save=True,
                     )
 
-            if scenario_index >= 6:
+            if scenario_index in TEAM_MEMBER_STATUS_BY_SCENARIO:
                 user, _ = UserProfile.objects.get_or_create(
                     email=email,
                     defaults={
@@ -158,12 +206,7 @@ class Command(BaseCommand):
                     application.applicant = user
                     application.save(update_fields=('applicant', 'updated_at'))
 
-                member_status = {
-                    6: 'invited',
-                    7: 'onboarding',
-                    8: 'active',
-                    9: 'inactive',
-                }[scenario_index]
+                member_status = TEAM_MEMBER_STATUS_BY_SCENARIO[scenario_index]
                 TeamMember.objects.update_or_create(
                     user=user,
                     defaults={

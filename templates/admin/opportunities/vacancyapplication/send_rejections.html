@@ -1,0 +1,49 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+  <div id="content-main">
+    <h1>Confirm rejection email send</h1>
+    <p>
+      You selected <strong>{{ selected_count }}</strong> application{{ selected_count|pluralize }}.
+      <strong>{{ eligible_count }}</strong> will receive the active OEF rejection email template.
+    </p>
+
+    {% if already_sent_count or wrong_status_count %}
+      <ul class="messagelist">
+        {% if already_sent_count %}
+          <li class="warning">
+            {{ already_sent_count }} application{{ already_sent_count|pluralize }} already received this email and will be skipped.
+          </li>
+        {% endif %}
+        {% if wrong_status_count %}
+          <li class="warning">
+            {{ wrong_status_count }} application{{ wrong_status_count|pluralize }} are not marked Not selected and will be skipped.
+          </li>
+        {% endif %}
+      </ul>
+    {% endif %}
+
+    <p>
+      Each eligible applicant will receive a personalised message using their first name and applied role.
+      This action records the sender, time, Brevo message ID and any delivery error.
+    </p>
+
+    <form method="post">
+      {% csrf_token %}
+      {% for application in queryset %}
+        <input type="hidden" name="{{ action_checkbox_name }}" value="{{ application.pk }}">
+      {% endfor %}
+      <input type="hidden" name="action" value="send_rejection_emails">
+      <input type="hidden" name="select_across" value="0">
+      <input type="hidden" name="confirm_rejection_send" value="1">
+
+      <div class="submit-row">
+        {% if eligible_count %}
+          <input type="submit" value="Send {{ eligible_count }} rejection email{{ eligible_count|pluralize }}" class="default">
+        {% endif %}
+        <a href="{% url 'admin:opportunities_vacancyapplication_changelist' %}" class="button cancel-link">Cancel</a>
+      </div>
+    </form>
+  </div>
+{% endblock %}

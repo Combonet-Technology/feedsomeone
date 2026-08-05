@@ -16,6 +16,13 @@ class RecruitmentPermissionTests(TestCase):
             'opportunities.migrations.0011_create_recruitment_manager_group'
         )
         migration.create_recruitment_manager_group(apps, schema_editor=None)
+        rejection_migration = import_module(
+            'opportunities.migrations.0013_vacancyapplication_rejection_email'
+        )
+        rejection_migration.add_rejection_permission_to_recruitment_managers(
+            apps,
+            schema_editor=None,
+        )
 
     def test_recruitment_manager_group_has_expected_permissions(self):
         group = Group.objects.get(name='Recruitment Manager')
@@ -27,6 +34,7 @@ class RecruitmentPermissionTests(TestCase):
                 'view_vacancyapplication',
                 'change_vacancyapplication',
                 'send_volunteer_offer',
+                'send_rejection_email',
                 'view_volunteeroffer',
             },
         )
@@ -42,6 +50,7 @@ class RecruitmentPermissionTests(TestCase):
         self.assertTrue(user.has_perm('opportunities.view_vacancyapplication'))
         self.assertTrue(user.has_perm('opportunities.change_vacancyapplication'))
         self.assertTrue(user.has_perm('opportunities.send_volunteer_offer'))
+        self.assertTrue(user.has_perm('opportunities.send_rejection_email'))
         self.assertFalse(user.has_perm('opportunities.delete_vacancyapplication'))
 
     def test_non_superuser_cannot_rewrite_applicant_submitted_fields(self):
@@ -75,3 +84,30 @@ class RecruitmentPermissionTests(TestCase):
 
         self.assertNotIn('full_name', readonly_fields)
         self.assertNotIn('status', readonly_fields)
+
+
+class VolunteerOnboardingPermissionTests(TestCase):
+    def test_onboarding_group_has_narrow_application_permissions(self):
+        group = Group.objects.get(name='Volunteer Onboarding')
+
+        self.assertSetEqual(
+            set(group.permissions.values_list('codename', flat=True)),
+            {
+                'view_vacancy',
+                'view_vacancyapplication',
+                'send_onboarding_email',
+            },
+        )
+
+    def test_group_member_can_manage_onboarding_without_offer_permission(self):
+        user = UserProfile.objects.create_user(
+            email='onboarding@example.com',
+            password='test-password',
+            is_staff=True,
+        )
+        user.groups.add(Group.objects.get(name='Volunteer Onboarding'))
+
+        self.assertTrue(user.has_perm('opportunities.view_vacancyapplication'))
+        self.assertFalse(user.has_perm('opportunities.change_vacancyapplication'))
+        self.assertTrue(user.has_perm('opportunities.send_onboarding_email'))
+        self.assertFalse(user.has_perm('opportunities.send_volunteer_offer'))

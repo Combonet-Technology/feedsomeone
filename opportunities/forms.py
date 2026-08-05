@@ -102,3 +102,13 @@ class StaffAccessRevocationForm(forms.Form):
             'The application and team-member record will be retained.'
         ),
     )
+
+
+class VolunteerOnboardingEmailForm(forms.Form):
+    expected_send_count = forms.IntegerField(min_value=0, widget=forms.HiddenInput)
+    confirm_send = forms.BooleanField(
+        label=(
+            'I have reviewed the recipient and confirm that this onboarding email '
+            'should be sent.'
+        ),
+    )

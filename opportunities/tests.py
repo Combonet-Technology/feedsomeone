@@ -292,6 +292,10 @@ class VacancyNotificationTests(TestCase):
         BREVO_VACANCY_ACK_TEMPLATE_ID=42,
         SLACK_VACANCIES_WEBHOOK_URL='https://hooks.slack.test/vacancies',
         OEF_PUBLIC_SITE_URL='https://www.example.org',
+        OEF_INSTAGRAM_URL='https://social.example/instagram',
+        OEF_LINKEDIN_URL='https://social.example/linkedin',
+        OEF_X_URL='https://social.example/x',
+        OEF_YOUTUBE_URL='https://social.example/youtube',
         VACANCY_APPLICATION_RESPONSE_WINDOW='3 working days',
     )
     @patch('opportunities.notifications.upsert_newsletter_contact')
@@ -339,6 +343,15 @@ class VacancyNotificationTests(TestCase):
             'https://www.example.org/article/all/',
         )
         self.assertNotIn('facebook_url', email_kwargs['params'])
+        self.assertEqual(
+            email_kwargs['params']['linkedin_url'],
+            'https://social.example/linkedin',
+        )
+        self.assertEqual(
+            email_kwargs['params']['instagram_url'],
+            'https://social.example/instagram',
+        )
+        self.assertEqual(email_kwargs['params']['x_url'], 'https://social.example/x')
 
         slack_kwargs = mock_post_slack.call_args.kwargs
         self.assertEqual(

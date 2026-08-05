@@ -55,6 +55,20 @@ services:
         value: "2"
       - key: BREVO_VACANCY_ACK_TEMPLATE_ID
         sync: false
+      - key: BREVO_ONBOARDING_TEMPLATE_ID
+        value: "2"
+      - key: BREVO_REJECTION_TEMPLATE_ID
+        value: "7"
+      - key: OEF_SLACK_INVITE_URL
+        sync: false
+      - key: OEF_INSTAGRAM_URL
+        value: https://www.instagram.com/feedsomeone_
+      - key: OEF_LINKEDIN_URL
+        value: https://www.linkedin.com/company/feed-someone/
+      - key: OEF_X_URL
+        value: https://x.com/feedsomeone_
+      - key: OEF_YOUTUBE_URL
+        value: https://www.youtube.com/oluwafemiebenezerfoundation
       - key: OEF_VOLUNTEER_OFFER_SIGNATORY_NAME
         value: Olanrewaju Oluwafemi Ebenezer
       - key: OEF_VOLUNTEER_OFFER_SIGNATORY_TITLE

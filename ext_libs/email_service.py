@@ -101,7 +101,7 @@ def send_email(
         return True
 
 
-def send_template_email(destination, template_id, params=None):
+def send_template_email(destination, template_id, params=None, message_headers=None):
     if not template_id:
         raise EmailProviderError("Brevo transactional template ID is not configured")
 
@@ -110,6 +110,8 @@ def send_template_email(destination, template_id, params=None):
         "templateId": int(template_id),
         "params": params or {},
     }
+    if message_headers:
+        payload["headers"] = message_headers
     response = requests.post(
         f"{settings.BREVO_API_BASE_URL}/smtp/email",
         headers=_brevo_headers(),
@@ -125,7 +127,51 @@ def send_template_email(destination, template_id, params=None):
         raise EmailProviderError(
             f"Brevo template email send failed with status {response.status_code}"
         )
-    return True
+    try:
+        return response.json().get("messageId", "") or True
+    except ValueError:
+        return True
+
+
+def send_template_email_batch(message_versions, template_id, idempotency_key):
+    if not template_id:
+        raise EmailProviderError("Brevo transactional template ID is not configured")
+    if not message_versions:
+        raise EmailProviderError("At least one email message version is required")
+
+    payload = {
+        "templateId": int(template_id),
+        "messageVersions": message_versions,
+        "headers": {"idempotencyKey": str(idempotency_key)},
+    }
+    try:
+        response = requests.post(
+            f"{settings.BREVO_API_BASE_URL}/smtp/email",
+            headers=_brevo_headers(),
+            json=payload,
+            timeout=settings.BREVO_TIMEOUT_SECONDS,
+        )
+    except requests.RequestException as error:
+        raise EmailProviderError("Brevo batch template email request failed") from error
+    if response.status_code >= 400:
+        logger.error(
+            "Brevo batch template email send failed: %s %s",
+            response.status_code,
+            response.text,
+        )
+        raise EmailProviderError(
+            f"Brevo batch template email send failed with status {response.status_code}"
+        )
+
+    try:
+        message_ids = response.json().get("messageIds", [])
+    except ValueError as error:
+        raise EmailProviderError("Brevo returned an invalid batch response") from error
+    if len(message_ids) != len(message_versions):
+        raise EmailProviderError(
+            "Brevo returned an unexpected number of batch message IDs"
+        )
+    return message_ids
 
 
 def upsert_newsletter_contact(email, attributes=None):

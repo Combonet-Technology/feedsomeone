@@ -63,9 +63,9 @@
         "telephone": "+2348170838856"
       },
       "sameAs": [
-        "https://www.instagram.com/feedsomeone_",
-        "https://x.com/feedsomeone_",
-        "https://www.linkedin.com/company/feed-someone/"
+        "{{ oef_social_links.instagram_url }}",
+        "{{ oef_social_links.x_url }}",
+        "{{ oef_social_links.linkedin_url }}"
       ]
     }
     </script>
@@ -257,13 +257,13 @@ margin-top:100px
                                 <div class="header-social">
                                     <ul>
                                         <li style="margin-right: 0px; padding-right: 0px"><a
-                                                href="https://x.com/feedsomeone_"><i
+                                                href="{{ oef_social_links.x_url }}"><i
                                                 class="fab fa-twitter"></i></a></li>
                                         <li style="margin-right: 0px; padding-right: 0px"><a
-                                                href="https://www.instagram.com/feedsomeone_"><i
+                                                href="{{ oef_social_links.instagram_url }}"><i
                                                 class="fab fa-instagram"></i></a></li>
                                         <li style="margin-right: 0px; padding-right: 0px"><a
-                                                href="https://www.linkedin.com/company/feed-someone/"><i
+                                                href="{{ oef_social_links.linkedin_url }}"><i
                                                 class="fab fa-linkedin-in"></i></a></li>
                                         <!--                                        <li style="margin-right: 0px; padding-right: 0px"> <a href="#"><i class="fab fa-google-plus-g"></i></a></li>-->
                                     </ul>
@@ -428,9 +428,9 @@ margin-top:100px
                     {% newsletter_form %}
                     <ul class="footer-social" id="footer-social">
                         <li><a><i class="fa fa-arrow-right"></i></a></li>
-                        <li><a href="https://x.com/feedsomeone_"><i class="fab fa-twitter"></i></a></li>
-                        <li><a href="https://www.instagram.com/feedsomeone_"><i class="fab fa-instagram"></i></a></li>
-                        <li><a href="https://www.youtube.com/oluwafemiebenezerfoundation"><i class="fab fa-youtube"></i></a>
+                        <li><a href="{{ oef_social_links.x_url }}"><i class="fab fa-twitter"></i></a></li>
+                        <li><a href="{{ oef_social_links.instagram_url }}"><i class="fab fa-instagram"></i></a></li>
+                        <li><a href="{{ oef_social_links.youtube_url }}"><i class="fab fa-youtube"></i></a>
                         </li>
                     </ul>
                 </div>

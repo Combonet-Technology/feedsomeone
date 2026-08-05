@@ -32,6 +32,13 @@
         <span class="oef-action-disabled" title="{{ staff_access_disabled_reason }}" aria-disabled="true">{{ staff_access_label }}</span>
       {% endif %}
     </li>
+    <li>
+      {% if can_send_onboarding %}
+        <a href="{{ send_onboarding_url }}">{{ send_onboarding_label }}</a>
+      {% else %}
+        <span class="oef-action-disabled" title="{{ send_onboarding_disabled_reason }}" aria-disabled="true">{{ send_onboarding_label }}</span>
+      {% endif %}
+    </li>
     {% if show_revoke_staff_access %}
       <li>
         {% if can_revoke_staff_access %}

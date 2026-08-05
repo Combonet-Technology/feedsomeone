@@ -120,6 +120,12 @@ class VacancyApplication(models.Model):
         ('withdrawn', 'Withdrawn'),
         ('closed', 'Closed'),
     )
+    REJECTION_EMAIL_STATUS_CHOICES = (
+        ('not_sent', 'Not sent'),
+        ('sending', 'Sending'),
+        ('sent', 'Sent'),
+        ('failed', 'Failed'),
+    )
     vacancy = models.ForeignKey(Vacancy, on_delete=models.CASCADE, related_name='applications')
     applicant = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -146,6 +152,32 @@ class VacancyApplication(models.Model):
         editable=False,
     )
     notification_error = models.TextField(blank=True, editable=False)
+    rejection_email_status = models.CharField(
+        max_length=20,
+        choices=REJECTION_EMAIL_STATUS_CHOICES,
+        default='not_sent',
+        editable=False,
+    )
+    rejection_email_batch_key = models.UUIDField(null=True, editable=False)
+    rejection_email_message_id = models.CharField(
+        max_length=255,
+        blank=True,
+        editable=False,
+    )
+    rejection_email_sent_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        editable=False,
+    )
+    rejection_email_sent_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        editable=False,
+        related_name='rejection_emails_sent',
+    )
+    rejection_email_error = models.TextField(blank=True, editable=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -153,6 +185,8 @@ class VacancyApplication(models.Model):
         ordering = ('-created_at',)
         permissions = (
             ('send_volunteer_offer', 'Can prepare and send volunteer offers'),
+            ('send_onboarding_email', 'Can send volunteer onboarding emails'),
+            ('send_rejection_email', 'Can send volunteer rejection emails'),
         )
         constraints = [
             models.UniqueConstraint(fields=('vacancy', 'applicant'), name='unique_vacancy_applicant'),
@@ -217,3 +251,45 @@ class VolunteerOffer(models.Model):
 
     def __str__(self):
         return f'Offer for {self.recipient_name} - {self.role_title}'
+
+
+class VolunteerOnboarding(models.Model):
+    DELIVERY_STATUS_CHOICES = (
+        ('draft', 'Not sent'),
+        ('sending', 'Sending'),
+        ('sent', 'Sent'),
+        ('failed', 'Failed'),
+    )
+
+    application = models.OneToOneField(
+        VacancyApplication,
+        on_delete=models.CASCADE,
+        related_name='volunteer_onboarding',
+    )
+    delivery_status = models.CharField(
+        max_length=20,
+        choices=DELIVERY_STATUS_CHOICES,
+        default='draft',
+    )
+    delivery_key = models.UUIDField(default=uuid4, unique=True, editable=False)
+    send_count = models.PositiveIntegerField(default=0, editable=False)
+    first_sent_at = models.DateTimeField(null=True, blank=True, editable=False)
+    last_sent_at = models.DateTimeField(null=True, blank=True, editable=False)
+    last_sent_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        editable=False,
+        related_name='volunteer_onboarding_emails_sent',
+    )
+    brevo_message_id = models.CharField(max_length=255, blank=True, editable=False)
+    delivery_error = models.TextField(blank=True, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ('-last_sent_at', '-created_at')
+
+    def __str__(self):
+        return f'Onboarding email for {self.application.full_name}'
