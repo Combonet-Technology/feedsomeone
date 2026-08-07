@@ -36,6 +36,8 @@ DATABASES = {
         'PORT': os.environ.get('POSTGRES_PORT')
     }
 }
+
+print(DATABASES)
 # for custom error handler
 TEMPLATE_DEBUG = DEBUG
 

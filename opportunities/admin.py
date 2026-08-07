@@ -21,7 +21,8 @@ from .offers import OfferDeliveryInProgress, send_volunteer_offer
 from .onboarding import \
     ELIGIBLE_APPLICATION_STATUSES as ELIGIBLE_ONBOARDING_STATUSES
 from .onboarding import OnboardingEmailError, send_onboarding_email
-from .rejections import send_rejection_email_batch
+from .rejections import (send_interview_invite_email_batch,
+                         send_rejection_email_batch)
 from .staff_access import (ELIGIBLE_APPLICATION_STATUSES, StaffAccessError,
                            grant_staff_access, revoke_staff_access)
 
@@ -110,7 +111,12 @@ class VacancyApplicationAdmin(admin.ModelAdmin):
         'slack_notified_at',
         'created_at',
     )
-    list_filter = ('status', 'vacancy', 'newsletter_opt_in')
+    list_filter = (
+        'status',
+        'rejection_email_status',
+        'vacancy',
+        'newsletter_opt_in',
+    )
     search_fields = ('vacancy__title', 'full_name', 'email')
     readonly_fields = (
         'acknowledgement_sent_at',
@@ -206,7 +212,7 @@ class VacancyApplicationAdmin(admin.ModelAdmin):
         ),
         ('Record', {'classes': ('collapse',), 'fields': ('created_at', 'updated_at')}),
     )
-    actions = ('send_rejection_emails', 'retry_notifications')
+    actions = ('send_acceptance_email', 'shortlist_candidates', 'send_rejection_emails', 'retry_notifications')
 
     applicant_submitted_fields = (
         'vacancy',
@@ -793,6 +799,7 @@ class VacancyApplicationAdmin(admin.ModelAdmin):
         if 'confirm_rejection_send' not in request.POST:
             context = {
                 **self.admin_site.each_context(request),
+                'action_to': 'rejection',
                 'opts': self.model._meta,
                 'title': 'Confirm rejection email send',
                 'queryset': queryset,
@@ -804,7 +811,7 @@ class VacancyApplicationAdmin(admin.ModelAdmin):
             }
             return TemplateResponse(
                 request,
-                'admin/opportunities/vacancyapplication/send_rejections.html',
+                'admin/opportunities/vacancyapplication/interview_actions.html',
                 context,
             )
 
@@ -847,4 +854,75 @@ class VacancyApplicationAdmin(admin.ModelAdmin):
                 f'Notifications complete for {successful} application(s). '
                 f'{incomplete} still have a delivery error.'
             ),
+        )
+
+    @admin.action(
+        description='shortlist Candidates for interview'
+    )
+    def shortlist_candidates(self, request, queryset):
+        eligible_statuses = frozenset({
+            VacancyApplication.Status.RECEIVED,
+            VacancyApplication.Status.REVIEWING,
+        })
+
+        updated_count = queryset.filter(
+            status__in=eligible_statuses,
+        ).update(
+            status=VacancyApplication.Status.SHORTLISTED,
+            shortlisted_by=request.user,
+            shortlisted_at=timezone.now(),
+        )
+
+        self.message_user(
+            request,
+            f"{updated_count} application(s) shortlisted.",
+            level=messages.SUCCESS,
+        )
+
+        # action worked but we should add tests for edge cases and also
+        # checks for edge cases like already shorlisted candidates
+
+    @admin.action(description='send interview emails')
+    def send_acceptance_email(self, request, queryset):
+        selected_count = queryset.count()
+        eligible_count = queryset.filter(
+            status='shortlisted',
+        ).exclude(
+            interview_email_status='sent',
+        ).count()
+        already_sent_count = queryset.filter(
+            interview_email_status='sent',
+        ).count()
+        wrong_status_count = queryset.exclude(status='shortlisted').count()
+
+        if 'confirm_interview_invite_send' not in request.POST:
+            context = {
+                **self.admin_site.each_context(request),
+                'action_to': 'interview_invite',
+                'opts': self.model._meta,
+                'title': 'Confirm interview email invite',
+                'queryset': queryset,
+                'action_checkbox_name': helpers.ACTION_CHECKBOX_NAME,
+                'selected_count': selected_count,
+                'eligible_count': eligible_count,
+                'already_sent_count': already_sent_count,
+                'wrong_status_count': wrong_status_count,
+            }
+            return TemplateResponse(
+                request,
+                'admin/opportunities/vacancyapplication/interview_actions.html',
+                context,
+            )
+
+        result = send_interview_invite_email_batch(queryset, request.user)
+        level = messages.ERROR if result.failed else messages.SUCCESS
+        self.message_user(
+            request,
+            (
+                f'Interview email batch complete: {result.sent} sent, '
+                f'{result.failed} failed, {result.skipped_already_sent} already sent, '
+                f'{result.skipped_wrong_status} not eligible, and '
+                f'{result.skipped_in_progress} already processing.'
+            ),
+            level=level,
         )

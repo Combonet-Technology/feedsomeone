@@ -200,6 +200,31 @@ class RejectionEmailAdminTests(TestCase):
         self.assertIn('send_rejection_emails', manager_actions)
         self.assertNotIn('send_rejection_emails', outsider_actions)
 
+    def test_status_and_outcome_email_filters_can_be_combined(self):
+        delivered = create_application(self.vacancy, 'delivered')
+        delivered.rejection_email_status = 'sent'
+        delivered.rejection_email_sent_at = timezone.now()
+        delivered.save()
+        reviewing = create_application(
+            self.vacancy,
+            'reviewing-unsent',
+            status='reviewing',
+        )
+        self.client.force_login(self.manager)
+
+        response = self.client.get(
+            self.changelist_url,
+            {
+                'status__exact': 'not_selected',
+                'rejection_email_status__exact': 'not_sent',
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.application.full_name)
+        self.assertNotContains(response, delivered.full_name)
+        self.assertNotContains(response, reviewing.full_name)
+
     @patch('opportunities.admin.send_rejection_email_batch')
     def test_confirmation_is_required_before_bulk_send(self, send_batch):
         self.client.force_login(self.manager)

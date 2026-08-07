@@ -59,6 +59,10 @@ services:
         value: "2"
       - key: BREVO_REJECTION_TEMPLATE_ID
         value: "7"
+      - key: BREVO_INTERVIEW_TEMPLATE_ID
+        value: "8"
+      - key: OEF_INTERVIEW_BOOKING_URL
+        value: "https://calendar.google.com/calendar/u/0/appointments/schedules/AcZssZ1CL0g7LMHSxwYo_xdZgFH53gExpzyvMzAvQ6cfwkDUWAWSOLmHfLMvR3Dd_CUyyPcyVIoO60UR?gv=true"
       - key: OEF_SLACK_INVITE_URL
         sync: false
       - key: OEF_INSTAGRAM_URL

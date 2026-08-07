@@ -107,25 +107,26 @@ class Vacancy(models.Model):
 
 
 class VacancyApplication(models.Model):
-    STATUS_CHOICES = (
-        ('received', 'Received'),
-        ('reviewing', 'Reviewing'),
-        ('shortlisted', 'Shortlisted'),
-        ('offered', 'Offered'),
-        ('offer_accepted', 'Offer accepted'),
-        ('agreement_signed', 'Agreement signed'),
-        ('onboarding', 'Onboarding'),
-        ('active', 'Active'),
-        ('not_selected', 'Not selected'),
-        ('withdrawn', 'Withdrawn'),
-        ('closed', 'Closed'),
-    )
-    REJECTION_EMAIL_STATUS_CHOICES = (
-        ('not_sent', 'Not sent'),
-        ('sending', 'Sending'),
-        ('sent', 'Sent'),
-        ('failed', 'Failed'),
-    )
+    class Status(models.TextChoices):
+        RECEIVED = "received", "Received"
+        REVIEWING = "reviewing", "Reviewing"
+        SHORTLISTED = "shortlisted", "Shortlisted"
+        OFFERED = "offered", "Offered"
+        OFFER_ACCEPTED = "offer_accepted", "Offer accepted"
+        AGREEMENT_SIGNED = "agreement_signed", "Agreement signed"
+        ONBOARDING = "onboarding", "Onboarding"
+        ACTIVE = "active", "Active"
+        NOT_SELECTED = "not_selected", "Not selected"
+        WITHDRAWN = "withdrawn", "Withdrawn"
+        CLOSED = "closed", "Closed"
+
+    class RejectionEmailStatuses(models.TextChoices):
+        NOT_SENT = 'not_sent', 'Not sent'
+        SENDING = 'sending', 'Sending'
+        SENT = 'sent', 'Sent'
+        FAILED = 'failed', 'Failed'
+
+    INTERVIEW_EMAIL_STATUS_CHOICES = RejectionEmailStatuses.choices
     vacancy = models.ForeignKey(Vacancy, on_delete=models.CASCADE, related_name='applications')
     applicant = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -142,7 +143,7 @@ class VacancyApplication(models.Model):
         upload_to=vacancy_cv_upload_to,
     )
     cover_letter = models.TextField()
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='received')
+    status = models.CharField(max_length=20, choices=Status.choices, default='received')
     acknowledgement_sent_at = models.DateTimeField(null=True, blank=True, editable=False)
     slack_notified_at = models.DateTimeField(null=True, blank=True, editable=False)
     newsletter_opt_in = models.BooleanField(default=False)
@@ -154,7 +155,7 @@ class VacancyApplication(models.Model):
     notification_error = models.TextField(blank=True, editable=False)
     rejection_email_status = models.CharField(
         max_length=20,
-        choices=REJECTION_EMAIL_STATUS_CHOICES,
+        choices=RejectionEmailStatuses.choices,
         default='not_sent',
         editable=False,
     )
@@ -177,7 +178,45 @@ class VacancyApplication(models.Model):
         editable=False,
         related_name='rejection_emails_sent',
     )
+    shortlisted_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        editable=False,
+        related_name='candidates_shortlisted',
+    )
+    shortlisted_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
     rejection_email_error = models.TextField(blank=True, editable=False)
+    interview_email_status = models.CharField(
+        max_length=20,
+        choices=INTERVIEW_EMAIL_STATUS_CHOICES,
+        default='not_sent',
+        editable=False,
+    )
+    interview_email_batch_key = models.UUIDField(null=True, editable=False)
+    interview_email_message_id = models.CharField(
+        max_length=255,
+        blank=True,
+        editable=False,
+    )
+    interview_email_sent_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        editable=False,
+    )
+    interview_email_sent_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        editable=False,
+        related_name='interview_invitations_sent',
+    )
+    interview_email_error = models.TextField(blank=True, editable=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -187,6 +226,7 @@ class VacancyApplication(models.Model):
             ('send_volunteer_offer', 'Can prepare and send volunteer offers'),
             ('send_onboarding_email', 'Can send volunteer onboarding emails'),
             ('send_rejection_email', 'Can send volunteer rejection emails'),
+            ('send_interview_invitation', 'Can send volunteer interview invitations'),
         )
         constraints = [
             models.UniqueConstraint(fields=('vacancy', 'applicant'), name='unique_vacancy_applicant'),

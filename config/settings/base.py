@@ -358,7 +358,11 @@ BREVO_ONBOARDING_TEMPLATE_ID = int(
 BREVO_REJECTION_TEMPLATE_ID = int(
     os.environ.get('BREVO_REJECTION_TEMPLATE_ID', '7')
 )
+BREVO_INTERVIEW_TEMPLATE_ID = int(
+    os.environ.get('BREVO_INTERVIEW_TEMPLATE_ID', '8')
+)
 OEF_SLACK_INVITE_URL = os.environ.get('OEF_SLACK_INVITE_URL', '')
+OEF_INTERVIEW_BOOKING_URL = os.environ.get('OEF_INTERVIEW_BOOKING_URL', '')
 OEF_PUBLIC_SITE_URL = 'https://www.oluwafemiebenezerfoundation.org'
 OEF_INSTAGRAM_URL = os.environ.get(
     'OEF_INSTAGRAM_URL',
