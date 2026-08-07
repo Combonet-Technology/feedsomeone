@@ -10,6 +10,7 @@ from django.urls import path, reverse
 from django.utils import timezone
 from django.utils.html import format_html
 
+from opportunities.interviews import send_interview_invitation_batch
 from user.models import TeamMember
 
 from .forms import (StaffAccessGrantForm, StaffAccessRevocationForm,
@@ -21,8 +22,7 @@ from .offers import OfferDeliveryInProgress, send_volunteer_offer
 from .onboarding import \
     ELIGIBLE_APPLICATION_STATUSES as ELIGIBLE_ONBOARDING_STATUSES
 from .onboarding import OnboardingEmailError, send_onboarding_email
-from .rejections import (send_interview_invite_email_batch,
-                         send_rejection_email_batch)
+from .rejections import send_rejection_email_batch
 from .staff_access import (ELIGIBLE_APPLICATION_STATUSES, StaffAccessError,
                            grant_staff_access, revoke_staff_access)
 
@@ -914,7 +914,7 @@ class VacancyApplicationAdmin(admin.ModelAdmin):
                 context,
             )
 
-        result = send_interview_invite_email_batch(queryset, request.user)
+        result = send_interview_invitation_batch(queryset, request.user)
         level = messages.ERROR if result.failed else messages.SUCCESS
         self.message_user(
             request,
