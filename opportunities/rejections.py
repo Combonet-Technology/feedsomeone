@@ -43,7 +43,7 @@ def send_interview_invite_email_batch(queryset, sent_by):
         queryset,
         sent_by,
         ApplicationEmailBatchConfig(
-            eligible_statuses=frozenset({'not_selected'}),
+            eligible_statuses=frozenset({'shortlisted'}),
             delivery_status_field='interview_email_status',
             batch_key_field='interview_email_batch_key',
             message_id_field='interview_email_message_id',
