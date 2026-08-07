@@ -212,7 +212,7 @@ class VacancyApplicationAdmin(admin.ModelAdmin):
         ),
         ('Record', {'classes': ('collapse',), 'fields': ('created_at', 'updated_at')}),
     )
-    actions = ('send_acceptance_email', 'shortlist_candidates', 'send_rejection_emails', 'retry_notifications')
+    actions = ('send_acceptance_emails', 'shortlist_candidates', 'send_rejection_emails', 'retry_notifications')
 
     applicant_submitted_fields = (
         'vacancy',
@@ -883,7 +883,7 @@ class VacancyApplicationAdmin(admin.ModelAdmin):
         # checks for edge cases like already shorlisted candidates
 
     @admin.action(description='send interview emails')
-    def send_acceptance_email(self, request, queryset):
+    def send_acceptance_emails(self, request, queryset):
         selected_count = queryset.count()
         eligible_count = queryset.filter(
             status='shortlisted',
@@ -895,10 +895,10 @@ class VacancyApplicationAdmin(admin.ModelAdmin):
         ).count()
         wrong_status_count = queryset.exclude(status='shortlisted').count()
 
-        if 'confirm_interview_invite_send' not in request.POST:
+        if 'confirm_acceptance_send' not in request.POST:
             context = {
                 **self.admin_site.each_context(request),
-                'action_to': 'interview_invite',
+                'action_to': 'acceptance',
                 'opts': self.model._meta,
                 'title': 'Confirm interview email invite',
                 'queryset': queryset,

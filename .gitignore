@@ -199,3 +199,4 @@ graphify-out/
 *.backup.gz
 *.dump
 *.sql.gz
+.vscode/
