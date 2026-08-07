@@ -15,6 +15,7 @@ def _params(application):
     return {
         'first_name': first_name(application.full_name),
         'role_title': application.vacancy.title,
+        'booking_url': settings.OEF_INTERVIEW_BOOKING_URL,
         **get_oef_social_links(),
     }
 
@@ -39,6 +40,7 @@ def send_rejection_email_batch(queryset, sent_by):
 
 
 def send_interview_invite_email_batch(queryset, sent_by):
+
     return send_application_email_batch(
         queryset,
         sent_by,
