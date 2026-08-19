@@ -210,8 +210,22 @@ class RegisterTestCase(TestCase):
         self.assertIsInstance(response.context['forms'], UserRegistrationForm)
         self.assertFalse(response.context['forms'].is_bound)
         self.assertEqual(list(response.context['forms'].fields), ['email', 'password'])
-        for backend in ['twitter', 'facebook', 'linkedin-oauth2', 'google-oauth2']:
+        for backend in ['twitter', 'facebook', 'linkedin-oauth2']:
             self.assertContains(response, reverse('social:begin', args=[backend]))
+        self.assertNotContains(response, reverse('social:begin', args=['google-oauth2']))
+        self.assertNotContains(response, 'Continue with Google')
+
+        login_response = self.client.get(reverse('login'))
+        self.assertNotContains(login_response, reverse('social:begin', args=['google-oauth2']))
+        self.assertNotContains(login_response, 'Continue with Google')
+        google_auth_response = self.client.post(
+            reverse('social:begin', args=['google-oauth2']),
+        )
+        self.assertEqual(google_auth_response.status_code, 404)
+        self.assertNotIn(
+            'social_core.backends.google.GoogleOAuth2',
+            settings.AUTHENTICATION_BACKENDS,
+        )
         self.assertNotContains(response, 'google.com/recaptcha/api.js')
 
     def test_tampered_honeypot_is_rejected(self, mock_send_email, mock_get_current_site):

@@ -21,12 +21,18 @@
     <title>{% block page_title %}Oluwafemi Ebenezer Foundation{% endblock %} | OEF</title>
     <meta name="description" content="{% block meta_description %}Oluwafemi Ebenezer Foundation is a CAC-registered Nigerian nonprofit providing practical relief, dignity-focused care, social support, health awareness, learning support and opportunity programmes for vulnerable people and underserved communities.{% endblock %}">
     <meta name="robots" content="{% block robots %}index,follow{% endblock %}">
-    <link rel="canonical" href="{{ request.build_absolute_uri }}">
-    <meta property="og:type" content="website">
+    <link rel="canonical" href="{% block canonical_url %}{{ request.build_absolute_uri }}{% endblock %}">
+    <meta property="og:type" content="{% block social_type %}website{% endblock %}">
     <meta property="og:site_name" content="Oluwafemi Ebenezer Foundation">
     <meta property="og:title" content="{% block social_title %}Oluwafemi Ebenezer Foundation{% endblock %}">
     <meta property="og:description" content="{% block social_description %}Practical relief, dignity-focused care and community support for vulnerable people and underserved communities in Nigeria.{% endblock %}">
-    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    <meta property="og:url" content="{% block social_url %}{{ request.build_absolute_uri }}{% endblock %}">
+    <meta property="og:image" content="{% block social_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'img/logo/oef-logo.svg' %}{% endblock %}">
+    <meta property="og:image:alt" content="{% block social_image_alt %}Oluwafemi Ebenezer Foundation{% endblock %}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{% block twitter_title %}Oluwafemi Ebenezer Foundation{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}Practical relief, dignity-focused care and community support for vulnerable people and underserved communities in Nigeria.{% endblock %}">
+    <meta name="twitter:image" content="{% block twitter_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'img/logo/oef-logo.svg' %}{% endblock %}">
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",

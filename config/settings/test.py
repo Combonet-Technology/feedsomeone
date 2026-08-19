@@ -2,11 +2,11 @@
 
 import os
 
-from .base import *  # noqa: F401,F403
+from .base import *  # noqa: F401, F403
 
 SECRET_KEY = 'test-only-secret-key'
 DEBUG = False
-ALLOWED_HOSTS = ['testserver', 'localhost', 'example.com', 'google.com', 'mail.com']
+ALLOWED_HOSTS = ['testserver', 'localhost', '127.0.0.1', 'example.com', 'google.com', 'mail.com']
 
 DATABASES = {
     'default': {

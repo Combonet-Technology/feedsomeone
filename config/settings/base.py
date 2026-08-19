@@ -262,7 +262,6 @@ CMS_TEMPLATES = [
 AUTHENTICATION_BACKENDS = [
     'social_core.backends.facebook.FacebookOAuth2',
     'social_core.backends.twitter.TwitterOAuth',
-    'social_core.backends.google.GoogleOAuth2',
     'ext_libs.python_social.backends.LinkedinOAuth2',
     'django.contrib.auth.backends.ModelBackend',
 ]
@@ -306,15 +305,6 @@ SOCIAL_AUTH_TWITTER_KEY = os.environ.get('TWITTER_API_KEY')
 SOCIAL_AUTH_TWITTER_SECRET = os.environ.get('TWITTER_API_SECRET')
 SOCIAL_AUTH_TWITTER_OAUTH2_SECRET = os.environ.get('TWITTER_OAUTH2_CLIENT_ID_KEY')
 SOCIAL_AUTH_TWITTER_OAUTH2_KEY = os.environ.get('TWITTER_OAUTH2_CLIENT_SECRET')
-
-SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get('GOOGLE_OAUTH2_KEY')
-SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.environ.get('GOOGLE_OAUTH2_SECRET')
-SOCIAL_AUTH_GOOGLE_PLUS_KEY = os.environ.get('GOOGLE_OAUTH2_KEY')
-SOCIAL_AUTH_GOOGLE_PLUS_SECRET = os.environ.get('GOOGLE_OAUTH2_SECRET')
-SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = [
-    'https://www.googleapis.com/auth/userinfo.email',
-    'https://www.googleapis.com/auth/userinfo.profile'
-]
 
 SOCIAL_AUTH_LINKEDIN_OAUTH2_KEY = os.environ.get('LINKEDIN_OAUTH2_KEY')
 SOCIAL_AUTH_LINKEDIN_OAUTH2_SECRET = os.environ.get('LINKEDIN_OAUTH2_SECRET')
