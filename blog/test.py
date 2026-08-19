@@ -32,6 +32,7 @@ class ArticleCommentViewTests(TestCase):
         )
         self.article = Article.objects.create(
             article_title='Test Article',
+            article_excerpt='A concise description for readers and social previews.',
             article_slug='test-article',
             article_content='Article body',
             article_author=self.author,
@@ -82,3 +83,37 @@ class ArticleCommentViewTests(TestCase):
 
         messages = [str(message) for message in get_messages(response.wsgi_request)]
         self.assertIn('Your comment has been posted and is awaiting moderation', messages)
+
+    def test_article_page_has_page_specific_search_and_social_metadata(self):
+        response = self.client.get(self.url, HTTP_HOST='example.com')
+
+        self.assertContains(
+            response,
+            '<meta name="description" content="A concise description for readers and social previews.">',
+            html=True,
+        )
+        canonical_url = 'http://example.com' + self.url
+        self.assertContains(
+            response,
+            f'<link rel="canonical" href="{canonical_url}">',
+            html=True,
+        )
+        self.assertContains(response, '<meta property="og:type" content="article">', html=True)
+        self.assertContains(response, '<meta property="og:title" content="Test Article">', html=True)
+        self.assertContains(
+            response,
+            '<meta property="og:image" content="http://example.com/media/feature_default.jpg">',
+            html=True,
+        )
+        self.assertContains(response, '<meta name="twitter:card" content="summary_large_image">', html=True)
+        self.assertContains(response, '"@type": "Article"')
+        self.assertContains(response, '<h1 class="article-title">Test Article</h1>', html=True)
+
+    def test_reply_form_is_collapsed_by_default_and_sidebar_assets_are_loaded(self):
+        response = self.client.get(self.url)
+
+        self.assertContains(response, '<details class="comment-form comment-reply" id="commentReply">', html=False)
+        self.assertContains(response, '<summary id="commentReplySummary">Leave a reply</summary>', html=True)
+        self.assertNotContains(response, '<details class="comment-form comment-reply" id="commentReply" open>')
+        self.assertContains(response, 'css/article-detail.css')
+        self.assertContains(response, 'js/article-detail.js')

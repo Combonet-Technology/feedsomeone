@@ -3,6 +3,21 @@
 {% load static %}
 {% load crispy_forms_tags %}
 {% load blog_tags %}
+{% block meta_description %}{{ article_meta.description }}{% endblock %}
+{% block canonical_url %}{{ article_meta.canonical_url }}{% endblock %}
+{% block social_type %}article{% endblock %}
+{% block social_title %}{{ article.article_title }}{% endblock %}
+{% block social_description %}{{ article_meta.description }}{% endblock %}
+{% block social_url %}{{ article_meta.canonical_url }}{% endblock %}
+{% block social_image %}{{ article_meta.image_url }}{% endblock %}
+{% block social_image_alt %}{{ article_meta.image_alt }}{% endblock %}
+{% block twitter_title %}{{ article.article_title }}{% endblock %}
+{% block twitter_description %}{{ article_meta.description }}{% endblock %}
+{% block twitter_image %}{{ article_meta.image_url }}{% endblock %}
+{% block structured_data_extra %}
+    <script type="application/ld+json">{{ article_meta.structured_data|safe }}</script>
+{% endblock %}
+{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/article-detail.css' %}?v=20260819-2">{% endblock %}
 {% block content %}
 
 <main>
@@ -33,8 +48,7 @@
                                  alt="">
                         </div>
                         <div class="blog_details">
-                            <h2 style="color: #2d2d2d;">{{article.article_title}}
-                            </h2>
+                            <h1 class="article-title">{{article.article_title}}</h1>
                             <ul class="blog-info-link mt-3 mb-4">
                                 <li>Post by <a
                                         href="{% url 'article:article-by-user' article.article_author.username %}"><i
@@ -42,9 +56,9 @@
                                 </li>
                                 <!--                           <li><a href="#"><i class="fa fa-comments"></i> 03 Comments</a></li>-->
                             </ul>
-                            <p>
+                            <div class="article-content">
                                 {{article.article_content | markdown_filter}}
-                            </p>
+                            </div>
                         </div>
                     </div>
                     <div class="navigation-top">
@@ -147,8 +161,8 @@
                     </div>
 
 
-                    <div class="comment-form">
-                        <h4>Leave a Reply</h4>
+                    <details class="comment-form comment-reply" id="commentReply">
+                        <summary id="commentReplySummary">Leave a reply</summary>
                         <form name="comment_form" class="form-contact comment_form"
                               action="{{ article.get_absolute_url }}"
                               id="commentForm" method="post">
@@ -156,24 +170,28 @@
                             <div class="row">
                                 <div class="col-12">
                                     <div class="form-group">
+                                 <label class="sr-only" for="body">Comment</label>
                                  <textarea class="form-control w-100" name="body" id="body" cols="30" rows="9"
                                            placeholder="Write Comment"></textarea>
                                     </div>
                                 </div>
                                 <div class="col-sm-6">
                                     <div class="form-group">
+                                        <label class="sr-only" for="name">Name</label>
                                         <input class="form-control" name="name" id="name" type="text"
                                                placeholder="Name">
                                     </div>
                                 </div>
                                 <div class="col-sm-6">
                                     <div class="form-group">
+                                        <label class="sr-only" for="email">Email</label>
                                         <input class="form-control" name="email" id="email" type="email"
                                                placeholder="Email">
                                     </div>
                                 </div>
                                 <div class="col-12">
                                     <div class="form-group">
+                                        <label class="sr-only" for="website">Website (optional)</label>
                                         <input class="form-control" name="website" id="website" type="text"
                                                placeholder="Website (optional)">
                                     </div>
@@ -185,9 +203,9 @@
                                 <p class="mt-2 mb-0 small text-muted">Comments are reviewed before they appear publicly.</p>
                             </div>
                         </form>
-                    </div>
+                    </details>
                 </div>
-                <div class="col-lg-4">
+                <div class="col-lg-4 article-sidebar-column">
                     <div class="blog_right_sidebar">
 
                         {% if similar %}
@@ -223,3 +241,4 @@
 </main>
 
 {% endblock %}
+{% block extra_script %}<script src="{% static 'js/article-detail.js' %}?v=20260819-1"></script>{% endblock %}

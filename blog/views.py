@@ -17,6 +17,7 @@ from taggit.models import Tag
 
 from blog.forms import ArticleForm, CommentForm, EmailShareForm, SearchForm
 from blog.models import Article, Categories
+from blog.seo import build_article_meta
 # Get an instance of a logger
 from ext_libs.email_service import send_email
 from utils.views import custom_paginator, get_actual_template
@@ -114,6 +115,7 @@ def article_detail(request, year, month, day, slug):
         # comment_form = CommentForm()
         return render(request, template_name, {
             'article': article,
+            'article_meta': build_article_meta(request, article),
             'comments': comments,
             'new_comment': posted_comment,
             'similar': similar_articles,
