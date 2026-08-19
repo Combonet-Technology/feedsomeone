@@ -85,10 +85,6 @@ services:
         sync: false
       - key: FACEBOOK_SECRET
         sync: false
-      - key: GOOGLE_OAUTH2_KEY
-        sync: false
-      - key: GOOGLE_OAUTH2_SECRET
-        sync: false
       - key: LINKEDIN_OAUTH2_KEY
         sync: false
       - key: LINKEDIN_OAUTH2_SECRET
