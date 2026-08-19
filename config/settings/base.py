@@ -325,7 +325,7 @@ BREVO_API_KEY = os.environ.get('BREVO_API_KEY')
 BREVO_API_BASE_URL = os.environ.get('BREVO_API_BASE_URL', 'https://api.brevo.com/v3')
 BREVO_SENDER_EMAIL = os.environ.get('BREVO_SENDER_EMAIL') or EMAIL_NO_REPLY or EMAIL_HOST_USER
 BREVO_SENDER_NAME = os.environ.get('BREVO_SENDER_NAME', 'Oluwafemi Ebenezer Foundation')
-BREVO_REPLY_TO_EMAIL = os.environ.get('BREVO_REPLY_TO_EMAIL') or GMAIL_EMAIL
+BREVO_REPLY_TO_EMAIL = 'noreply@oluwafemiebenezerfoundation.org'
 BREVO_CONTACT_RECIPIENTS = [
     email.strip()
     for email in os.environ.get('BREVO_CONTACT_RECIPIENTS', GMAIL_EMAIL or '').split(',')

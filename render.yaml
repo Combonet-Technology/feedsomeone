@@ -47,8 +47,6 @@ services:
         sync: false
       - key: BREVO_SENDER_NAME
         value: Oluwafemi Ebenezer Foundation
-      - key: BREVO_REPLY_TO_EMAIL
-        sync: false
       - key: BREVO_CONTACT_RECIPIENTS
         sync: false
       - key: BREVO_NEWSLETTER_LIST_ID
