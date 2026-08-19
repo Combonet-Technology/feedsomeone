@@ -1,5 +1,6 @@
 from unittest.mock import Mock, patch
 
+from django.conf import settings
 from django.contrib.messages import get_messages
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -106,6 +107,12 @@ class ContactViewTests(TestCase):
 
 
 class BrevoEmailServiceTests(TestCase):
+    def test_default_reply_to_uses_verified_oef_no_reply_address(self):
+        self.assertEqual(
+            settings.BREVO_REPLY_TO_EMAIL,
+            "noreply@oluwafemiebenezerfoundation.org",
+        )
+
     @override_settings(
         BREVO_API_KEY="test-api-key",
         BREVO_API_BASE_URL="https://api.brevo.com/v3",
