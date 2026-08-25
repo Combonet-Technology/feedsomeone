@@ -2,65 +2,72 @@
 {% load static %}
 {% block page_title %}Our Impact{% endblock %}
 {% block social_title %}Our Impact | Oluwafemi Ebenezer Foundation{% endblock %}
-{% block meta_description %}Review OEF impact records from Feed Someone outreach, community relief, founder-funded support and evidence-safe reporting since 2019.{% endblock %}
-{% block social_description %}OEF impact records show documented Feed Someone outreach, community relief and cautious evidence-based reporting since 2019.{% endblock %}
+{% block meta_description %}Explore OEF's community impact since 2019, from Feed Someone relief outreaches to practical support that advances dignity, wellbeing and opportunity.{% endblock %}
+{% block social_description %}See how OEF turns community action into practical support for people facing hardship, with dignity, care and opportunity at the centre.{% endblock %}
 {% block content %}
+<style>
+    .oef-impact-list { max-width: 900px; margin: 0 auto; }
+    .oef-impact-card { margin-bottom: 56px; }
+    .oef-impact-card__meta { margin-bottom: 20px; color: #001b5e; font-size: 16px; font-weight: 700; }
+    .oef-impact-card h2 { margin-bottom: 8px; font-size: 20px; line-height: 1.4; font-weight: 500; }
+    .oef-impact-card p { margin-bottom: 20px; line-height: 1.9; }
+    .oef-impact-intro { max-width: 900px; margin: 0 auto 65px; text-align: center; }
+    .oef-impact-intro .section-tittle { margin-bottom: 20px; }
+    .oef-impact-intro p { line-height: 1.9; }
+    .oef-impact-card__link {
+        display: inline-block;
+        padding: 11px 20px;
+        border: 1px solid #1f2b7b;
+        background: #1f2b7b;
+        color: #fff !important;
+        font-size: 14px;
+        font-weight: 700;
+        line-height: 1.4;
+    }
+    .oef-impact-card__link:hover,
+    .oef-impact-card__link:focus {
+        border-color: #09a96f;
+        background: #09a96f;
+        color: #fff !important;
+        text-decoration: none;
+    }
+    .oef-impact-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 14px; margin-top: 65px; }
+    @media (max-width: 767px) {
+        .oef-impact-card { margin-bottom: 42px; }
+    }
+</style>
 <main>
     <div class="slider-area2">
         <div class="slider-height2 d-flex align-items-center">
             <div class="container text-center"><h1>Our Impact</h1></div>
         </div>
     </div>
-    <section class="section-padding30">
+    <section class="section-padding">
         <div class="container">
-            <div class="row justify-content-center mb-50">
-                <div class="col-lg-9 text-center">
-                    <div class="section-tittle">
-                        <span>Grassroots action since 2019</span>
-                        <h2>Founder-funded, volunteer-supported, and now becoming grant-ready</h2>
-                    </div>
-                    <p>OEF's public impact record begins with Feed Someone, a volunteer-led relief movement that started in Akure in 2019. We are publishing this history carefully: completed work is separated from planned programmes, and uncertain counts or institution details are clearly marked for verification.</p>
+            <div class="oef-impact-intro">
+                <div class="section-tittle">
+                    <span>Community action since 2019</span>
+                    <h2>Practical support that protects dignity and opens pathways forward</h2>
                 </div>
+                <p>OEF began with Feed Someone in Akure in 2019, when volunteers came together to provide meals and essential support to underserved communities. That same community spirit guides our work today: meeting urgent needs with care and helping vulnerable people move towards greater safety, wellbeing, learning and opportunity.</p>
             </div>
-
-            <div class="row">
-                <div class="col-lg-6 mb-40">
-                    <h3>Feed Someone 1.0</h3>
-                    <p><strong>27 December 2019 &middot; Akure, Ondo State</strong></p>
-                    <p>Friends and volunteers prepared meals, bought drinks, and distributed them to an underserved street-connected community. The outreach reached approximately 150+ people.</p>
-                    <p><strong>Support delivered:</strong> cooked food, drinks, personal volunteer mobilisation.</p>
-                    <a href="{% url 'mainsite:gallery' %}?event=feed-someone-1.0" class="genric-btn primary">View gallery</a>
-                </div>
-                <div class="col-lg-6 mb-40">
-                    <h3>Feed Someone 2.0</h3>
-                    <p><strong>December 2020 &middot; Akure, Ondo State</strong></p>
-                    <p>The outreach expanded from community feeding into institution-based relief. Two children's homes and an underserved street-connected community received practical support.</p>
-                    <p><strong>Support delivered:</strong> staple food items, baby-care supplies, hygiene and household essentials, clothing, footwear, and other practical relief materials gathered through volunteer and workplace mobilisation.</p>
-                    <a href="{% url 'mainsite:gallery' %}?event=feed-someone-2.0" class="genric-btn primary">View gallery</a>
-                </div>
-                <div class="col-lg-6 mb-40">
-                    <h3>Collaborative outreach support</h3>
-                    <p><strong>2021 &middot; Abeokuta, Ogun State</strong></p>
-                    <p>The founder participated in or supported an independently led outreach reported to have reached approximately 200 children. Exact date, partner details, and OEF's role are being verified before stronger public attribution.</p>
-                </div>
-                <div class="col-lg-6 mb-40">
-                    <h3>Orphanage Relief</h3>
-                    <p><strong>9 August 2022 &middot; Lugbe / Airport Road axis, Abuja</strong></p>
-                    <p>A founder-funded visit delivered food items and practical relief supplies to a children's home with help from a small group of friends. The institution name and beneficiary count are pending confirmation.</p>
-                </div>
-                <div class="col-lg-12 mb-40">
-                    <h3>Partner-led rural outreach support</h3>
-                    <p><strong>2025-2026 &middot; Nigeria</strong></p>
-                    <p>The founder has also supported partner-led rural outreach activities involving food items, clothing, medicine, and medical checks. These contributions are being documented internally and will be published with exact figures only where receipts, partner consent, and records support public attribution.</p>
-                </div>
+            <div class="oef-impact-list">
+                {% for event in events %}
+                    <article class="oef-impact-card">
+                        <h2><a href="{% url 'event-details' event.id event.event_slug %}">{{ event.title }}</a></h2>
+                        <div class="oef-impact-card__meta">
+                            <time datetime="{{ event.event_date|date:'Y-m-d' }}">{{ event.event_date|date:"j F Y" }}</time>
+                            <span aria-hidden="true"> &middot; </span>{{ event.location }}
+                        </div>
+                        <p>{{ event.description|default:event.content|striptags|truncatewords:35 }}</p>
+                        <a class="oef-impact-card__link" href="{% url 'event-details' event.id event.event_slug %}">View impact details <span aria-hidden="true">&rarr;</span></a>
+                    </article>
+                {% empty %}<div class="text-center"><h3>Impact records will appear here.</h3></div>{% endfor %}
             </div>
-
-            <div class="row justify-content-center mt-30">
-                <div class="col-lg-9 text-center">
-                    <p><em>Impact records are being strengthened as OEF prepares for responsible first-grant partnerships. Where exact beneficiary records are unavailable, we use cautious wording and identify gaps clearly.</em></p>
-                    <a href="{% url 'mainsite:transparency' %}" class="btn">Review transparency notes</a>
-                    <a href="{% url 'contact' %}" class="btn ml-3">Partner with us</a>
-                </div>
+            {% include "pagination.html" %}
+            <div class="oef-impact-actions">
+                <a href="{% url 'mainsite:transparency' %}" class="oef-impact-card__link">Review transparency notes</a>
+                <a href="{% url 'contact' %}" class="oef-impact-card__link">Partner with us</a>
             </div>
         </div>
     </section>

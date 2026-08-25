@@ -1,0 +1,32 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+{% block breadcrumbs %}
+<div class="breadcrumbs"><a href="{% url 'admin:index' %}">Home</a> &rsaquo; <a href="{{ list_url }}">Gallery images</a> &rsaquo; Add images</div>
+{% endblock %}
+{% block extrastyle %}{{ block.super }}
+<style>
+.oef-gallery-upload{max-width:1040px;margin:0 auto;padding:0 1rem 3rem}.oef-gallery-upload__head{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1.5rem}.oef-gallery-upload__head p{max-width:700px;color:#5a6572;font-size:16px}.oef-secondary,.oef-choose{display:inline-block;border-radius:4px;padding:.7rem 1rem;font-weight:700;text-decoration:none!important}.oef-secondary{border:1px solid #1f2b7b;color:#1f2b7b!important;background:#fff}.oef-choose{margin-top:.5rem;background:#1f2b7b;color:#fff}.oef-dropzone{border:2px dashed #98a6b5;border-radius:10px;background:#fff;padding:3rem 1.5rem;text-align:center;cursor:pointer}.oef-dropzone:hover,.oef-dropzone:focus,.oef-dropzone.is-dragging{border-color:#1f2b7b;background:#f5f7ff;outline:0}.oef-dropzone:hover .oef-choose,.oef-dropzone:focus .oef-choose{background:#09a96f}.oef-file-input{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}.oef-upload-status{display:block;margin-top:1rem;color:#3d4855}.oef-review[hidden]{display:none}.oef-review{position:fixed;z-index:1100;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(20,28,38,.58);padding:3vh 1rem;overflow:hidden}.oef-review__panel{display:flex;flex-direction:column;width:100%;max-width:960px;max-height:80vh;max-height:80dvh;margin:0 auto;background:#fff;border-radius:10px;box-shadow:0 16px 48px rgba(0,0,0,.22);overflow:hidden}.oef-review__head,.oef-review__body,.oef-review__foot{padding:1.25rem 1.5rem}.oef-review__head{flex:0 0 auto;border-bottom:1px solid #e1e6eb}.oef-review__head h2{margin:0 0 .35rem}.oef-review__body{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable}.oef-review__fields{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem}.oef-review label{display:block;font-weight:700;margin-bottom:.4rem}.oef-review select,.oef-review input[type=text]{width:100%;box-sizing:border-box;background:#fff!important;color:#17202a!important;border:1px solid #bdc7d1!important;border-radius:5px;padding:.72rem .8rem}.oef-review__items{display:grid;gap:.75rem}.oef-review__item{display:grid;grid-template-columns:100px minmax(0,1fr) auto;gap:1rem;align-items:center;padding:.8rem;border:1px solid #e1e6eb;border-radius:8px}.oef-review__item img{width:100px;height:74px;object-fit:cover;border-radius:5px}.oef-review__filename{display:block;margin-bottom:.45rem;overflow-wrap:anywhere}.oef-review__remove{border:0;background:transparent;color:#a51d2d;text-decoration:underline;cursor:pointer}.oef-review__foot{flex:0 0 auto;display:flex;justify-content:flex-end;gap:.75rem;border-top:1px solid #e1e6eb;background:#fff;border-radius:0 0 10px 10px}.oef-primary{background:#1f2b7b!important;border-color:#1f2b7b!important;color:#fff!important}.oef-primary:hover{background:#09a96f!important;border-color:#09a96f!important}@media(max-width:700px){.oef-review{align-items:stretch;padding:0}.oef-review__panel{max-height:100vh;max-height:100dvh;border-radius:0}.oef-review__fields{grid-template-columns:1fr}.oef-review__item{grid-template-columns:76px minmax(0,1fr)}.oef-review__item img{width:76px;height:58px}.oef-review__remove{grid-column:2;text-align:left}.oef-review__foot{border-radius:0}}
+</style>{% endblock %}
+{% block content %}
+<div class="oef-gallery-upload">
+  <div class="oef-gallery-upload__head"><p>Select several photographs. They are staged locally first, so nothing reaches Cloudinary until you review the batch and confirm the upload.</p><a class="oef-secondary" href="{{ list_url }}">Manage gallery images</a></div>
+  <form id="oef-stage-form" action="{{ stage_url }}" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="oef-dropzone" id="oef-dropzone" tabindex="0" role="button" aria-controls="oef-images"><strong>Drop photographs here</strong><p>or choose several JPEG, PNG or WebP images.</p><span class="oef-choose">Choose images</span><input class="oef-file-input" id="oef-images" name="images" type="file" accept="image/jpeg,image/png,image/webp" multiple></div>
+    <span class="oef-upload-status" id="oef-upload-status" role="status" aria-live="polite"></span>
+  </form>
+</div>
+<div class="oef-review" id="oef-review" hidden role="dialog" aria-modal="true" aria-labelledby="oef-review-title">
+  <form class="oef-review__panel" id="oef-review-form" action="{{ commit_url }}" method="post">
+    {% csrf_token %}<input type="hidden" name="batch_id" id="oef-batch-id">
+    <div class="oef-review__head"><h2 id="oef-review-title">Review images before upload</h2><p>Assign the event and optional metadata. Alternative text can also be edited later.</p></div>
+    <div class="oef-review__body">
+      <div class="oef-review__fields"><div><label for="oef-event">Event</label><select id="oef-event" name="event" required><option value="">Select an event</option>{% for event in events %}<option value="{{ event.pk }}" {% if selected_event == event.pk|stringformat:'s' %}selected{% endif %}>{{ event.title }}{% if event.event_date %} — {{ event.event_date|date:"Y" }}{% endif %}</option>{% endfor %}</select></div><div><label for="oef-tags">Additional tags <small>(optional)</small></label><input id="oef-tags" name="tags" type="text" placeholder="volunteers, food-relief"><small>The event and local/production environment tags are added automatically.</small></div></div>
+      <div class="oef-review__items" id="oef-review-items"></div>
+    </div>
+    <div class="oef-review__foot"><button class="button" id="oef-cancel-batch" type="button">Cancel batch</button><button class="button oef-primary" type="submit">Upload to Cloudinary</button></div>
+  </form>
+</div>
+<script>window.OEFGalleryUpload={removeUrl:"{{ remove_url|escapejs }}",cancelUrl:"{{ cancel_url|escapejs }}"};</script>
+<script src="{% static 'events/js/gallery-batch-upload.js' %}?v=3"></script>
+{% endblock %}

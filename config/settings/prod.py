@@ -37,8 +37,21 @@ if os.environ.get('DATABASE_URL'):
         'PORT': database_url.port,
     }
 
-CSRF_TRUSTED_ORIGINS = os.environ.get("ALLOWED_CSRF").split(" ")
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS").split(" ")
+def _trusted_origin(value):
+    value = value.strip()
+    if not value or '://' in value:
+        return value
+    if value.count(':') > 1 and not value.startswith('['):
+        value = f'[{value}]'
+    return f'https://{value}'
+
+
+CSRF_TRUSTED_ORIGINS = [
+    _trusted_origin(value)
+    for value in os.environ.get('ALLOWED_CSRF', '').split()
+    if value.strip()
+]
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split()
 
 # Render terminates TLS before forwarding requests to Django. Trust its
 # forwarded protocol header so SecurityMiddleware can apply HTTPS-only
@@ -72,7 +85,7 @@ STORAGES = {
         'BACKEND': 'cloudinary_storage.storage.MediaCloudinaryStorage',
     },
     'staticfiles': {
-        'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
+        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
     },
 }
 

@@ -18,6 +18,7 @@ DATABASES = {
 EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
 PASSWORD_HASHERS = ['django.contrib.auth.hashers.MD5PasswordHasher']
 TEST_RUNNER = 'django.test.runner.DiscoverRunner'
+OEF_CLOUDINARY_ENVIRONMENT = 'test'
 
 # Legacy project migrations contain PostgreSQL-specific operations. Tests build
 # the local app tables directly from the current models while retaining Django

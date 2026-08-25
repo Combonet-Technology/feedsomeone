@@ -14,9 +14,9 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.urls import path
+from django.views.generic import RedirectView
 
 from mainsite import views
-from mainsite.views import AllGalleryImagesListView
 
 app_name = 'mainsite'
 
@@ -27,7 +27,11 @@ urlpatterns = [
     path('impact/', views.impact, name='impact'),
     path('transparency/', views.transparency, name='transparency'),
     path('robots.txt', views.robots_txt, name='robots-txt'),
-    path('gallery/', AllGalleryImagesListView.as_view(), name="gallery"),
+    path(
+        'gallery/',
+        RedirectView.as_view(pattern_name='mainsite:impact', permanent=True),
+        name='gallery',
+    ),
     path('donate/', views.donate, name='donate'),
     path('upload/', views.upload_images, name='imageuploader'),
     path('webhooks/', views.webhooks, name='webhooks'),

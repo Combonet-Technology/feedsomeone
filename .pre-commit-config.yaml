@@ -33,7 +33,16 @@ repos:
     hooks:
       - id: flake8
         exclude: ^.*\/migrations\/.*$|^config
-        args: [ '--max-line-length=120' ]
+        args:
+          - '--max-line-length=120'
+          # Flake8 6 mis-tokenises URL/HTTP punctuation inside f-strings on
+          # Python 3.12. Keep the exceptions scoped to the affected files.
+          - >-
+            --per-file-ignores=blog/test_editorial.py:E231,
+            events/admin.py:E702,
+            events/test_admin_gallery.py:E231,
+            events/test_gallery.py:E231,
+            mainsite/management/commands/backfill_event_gallery_tags.py:E231
 
 
   - repo: https://github.com/asottile/yesqa
@@ -48,3 +57,4 @@ repos:
     rev: v2.2.4
     hooks:
       - id: codespell
+        exclude: ^assets/blog/vendor/cropperjs/|^poetry\.lock$

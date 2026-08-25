@@ -12,6 +12,8 @@ services:
       POSTGRES_PORT: 5432
       POSTGRES_DB_USER: postgres
       POSTGRES_DB_PASS: postgres
+      OEF_CLOUDINARY_ENVIRONMENT: local
+      CLOUDINARY_GALLERY_ENABLED: "true"
     ports:
       - "8000:8000"
     volumes:

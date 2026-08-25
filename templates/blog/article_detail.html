@@ -1,17 +1,17 @@
 {% extends 'base.html' %}
-{% block page_title %}{{article.article_title}}{% endblock %}
+{% block page_title %}{{article.public_title}}{% endblock %}
 {% load static %}
 {% load crispy_forms_tags %}
 {% load blog_tags %}
 {% block meta_description %}{{ article_meta.description }}{% endblock %}
 {% block canonical_url %}{{ article_meta.canonical_url }}{% endblock %}
 {% block social_type %}article{% endblock %}
-{% block social_title %}{{ article.article_title }}{% endblock %}
+{% block social_title %}{{ article.public_title }}{% endblock %}
 {% block social_description %}{{ article_meta.description }}{% endblock %}
 {% block social_url %}{{ article_meta.canonical_url }}{% endblock %}
 {% block social_image %}{{ article_meta.image_url }}{% endblock %}
 {% block social_image_alt %}{{ article_meta.image_alt }}{% endblock %}
-{% block twitter_title %}{{ article.article_title }}{% endblock %}
+{% block twitter_title %}{{ article.public_title }}{% endblock %}
 {% block twitter_description %}{{ article_meta.description }}{% endblock %}
 {% block twitter_image %}{{ article_meta.image_url }}{% endblock %}
 {% block structured_data_extra %}
@@ -44,11 +44,11 @@
                     <div class="single-post">
                         <div class="feature-img">
                             <img class="img-fluid"
-                                 src="{% if article.feature_img %}{{ article.feature_img.url }}{%endif%}"
-                                 alt="">
+                                 src="{{ article.public_feature_image_url }}"
+                                 alt="{{ article.public_title }}">
                         </div>
                         <div class="blog_details">
-                            <h1 class="article-title">{{article.article_title}}</h1>
+                            <h1 class="article-title">{{article.public_title}}</h1>
                             <ul class="blog-info-link mt-3 mb-4">
                                 <li>Post by <a
                                         href="{% url 'article:article-by-user' article.article_author.username %}"><i
@@ -57,7 +57,7 @@
                                 <!--                           <li><a href="#"><i class="fa fa-comments"></i> 03 Comments</a></li>-->
                             </ul>
                             <div class="article-content">
-                                {{article.article_content | markdown_filter}}
+                                {{article.public_content|safe}}
                             </div>
                         </div>
                     </div>
@@ -213,10 +213,10 @@
                             <h3 class="widget_title" style="color: #2d2d2d;">You may also like</h3>
                             {% for post in similar %}
                             <div class="media post_item">
-                                <img src="{{ post.feature_img.url }}" alt="post">
+                                <img src="{{ post.public_feature_image_url }}" alt="{{ post.public_title }}">
                                 <div class="media-body">
                                     <a href="{{ post.get_absolute_url }}">
-                                        <h3 style="color: #2d2d2d;">{{post.article_title}}</h3>
+                                        <h3 style="color: #2d2d2d;">{{post.public_title}}</h3>
                                     </a>
                                     <p>{{ post.date_created | date:"d M" }}, {{ post.date_created | date:"Y" }}</p>
                                 </div>

@@ -2,31 +2,34 @@
 {% block page_title %}{{event.title}}{% endblock %}
 {% load static %}
 {% load crispy_forms_tags %}
+{% block extra_styles %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'events/css/event-gallery-carousel.css' %}?v=2">
+{% endblock %}
 {% block content %}
-
+<style>
+   .oef-impact-detail .feature-img img { width: 100%; max-height: 520px; object-fit: cover; }
+   .oef-impact-detail-section { padding-top: 56px; }
+   .oef-impact-copy { color: #506172; font-family: inherit; font-size: 16px; line-height: 1.8; }
+   .oef-impact-actions { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 30px; }
+   .oef-impact-actions a { margin: 0 !important; position: relative; z-index: 1; }
+   .oef-impact-actions .oef-primary { background: #1f2b7b; border: 1px solid #1f2b7b; color: #fff; }
+   .oef-impact-actions .oef-primary:hover, .oef-impact-actions .oef-primary:focus { background: #111a55; color: #fff; }
+   .oef-impact-actions .oef-secondary { background: #fff; border: 1px solid #1f2b7b; color: #1f2b7b; }
+   .oef-impact-actions .oef-secondary:hover, .oef-impact-actions .oef-secondary:focus { background: #1f2b7b; color: #fff; }
+   .oef-gallery-disclosure { margin-top: 45px; border-top: 1px solid #e5e7ee; padding-top: 24px; }
+   .oef-gallery-disclosure summary { cursor: pointer; display: inline-block; color: #1f2b7b; font-weight: 700; border: 1px solid #1f2b7b; padding: 11px 18px; list-style: none; }
+   .oef-gallery-disclosure summary::-webkit-details-marker { display: none; }
+   @media (max-width: 767px) { .oef-impact-detail-section { padding-top: 36px; } }
+</style>
 
    <main>
-      <!--? Hero Start -->
-      <div class="slider-area2">
-         <div class="slider-height2 d-flex align-items-center">
-               <div class="container">
-                  <div class="row">
-                     <div class="col-xl-12">
-                           <div class="hero-cap hero-cap2 pt-20 text-center">
-                              <h2>Programme Record</h2>
-                           </div>
-                     </div>
-                  </div>
-               </div>
-         </div>
-      </div>
-      <!-- Hero End -->
       <!--? Blog Area Start -->
-      <section class="blog_area single-post-area section-padding">
+      <section class="blog_area single-post-area section-padding oef-impact-detail-section">
          <div class="container">
-            <div class="row">
-               <div class="col-lg-8 posts-list">
-                  <div class="single-post">
+            <div class="row justify-content-center">
+               <div class="col-lg-10 posts-list">
+                  <div class="single-post oef-impact-detail">
                      <div class="feature-img">
                         <img class="img-fluid" src="{{event.feature_img.url}}" alt="">
                      </div>
@@ -37,20 +40,12 @@
                            <li><a href="#"><i class="fa fa-location"></i>{{event.location}}</a></li>
                            <li><a href="#"><i class="fa fa-calendar"></i> {{event.event_date | date:"F d, Y"}}</a></li>
                         </ul>
-                        <p class="excert" style="font-size: 20px; line-height: 1.5em">
+                        <div class="oef-impact-copy">
                             {{event.content}}
-                        </p>
-                        <div class="quote-wrapper">
-                           <div class="quotes">
-                               <div class=" row">
-                                   <h2>Help OEF turn verified outreach history into stronger programmes, partnerships and future grants.</h2>
-                                   <div class="button-group-area mt-10">
-                                   <a href="{% url 'register'%}" class="genric-btn primary e-large">Volunteer</a>
-                                   <a href="{% url 'contact'%}" class="genric-btn primary-border e-large ml-3">Partner with us</a>
-                                   <a href="{% url 'mainsite:donate'%}" class="genric-btn primary-border e-large ml-3">Donate</a>
-                                   </div>
-                                </div>
-                           </div>
+                        </div>
+                        <div class="oef-impact-actions">
+                           <a href="{% url 'contact'%}" class="genric-btn e-large oef-primary">Partner with us</a>
+                           <a href="{% url 'mainsite:impact'%}" class="genric-btn e-large oef-secondary">Back to all impact</a>
                         </div>
 <!--                         <div class="event-details">-->
 <!--                             <span>Location: {{event.location}}</span> | <span>Event Date: {{event.event_date}}</span> | <span>Budget: <span>&#8358;</span>{{event.budget}}</span>-->
@@ -58,28 +53,55 @@
                      </div>
                   </div>
 
-                  {% if gallery %}
-                  <section class="mt-50" aria-labelledby="event-gallery-title">
-                     <h2 id="event-gallery-title">{{ gallery.title }} gallery</h2>
-                     <p>{{ gallery.summary }}</p>
-                     {% if gallery_assets %}
-                     <div class="row gallery-item">
-                        {% for image in gallery_assets %}
-                        <div class="col-md-6 mb-30">
-                           <a href="{{ image.url }}" class="img-pop-up" aria-label="Open {{ image.alt }}">
-                              <img class="img-fluid" src="{{ image.thumbnail_url }}" width="640" height="480" loading="lazy" decoding="async" alt="{{ image.alt }}">
-                           </a>
+                  {% if gallery_assets %}
+                  <details class="oef-gallery-disclosure">
+                     <summary>View images ({{ gallery_assets|length }})</summary>
+                     <div class="oef-event-gallery" data-event-gallery data-active-index="0" aria-label="Photographs from {{ event.title }}">
+                        {% with first_image=gallery_assets.0 %}
+                        <a class="oef-gallery-preview" data-gallery-preview href="{{ first_image.url }}" aria-label="Open {{ first_image.alt }} in full screen">
+                           <img data-gallery-preview-image src="{{ first_image.url }}" alt="{{ first_image.alt }}" decoding="async">
+                           <span class="oef-gallery-preview-action"><i class="fas fa-search-plus" aria-hidden="true"></i> Open image</span>
+                           <span class="oef-gallery-counter" data-gallery-counter aria-live="polite">1 / {{ gallery_assets|length }}</span>
+                        </a>
+                        {% endwith %}
+
+                        <div class="oef-gallery-navigation" aria-label="Choose an image">
+                           <button class="oef-gallery-arrow" type="button" data-gallery-previous aria-label="Show previous image" title="Previous image">
+                              <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                           </button>
+                           <div class="oef-gallery-thumbnails" data-gallery-thumbnails role="list">
+                              {% for image in gallery_assets %}
+                              <button
+                                 class="oef-gallery-thumbnail{% if forloop.first %} is-active{% endif %}"
+                                 type="button"
+                                 role="listitem"
+                                 data-gallery-thumbnail
+                                 data-index="{{ forloop.counter0 }}"
+                                 data-full-url="{{ image.url }}"
+                                 data-alt="{{ image.alt }}"
+                                 aria-label="Show image {{ forloop.counter }} of {{ gallery_assets|length }}: {{ image.alt }}"
+                                 aria-current="{% if forloop.first %}true{% else %}false{% endif %}">
+                                 <img src="{{ image.thumbnail_url }}" width="96" height="72" loading="lazy" decoding="async" alt="">
+                              </button>
+                              {% endfor %}
+                           </div>
+                           <button class="oef-gallery-arrow" type="button" data-gallery-next aria-label="Show next image" title="Next image">
+                              <i class="fas fa-chevron-right" aria-hidden="true"></i>
+                           </button>
                         </div>
-                        {% endfor %}
+                        <p class="oef-gallery-help">Choose a thumbnail or use the arrow keys. Select the large image to open the full-screen viewer.</p>
+
+                        <div class="oef-gallery-lightbox-links" hidden>
+                           {% for image in gallery_assets %}
+                           <a href="{{ image.url }}" class="img-pop-up" data-gallery-lightbox-link title="{{ image.alt }}">{{ image.alt }}</a>
+                           {% endfor %}
+                        </div>
                      </div>
-                     {% else %}
-                     <p>This gallery is undergoing a consent and privacy review before public release.</p>
-                     {% endif %}
-                  </section>
+                  </details>
                   {% endif %}
 
                </div>
-               <div class="col-lg-4">
+               <div class="col-lg-4" hidden>
                   <div class="blog_right_sidebar">
                      <aside class="single_sidebar_widget search_widget">
                         <form action="#">
@@ -151,4 +173,8 @@
    </main>
 
 
+{% endblock %}
+{% block extra_script %}
+{{ block.super }}
+<script src="{% static 'events/js/event-gallery-carousel.js' %}?v=2"></script>
 {% endblock %}

@@ -28,7 +28,7 @@ def custom_paginator(request, page_size, queryset):
             return HttpResponse('')
         results = paginator.page(paginator.num_pages)
     is_paginated = len(results) > 0
-    return paginator, page, results, is_paginated
+    return paginator, results, results, is_paginated
 
 
 def get_actual_template(view_obj, extra_template):

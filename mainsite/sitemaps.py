@@ -37,7 +37,6 @@ class StaticViewSitemap(CanonicalDomainSitemap):
             'mainsite:what-is-oef',
             'mainsite:impact',
             'mainsite:transparency',
-            'mainsite:gallery',
             'mainsite:services',
             'mainsite:privacy',
             'opportunities:list',

@@ -1,0 +1,96 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <style>
+    .media-upload { max-width: 760px; margin-bottom: 2rem; }
+    .media-upload .form-row { margin-bottom: 0.75rem; }
+    .media-upload label { display: block; font-weight: 600; }
+    .media-upload input[type="text"] { width: min(100%, 680px); }
+    .media-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem; }
+    .media-card { border: 1px solid var(--hairline-color, #ddd); padding: 0.75rem; background: var(--body-bg, #fff); }
+    .media-card img { width: 100%; height: 140px; object-fit: cover; display: block; margin-bottom: 0.5rem; }
+    .media-card button { width: 100%; }
+    .media-status { min-height: 1.5rem; margin: 0.5rem 0; }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <h1>OEF editorial media</h1>
+  <p>Upload a new image or reuse an existing one. Alternative text is required.</p>
+
+  {% if perms.blog.add_mediaasset %}
+    <form class="media-upload" id="media-upload" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="form-row">
+        <label for="media-image">Image</label>
+        <input id="media-image" name="image" type="file" accept="image/jpeg,image/png,image/webp" required>
+      </div>
+      <div class="form-row">
+        <label for="media-alt">Alternative text</label>
+        <input id="media-alt" name="alt_text" type="text" maxlength="255" required>
+      </div>
+      <div class="form-row">
+        <label for="media-caption">Caption (optional)</label>
+        <input id="media-caption" name="caption" type="text" maxlength="500">
+      </div>
+      <button type="submit" class="button default">Upload image</button>
+      <p class="media-status" id="media-status" role="status"></p>
+    </form>
+  {% endif %}
+
+  <div class="media-grid" id="media-grid">
+    {% for asset in assets %}
+      <article class="media-card">
+        <img src="{{ asset.secure_url }}" alt="{{ asset.alt_text }}" loading="lazy">
+        <p><strong>{{ asset.original_filename }}</strong></p>
+        <p>{{ asset.alt_text }}</p>
+        <button type="button" class="button media-select"
+                data-url="{{ asset.secure_url }}"
+                data-alt="{{ asset.alt_text }}"
+                data-caption="{{ asset.caption }}">Use image</button>
+      </article>
+    {% empty %}
+      <p id="media-empty">No editorial images have been uploaded yet.</p>
+    {% endfor %}
+  </div>
+
+  <script>
+    (() => {
+      const funcNum = "{{ func_num|escapejs }}"
+      const selectImage = (url, alt, caption) => {
+        if (!window.opener || !window.opener.CKEDITOR) return
+        window.opener.CKEDITOR.tools.callFunction(funcNum, url, {
+          alternative_text: alt,
+          caption: caption,
+        })
+        window.close()
+      }
+      document.addEventListener("click", (event) => {
+        const button = event.target.closest(".media-select")
+        if (button) selectImage(button.dataset.url, button.dataset.alt, button.dataset.caption)
+      })
+
+      const form = document.getElementById("media-upload")
+      if (!form) return
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault()
+        const status = document.getElementById("media-status")
+        status.textContent = "Uploading…"
+        const response = await fetch("{{ upload_url|escapejs }}", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "X-CSRFToken": form.querySelector("[name=csrfmiddlewaretoken]").value },
+          body: new FormData(form),
+        })
+        const payload = await response.json()
+        if (!response.ok) {
+          status.textContent = payload.error || "Upload failed."
+          return
+        }
+        selectImage(payload.url, payload.alt_text, payload.caption)
+      })
+    })()
+  </script>
+{% endblock %}

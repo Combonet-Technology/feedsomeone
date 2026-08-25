@@ -1,20 +1,16 @@
-import json
 import os
 from datetime import datetime
 
-from django.conf import settings
 from django.contrib import messages
+from django.core.paginator import Paginator
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
-from django.views.decorators.csrf import csrf_exempt
-from django.views.generic import ListView, TemplateView
+from django.views.generic import ListView
 
 from events.models import Events
 from ext_libs.rave.payment import RavePaymentHandler
 from mainsite.models import GalleryImage, TransactionHistory
-from mainsite.services.cloudinary_gallery import (get_gallery_assets,
-                                                  get_gallery_definition)
 from mainsite.utils import (create_transaction_history, get_or_create_donor,
                             get_or_create_user_profile,
                             handle_failed_transaction,
@@ -57,7 +53,12 @@ def what_is_oef(request):
 
 
 def impact(request):
-    return render(request, 'impact.html')
+    events = Events.objects.filter(event_date__lte=datetime.now()).order_by('event_date', 'title')
+    page_obj = Paginator(events, 6).get_page(request.GET.get('page'))
+    return render(request, 'impact.html', {
+        'events': page_obj.object_list,
+        'page_obj': page_obj,
+    })
 
 
 def transparency(request):
@@ -70,24 +71,6 @@ def robots_txt(request):
 
 
 # Post Page Fxn recreated into a class
-class AllGalleryImagesListView(TemplateView):
-    template_name = 'mainsite/gallery_list.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        gallery_slug = self.request.GET.get('event', '')
-        context['gallery_options'] = [
-            {'slug': slug, **definition}
-            for slug, definition in settings.CLOUDINARY_GALLERIES.items()
-        ]
-        context['selected_gallery'] = get_gallery_definition(gallery_slug)
-        context['selected_gallery_slug'] = gallery_slug if context['selected_gallery'] else ''
-        context['objects'] = get_gallery_assets(gallery_slug) if context['selected_gallery'] else []
-        context['gallery_enabled'] = settings.CLOUDINARY_GALLERY_ENABLED
-        return context
-
-
-# Post Page Fxn recreated into a class
 # convert into an inclusion tag and dynamically generate the images
 class FooterGalleryImages(ListView):
     model = GalleryImage
@@ -97,36 +80,9 @@ class FooterGalleryImages(ListView):
     paginate_by = 6
 
 
-@csrf_exempt
 def upload_images(request):
-    if request.method == 'POST':
-        event = request.POST['event']
-        if event:
-            response = {'files': []}
-            # Loop through our files in the files list uploaded
-            for image in request.FILES.getlist('files[]'):
-                # Create a new entry in our database
-                new_image = GalleryImage()
-                # Save the image using the model's ImageField settings
-                filename, ext = os.path.splitext(image.name)
-                new_image.image.save(f"{image.name}-{datetime.now()}{ext}", image)
-                new_image.image_title = filename
-                new_image.event_id = event
-                new_image.save()
-                # Save output for return as JSON
-                response['files'].append({
-                    'name': '%s' % image.name,
-                    'size': '%d' % image.size,
-                    'url': '%s' % new_image.image.url,
-                    'thumbnailUrl': '%s' % new_image.image.url,
-                    'deleteUrl': r'\/image\/delete\/%s' % image.name,
-                    "deleteType": 'DELETE'
-                })
-
-            return HttpResponse(json.dumps(response), content_type='application/json')
-    else:
-        event = Events.objects.all()
-        return render(request, 'file_upload.html', {'event': event})
+    messages.info(request, 'Event image uploads have moved to the event administration area.')
+    return redirect('admin:events_events_changelist')
 
 
 def donate(request):

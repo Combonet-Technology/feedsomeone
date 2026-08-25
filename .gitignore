@@ -200,3 +200,4 @@ graphify-out/
 *.dump
 *.sql.gz
 .vscode/
+/tmp/

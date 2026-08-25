@@ -338,7 +338,6 @@ margin-top:100px
                                                 </ul>
                                             </li>
                                             <li><a href="{% url 'contact' %}">Contact us</a></li>
-                                            <li><a href="{% url 'mainsite:gallery' %}">Gallery</a></li>
                                             <!--                                                <li><a href="blog.html">Blog</a>-->
                                             <!--                                                    <ul class="submenu">-->
                                             <!--                                                        <li><a href="blog.html">Blog</a></li>-->
@@ -398,33 +397,24 @@ margin-top:100px
             </div>
             <!-- /footer contact -->
 
-            <!-- footer galery -->
+            <!-- footer gallery -->
             <div class="col-md-4">
                 <div class="footer">
-                    <h3 class="footer-title">Gallery</h3>
-                    <ul class="footer-galery">
-                        <li><a href="{% url 'mainsite:gallery' %}"><img src="{% static 'img/fs-seven.jpg' %}"
-                                                                        alt=""></a></li>
-                        <li><a href="{% url 'mainsite:gallery' %}"><img src="{% static 'img/fs-three.jpg' %}"
-                                                                        alt=""></a></li>
-                        <li><a href="{% url 'mainsite:gallery' %}"><img src="{% static 'img/fs-five.jpg' %}" alt=""></a>
-                        </li>
-                        <li><a href="{% url 'mainsite:gallery' %}"><img src="{% static 'img/fs-four.jpg' %}" alt=""></a>
-                        </li>
-                        <li><a href="{% url 'mainsite:gallery' %}"><img src="{% static 'img/fs-six.jpg' %}" alt=""></a>
-                        </li>
-                        <li><a href="{% url 'mainsite:gallery' %}"><img src="{% static 'img/fs-two.jpg' %}" alt=""></a>
-                        </li>
-                        <li><a href="{% url 'mainsite:gallery' %}"><img src="{% static 'img/fs-nine.jpg' %}" alt=""></a>
-                        </li>
-                        <li><a href="{% url 'mainsite:gallery' %}"><img src="{% static 'img/fs-one.jpg' %}" alt=""></a>
-                        </li>
-                        <li><a href="{% url 'mainsite:gallery' %}"><img src="{% static 'img/fs-eight.jpg' %}"
-                                                                        alt=""></a></li>
+                    <h3 class="footer-title"><a href="{% url 'mainsite:impact' %}">Gallery</a></h3>
+                    <ul class="footer-galery" aria-label="OEF impact gallery">
+                        <li><a href="{% url 'mainsite:impact' %}" aria-label="View OEF impact photographs"><img src="{% static 'img/fs-seven.jpg' %}" alt="" loading="lazy"></a></li>
+                        <li><a href="{% url 'mainsite:impact' %}" aria-label="View OEF impact photographs"><img src="{% static 'img/fs-three.jpg' %}" alt="" loading="lazy"></a></li>
+                        <li><a href="{% url 'mainsite:impact' %}" aria-label="View OEF impact photographs"><img src="{% static 'img/fs-five.jpg' %}" alt="" loading="lazy"></a></li>
+                        <li><a href="{% url 'mainsite:impact' %}" aria-label="View OEF impact photographs"><img src="{% static 'img/fs-four.jpg' %}" alt="" loading="lazy"></a></li>
+                        <li><a href="{% url 'mainsite:impact' %}" aria-label="View OEF impact photographs"><img src="{% static 'img/fs-six.jpg' %}" alt="" loading="lazy"></a></li>
+                        <li><a href="{% url 'mainsite:impact' %}" aria-label="View OEF impact photographs"><img src="{% static 'img/fs-two.jpg' %}" alt="" loading="lazy"></a></li>
+                        <li><a href="{% url 'mainsite:impact' %}" aria-label="View OEF impact photographs"><img src="{% static 'img/fs-nine.jpg' %}" alt="" loading="lazy"></a></li>
+                        <li><a href="{% url 'mainsite:impact' %}" aria-label="View OEF impact photographs"><img src="{% static 'img/fs-one.jpg' %}" alt="" loading="lazy"></a></li>
+                        <li><a href="{% url 'mainsite:impact' %}" aria-label="View OEF impact photographs"><img src="{% static 'img/fs-eight.jpg' %}" alt="" loading="lazy"></a></li>
                     </ul>
                 </div>
             </div>
-            <!-- /footer galery -->
+            <!-- /footer gallery -->
 
             <!-- footer newsletter -->
             <div class="col-md-4">

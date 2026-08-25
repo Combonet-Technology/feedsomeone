@@ -8,6 +8,7 @@ from django.urls import reverse
 
 from ext_libs.email_service import EmailProviderError, send_email
 from user.models import UserProfile
+from utils.cloudinary_paths import cloudinary_folder
 
 from .models import Vacancy, VacancyApplication, VolunteerOffer
 from .offers import render_offer_pdf, send_volunteer_offer
@@ -122,7 +123,11 @@ class VolunteerOfferWorkflowTests(TestCase):
         self.assertEqual(offer.brevo_message_id, 'brevo-message-123')
         self.assertEqual(offer.sent_by, self.sender)
         self.assertIsNotNone(offer.sent_at)
-        self.assertTrue(offer.letter_pdf.name.startswith('vacancy_applications/private_offers/'))
+        self.assertTrue(
+            offer.letter_pdf.name.startswith(
+                f'{cloudinary_folder("vacancy-applications", "private-offers")}/'
+            )
+        )
         with offer.letter_pdf.open('rb') as letter:
             self.assertEqual(letter.read(), b'%PDF-test-offer')
 
