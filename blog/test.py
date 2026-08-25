@@ -223,6 +223,12 @@ class ArticleCommentViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, 'Waiting for approval.')
 
+    def test_article_without_feature_image_omits_feature_image_container(self):
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, '<div class="feature-img">', html=True)
+
     def test_success_message_explains_moderation(self):
         response = self.client.post(self.url, {
             'name': 'Reader',
