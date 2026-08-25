@@ -11,8 +11,8 @@ python manage.py collectstatic --no-input
 echo "Apply database migrations"
 python manage.py migrate --noinput
 
-if [[ "${OEF_RUN_GALLERY_PORT_ON_DEPLOY:-false}" == "true" ]]; then
-    if [[ "${OEF_CLOUDINARY_ENVIRONMENT:-local}" != "production" ]]; then
+if [ "${OEF_RUN_GALLERY_PORT_ON_DEPLOY:-false}" = "true" ]; then
+    if [ "${OEF_CLOUDINARY_ENVIRONMENT:-local}" != "production" ]; then
         echo "Refusing gallery port outside the production Cloudinary environment" >&2
         exit 1
     fi
