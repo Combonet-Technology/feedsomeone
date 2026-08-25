@@ -46,7 +46,6 @@ urlpatterns = [
     path('', include('django.contrib.auth.urls')),
     path(f'social-auth/complete/<str:backend>/', social_auth_complete, name='complete'),
     path('social-auth/', include('social_django.urls', namespace='social')),
-    path('ckeditor/', include('ckeditor_uploader.urls')),
     # re_path(r'^', include('cms.urls'))
 ]
 if settings.DEBUG:

@@ -1,0 +1,21 @@
+{% extends "admin/change_form.html" %}
+
+{% block submit_buttons_bottom %}
+  {% if oef_can_request_changes or oef_can_approve %}
+    <section class="oef-workflow-action oef-review-actions" aria-label="Review decision">
+      <div>
+        <strong>Record a review decision</strong>
+        <p>Add review notes before requesting changes. Saving a note alone does not create another revision or change its status.</p>
+      </div>
+      <div class="oef-review-actions__buttons">
+        {% if oef_can_request_changes %}
+          <button type="submit" class="button" name="_request_changes" value="1">Request changes</button>
+        {% endif %}
+        {% if oef_can_approve %}
+          <button type="submit" class="button default" name="_approve_revision" value="1">Approve and publish</button>
+        {% endif %}
+      </div>
+    </section>
+  {% endif %}
+  {{ block.super }}
+{% endblock %}

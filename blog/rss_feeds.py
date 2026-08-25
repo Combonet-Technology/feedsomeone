@@ -14,7 +14,7 @@ class LatestArticlesFeed(Feed):
         return Article.published.all()[:5]
 
     def item_title(self, item):
-        return item.article_title
+        return item.public_title
 
     def item_description(self, item):
-        return truncatewords(item.article_content, 30)
+        return truncatewords(item.public_content, 30)

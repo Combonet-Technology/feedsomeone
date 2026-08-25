@@ -1,0 +1,30 @@
+{% extends "admin/change_form.html" %}
+
+{% block submit_buttons_bottom %}
+  {% if oef_can_submit or oef_can_publish_now %}
+    <section class="oef-workflow-action" aria-label="Editorial submission">
+      <div>
+        {% if oef_can_publish_now %}
+          <strong>Ready to publish?</strong>
+          <p>Publish this working copy immediately, or send it through editorial review. Both options preserve revision history.</p>
+        {% else %}
+          <strong>Ready for editorial review?</strong>
+          <p>This saves the working draft and creates a locked review snapshot. The live article will not change until approval.</p>
+        {% endif %}
+      </div>
+      <div class="oef-review-actions__buttons">
+        {% if oef_can_submit %}
+          <button type="submit" class="button" name="_submit_for_review" value="1">
+            Save and submit for review
+          </button>
+        {% endif %}
+        {% if oef_can_publish_now %}
+          <button type="submit" class="button default" name="_publish_now" value="1">
+            Publish now
+          </button>
+        {% endif %}
+      </div>
+    </section>
+  {% endif %}
+  {{ block.super }}
+{% endblock %}

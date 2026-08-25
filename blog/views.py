@@ -2,11 +2,12 @@ import logging
 
 from django.contrib import messages
 from django.contrib.auth import get_user_model
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.mixins import (LoginRequiredMixin,
+                                        PermissionRequiredMixin,
+                                        UserPassesTestMixin)
 from django.contrib.postgres.search import (SearchQuery, SearchRank,
                                             SearchVector)
-from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db.models import Count
 from django.http import HttpResponse, HttpResponseRedirect
@@ -55,8 +56,8 @@ class ArticleListView(ListView):
         elif self.category == 'Articles':
             context['page_title'] = 'OEF Articles'
             context['page_heading'] = 'OEF Articles'
-        context['posts'] = self.get_queryset()
-        context['recent_posts'] = self.get_queryset().order_by("-date_created")[:8]
+        context['posts'] = self.object_list
+        context['recent_posts'] = self.object_list.order_by('-date_created')[:8]
         return context
 
     def get_template_names(self):
@@ -67,6 +68,13 @@ class ArticleListView(ListView):
         return custom_paginator(self.request, page_size, queryset)
 
 
+def legacy_article_filter(request, value):
+    """Redirect the former ambiguous filter URL to its canonical route."""
+    if Categories.objects.filter(title=value).exists():
+        return redirect('article:articles-by-category', category=value, permanent=True)
+    return redirect('article:articles-by-slug', tag=value, permanent=True)
+
+
 class UserArticleListView(LoginRequiredMixin, ListView):
     model = Article
     template_name = 'blog/article_list.html'
@@ -75,22 +83,33 @@ class UserArticleListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         user = get_object_or_404(get_user_model(), username=self.kwargs.get('username'))
-        articles = Article.objects.filter(article_author=user).order_by('-date_created')
-        return articles
+        can_view_private = (
+            self.request.user == user
+            or self.request.user.is_superuser
+            or self.request.user.has_perm('blog.review_article')
+        )
+        manager = Article.objects if can_view_private else Article.published
+        return manager.filter(
+            article_author=user,
+            is_deleted=False,
+        ).order_by('-date_created')
 
 
 def get_similar_articles(article, limit=3):
     article_tags_ids = article.tags.values_list('id', flat=True)
-    similar_articles = Article.objects.filter(tags__in=article_tags_ids).exclude(id=article.id)
+    similar_articles = Article.published.filter(tags__in=article_tags_ids).exclude(id=article.id)
     return similar_articles.annotate(same_tags=Count('tags')).order_by('-same_tags', '-publish_date')[:limit]
 
 
 def article_detail(request, year, month, day, slug):
     template_name = 'blog/article_detail.html'
-    article = get_object_or_404(Article, article_slug=slug,
-                                publish_date__year=year,
-                                publish_date__month=month,
-                                publish_date__day=day)
+    article = get_object_or_404(
+        Article.published,
+        article_slug=slug,
+        publish_date__year=year,
+        publish_date__month=month,
+        publish_date__day=day,
+    )
     comments = article.comments.filter(active=True)
     similar_articles = get_similar_articles(article)
     posted_comment = None
@@ -106,11 +125,11 @@ def article_detail(request, year, month, day, slug):
             else:
                 messages.error(
                     request, 'Your comment was not posted, try again later')
-            return HttpResponseRedirect(request.headers.get('referer'))
+            return redirect(article.get_absolute_url())
         else:
             logger.error(msg=str(comment.errors))
         messages.error(request, 'Form not fully filled, please retry.')
-        return HttpResponseRedirect(request.headers.get('referer'))
+        return redirect(article.get_absolute_url())
     else:
         # comment_form = CommentForm()
         return render(request, template_name, {
@@ -136,8 +155,10 @@ def search_article(request):
         if form.is_valid():
             query = form.cleaned_data['query']
             search_vector = \
-                SearchVector('article_title', weight='A') + SearchVector('article_excerpt', weight='C') + \
-                SearchVector('article_content', weight='C') + SearchVector('article_author__username', weight='D') + \
+                SearchVector('published_revision__title', weight='A') + \
+                SearchVector('published_revision__excerpt', weight='C') + \
+                SearchVector('published_revision__content', weight='C') + \
+                SearchVector('article_author__username', weight='D') + \
                 SearchVector('article_author__first_name', weight='B') + SearchVector('article_author__last_name',
                                                                                       weight='B')
             search_query = SearchQuery(query)
@@ -163,58 +184,33 @@ def search_article(request):
 
 
 @login_required
+@permission_required('blog.add_article', raise_exception=True)
 def create_article(request):
-    template_name = 'blog/article_form.html'
-
-    if request.method == 'POST':
-        article_form = ArticleForm(request.POST, request.FILES)
-
-        if article_form.is_valid():
-            article = article_form.save(commit=False)
-            article.article_author = request.user
-            article.save()
-
-            for category in article_form.cleaned_data['category']:
-                new_category_instance, _ = Categories.objects.get_or_create(title=category)
-                article.category.add(new_category_instance)
-
-            article_form.save_m2m()
-            return redirect('article:all-articles')
-
-        article_errors = article_form.errors
-        logger.error(article_errors)
-    else:
-        article_form = ArticleForm()
-
-    context = {
-        'form': article_form,
-        'action_to_perform': "create new"
-    }
-    return render(request, template_name, context)
+    """Preserve old bookmarks while keeping all authoring inside Django admin."""
+    return redirect('admin:blog_article_add')
 
 
-class UpdateArticleView(UserPassesTestMixin, UpdateView):
+class UpdateArticleView(LoginRequiredMixin, PermissionRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Article
     form_class = ArticleForm
+    permission_required = 'blog.change_article'
     template_name = 'blog/article_form.html'
     slug_url_kwarg = 'slug'
     slug_field = 'article_slug'
 
     def form_valid(self, form):
         form.instance.article_author = self.request.user
-        image_field = form.cleaned_data.get('image_field')
-        if isinstance(image_field, InMemoryUploadedFile):
-            form.instance.image_field.save(
-                image_field.name,
-                image_field,
-                save=False
-            )
-
         return super().form_valid(form)
+
+    def get(self, request, *args, **kwargs):
+        return redirect('admin:blog_article_change', object_id=self.get_object().pk)
+
+    def post(self, request, *args, **kwargs):
+        return redirect('admin:blog_article_change', object_id=self.get_object().pk)
 
     def test_func(self):
         post = self.get_object()
-        if self.request.user == post.article_author:
+        if self.request.user == post.article_author and not post.pending_revision_id:
             return True
         return False
 
@@ -223,10 +219,12 @@ class UpdateArticleView(UserPassesTestMixin, UpdateView):
         slug = article.article_slug
         date = article.publish_date
 
-        return reverse('article:article_detail', kwargs={'year': date.year,
-                                                         'month': date.month,
-                                                         'day': date.day,
-                                                         'slug': slug})
+        if article.is_published:
+            return reverse('article:article_detail', kwargs={'year': date.year,
+                                                             'month': date.month,
+                                                             'day': date.day,
+                                                             'slug': slug})
+        return reverse('article:article-by-user', kwargs={'username': self.request.user.username})
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -234,11 +232,10 @@ class UpdateArticleView(UserPassesTestMixin, UpdateView):
         return context
 
 
-class ArticleDeleteView(UserPassesTestMixin, DeleteView):
+class ArticleDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Article
     template_name = 'blog/article_confirm_delete.html'
     context_object_name = 'post'
-    success_url = 'article:all-articles'
     slug_field = 'article_slug'
 
     def test_func(self):
@@ -247,11 +244,20 @@ class ArticleDeleteView(UserPassesTestMixin, DeleteView):
             return True
         return False
 
+    def form_valid(self, form):
+        return self._soft_delete()
+
     def delete(self, request, *args, **kwargs):
-        article = self.get_object()
-        article.is_deleted = True
-        article.save()
-        return redirect(self.success_url)
+        self.object = self.get_object()
+        return self._soft_delete()
+
+    def _soft_delete(self):
+        self.object.is_deleted = True
+        self.object.save(update_fields=('is_deleted', 'date_updated'))
+        return HttpResponseRedirect(self.get_success_url())
+
+    def get_success_url(self):
+        return reverse('article:all-articles')
 
 
 # Create your views here.
@@ -275,15 +281,15 @@ def about(request):
 # remove if field later for uuid from calling function
 # add option to share pot on FB, Twitter and IG
 def post_share(request, slug, medium=None):
-    post = get_object_or_404(Article, article_slug=slug)
+    post = get_object_or_404(Article.published, article_slug=slug)
     sent = False
     if request.method == 'POST':
         form = EmailShareForm(request.POST)
         if form.is_valid():
             cd = form.cleaned_data
             post_url = request.build_absolute_uri(post.get_absolute_url())
-            subject = f"{cd['name']} recommends you read {post.article_title}"
-            message = f"Read {post.article_title} at {post_url}\n\n {cd['name']}\'s comments: {cd['comments']}"
+            subject = f"{cd['name']} recommends you read {post.public_title}"
+            message = f"Read {post.public_title} at {post_url}\n\n {cd['name']}\'s comments: {cd['comments']}"
             sent = send_email(destination=cd['to'], subject=subject, content=message, plain=True)
     else:
         form = EmailShareForm()

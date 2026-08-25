@@ -25,7 +25,6 @@ class PublicPageTests(TestCase):
         'mainsite:what-is-oef',
         'mainsite:impact',
         'mainsite:transparency',
-        'mainsite:gallery',
         'mainsite:services',
         'mainsite:privacy',
     )
@@ -118,7 +117,6 @@ class PublicPageTests(TestCase):
             '/what-is-oluwafemi-ebenezer-foundation/',
             '/impact/',
             '/transparency/',
-            '/gallery/',
             '/services/',
             '/privacy-policy/',
             '/opportunities/',
@@ -139,7 +137,6 @@ class PublicPageTests(TestCase):
             'mainsite:what-is-oef',
             'mainsite:impact',
             'mainsite:transparency',
-            'mainsite:gallery',
         )
         descriptions = {}
 
@@ -157,6 +154,19 @@ class PublicPageTests(TestCase):
 
         self.assertEqual(len(set(descriptions.values())), len(descriptions))
 
+    def test_footer_gallery_is_restored_as_an_impact_entry_point(self):
+        response = self.client.get(reverse('mainsite:homepage'))
+
+        self.assertContains(response, '>Gallery</a>')
+        self.assertContains(response, 'class="footer-galery"')
+        self.assertContains(response, 'aria-label="OEF impact gallery"')
+        self.assertContains(response, 'aria-label="View OEF impact photographs"', count=9)
+        self.assertNotContains(response, 'View Gallery')
+
+        retired = self.client.get(reverse('mainsite:gallery'))
+        self.assertEqual(retired.status_code, 301)
+        self.assertEqual(retired.url, reverse('mainsite:impact'))
+
     def test_transparency_page_exposes_faq_schema(self):
         response = self.client.get(reverse('mainsite:transparency'))
         content = response.content.decode()
@@ -165,3 +175,34 @@ class PublicPageTests(TestCase):
         self.assertContains(response, 'Is Oluwafemi Ebenezer Foundation registered?')
         self.assertContains(response, 'CAC registration number: 179189')
         self.assertIn('info@oluwafemiebenezerfoundation.org', content)
+
+    def test_non_article_pages_do_not_expose_internal_readiness_language(self):
+        routes = (
+            'mainsite:homepage',
+            'mainsite:about-page',
+            'mainsite:what-is-oef',
+            'mainsite:impact',
+            'mainsite:transparency',
+            'mainsite:donate',
+            'events',
+            'contact',
+        )
+        prohibited = (
+            'becoming grant-ready',
+            'first grants',
+            'evidence-safe',
+            'marked for verification',
+            'pending confirmation',
+            'planned programme pipeline',
+            'governance information in preparation',
+            'institutional grants received',
+            'we have not yet received an institutional grant',
+        )
+
+        for route in routes:
+            response = self.client.get(reverse(route))
+            self.assertEqual(response.status_code, 200, route)
+            rendered = response.content.decode().lower()
+            for phrase in prohibited:
+                with self.subTest(route=route, phrase=phrase):
+                    self.assertNotIn(phrase, rendered)

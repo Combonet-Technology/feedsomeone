@@ -10,7 +10,7 @@
             <div class="col-md-8 col-lg-8 col-sm-8=" style="margin: 0 auto !important; padding: 100px 0">
                 <h1>E-mail successfully sent</h1>
                 <p>
-                    "{{ post.article_title }}" was successfully sent to {{ form.cleaned_data.to }}.
+                    "{{ post.public_title }}" was successfully sent to {{ form.cleaned_data.to }}.
                 </p>
             </div>
             {% else %}
@@ -20,7 +20,7 @@
                     <fieldset class="form-group">
                         <legend class="border-bottom mb-4 pt-5"><h1 class="col-md-12 col-sm-6"
                                                                     style="font-weight: 700; font-size: 2rem;">
-                            Share "{{ post.article_title }}" by e-mail</h1></legend>
+                            Share "{{ post.public_title }}" by e-mail</h1></legend>
                         {{form | crispy}}
                         <input type="hidden" name="g-recaptcha-response" id='recaptcha'>
                     </fieldset>

@@ -126,14 +126,23 @@ For detailed run/test/debug workflow, see `RUNBOOK.md`.
 
 ## Testing and Verification
 
-- Run targeted tests for the changed app when possible.
+- Keep verification proportional to the change. Do not create tests or run broad
+  suites for every incremental edit.
+- Use the smallest check that proves the changed behaviour: syntax/readback for
+  tiny configuration or copy edits, and targeted tests for the affected module
+  and its direct dependencies for scoped code changes.
+- Run a full regression suite only for genuinely cross-cutting or high-risk
+  changes, when the user explicitly requests it, or when a release/push gate
+  requires it. Reuse fresh passing evidence when the code it covered has not
+  changed.
+- Explain why a broad regression run is necessary before starting one.
 - Run `python manage.py check` after settings, model, URL, view, or template changes.
 - For payment, auth, donation, user, or data migration work, prefer explicit tests and manual verification notes.
 - If tests cannot be run because dependencies, network, secrets, or local services are unavailable, state that clearly.
 
 ## UI Verification Hook
 
-For every template, CSS, or frontend behavior change:
+Run UI verification only when Oluwafemi explicitly requests it. When requested:
 
 1. Run `powershell -ExecutionPolicy Bypass -File scripts\verify_ui.ps1 -Url http://127.0.0.1:8000/<route>/`.
 2. Inspect both generated screenshots with the visual inspection tool at desktop and mobile sizes.

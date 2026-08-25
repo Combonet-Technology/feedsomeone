@@ -8,11 +8,11 @@
         <!--                                    <img src="{% static 'img/post/post_1.png' %}" alt="post">-->
         <!--                                    <img height="100px" width="100px" src="{{post.feature_img.url}}" alt="post">-->
         <div id="" style="height: 70px; width:70px; background:transparent no-repeat center;background-size: cover;
-                                        background-image: url('{{post.feature_img.url}}');
+                                        background-image: url('{{post.public_feature_image_url}}');
                                         transition: all .5s;"></div>
         <div class="media-body">
             <a href="{{ post.get_absolute_url }}">
-                <h3 style="color: #2d2d2d;">{{post.article_title}}</h3>
+                <h3 style="color: #2d2d2d;">{{post.public_title}}</h3>
             </a>
             <p>{{ post.date_created | date:"d M" }}, {{ post.date_created | date:"Y" }}</p>
         </div>

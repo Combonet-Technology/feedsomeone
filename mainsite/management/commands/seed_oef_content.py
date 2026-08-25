@@ -112,15 +112,14 @@ class Command(BaseCommand):
                 "time": "Birthday outreach",
                 "location": "Lugbe / Airport Road axis, Abuja",
                 "description": (
-                    "A founder-funded visit delivered food items and practical relief supplies "
+                    "A community visit delivered food items and practical relief supplies "
                     "to a children's home in Abuja."
                 ),
                 "content": (
-                    "On 9 August 2022, the founder led a small birthday outreach around the "
+                    "On 9 August 2022, a small birthday outreach took place around the "
                     "Lugbe / Airport Road axis in Abuja. "
                     "The visit delivered food items and practical relief supplies to a "
-                    "children's home with support from a small group of friends. "
-                    "The institution name and beneficiary count are pending confirmation."
+                    "children's home with support from a small group of friends."
                 ),
                 "feature_img": "event_feature_img/placeholder.jpg",
                 "budget": None,

@@ -15,8 +15,21 @@ PRIVATE_DOCUMENT_PREFIXES = (PRIVATE_CV_PREFIX, PRIVATE_OFFER_PREFIX)
 CLOUDINARY_MEDIA_PREFIX = 'media/'
 
 
+def _is_managed_private_document(name):
+    normalised = str(name).replace('\\', '/')
+    return (
+        normalised.startswith(PRIVATE_DOCUMENT_PREFIXES)
+        or '/vacancy-applications/private-cv/' in normalised
+        or '/vacancy-applications/private-offers/' in normalised
+    )
+
+
 def _normalise_private_document_name(name):
     normalised_name = str(name).replace('\\', '/')
+    if normalised_name.startswith(CLOUDINARY_MEDIA_PREFIX):
+        without_media = normalised_name[len(CLOUDINARY_MEDIA_PREFIX):]
+        if _is_managed_private_document(without_media):
+            return without_media
     for prefix in PRIVATE_DOCUMENT_PREFIXES:
         if normalised_name.startswith(f'{CLOUDINARY_MEDIA_PREFIX}{prefix}'):
             return normalised_name[len(CLOUDINARY_MEDIA_PREFIX):]
@@ -72,7 +85,7 @@ class VacancyPrivateDocumentStorage(Storage):
 
     def _backend(self, name):
         normalised_name = _normalise_private_document_name(name)
-        if normalised_name.startswith(PRIVATE_DOCUMENT_PREFIXES):
+        if _is_managed_private_document(normalised_name):
             if self._cloudinary_is_configured():
                 return AuthenticatedRawCloudinaryStorage()
             return FileSystemStorage(

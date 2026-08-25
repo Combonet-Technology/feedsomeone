@@ -11,6 +11,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from user.models import UserProfile
+from utils.cloudinary_paths import cloudinary_folder
 
 from .models import Vacancy, VacancyApplication
 from .notifications import notify_new_application
@@ -205,7 +206,10 @@ class VacancyApplicationTests(TestCase):
         self.assertIsNone(application.applicant)
         self.assertFalse(application.newsletter_opt_in)
         self.assertTrue(
-            application.cv.name.startswith('vacancy_applications/private_cv/')
+            application.cv.name.startswith(
+                f'{cloudinary_folder("vacancy-applications", "private-cv")}/'
+            ),
+            application.cv.name,
         )
         self.assertTrue(application.cv.name.endswith('.pdf'))
         self.mock_notify_new_application.assert_called_once_with(

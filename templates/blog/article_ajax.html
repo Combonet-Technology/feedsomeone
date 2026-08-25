@@ -1,14 +1,17 @@
+{% load static %}
 {% for article in objects %}
 <article class="blog_item">
     <div class="blog_item_img">
         <a href="{{ article.get_absolute_url }}">
-            <div id="yes"
-                 style="background:transparent no-repeat center;background-size: cover;
-                            background-image: url('{% if article.feature_img %}{{ article.feature_img.url }}{%endif%}');
-                            transition: all .5s;"></div>
-        </a><img class="card-img rounded-0" src="
-                                    {% if article.feature_img %}{{ article.feature_img.url }}{%endif%}"
-                 alt="">
+            {% if article.public_feature_image_url %}
+            <img class="card-img rounded-0" src="{{ article.public_feature_image_url }}"
+                 alt="{{ article.public_title }}" loading="lazy" decoding="async">
+            {% else %}
+            <img class="card-img rounded-0" src="{% static 'img/logo/oef-logo.svg' %}"
+                 alt="" loading="lazy" decoding="async"
+                 style="height:320px;object-fit:contain;padding:70px;background:#f5f7fa">
+            {% endif %}
+        </a>
         <a href="{{ article.get_absolute_url }}" class="blog_item_date">
             <h3>{{ article.date_created | date:"d" }}</h3>
             <p>{{ article.date_created | date:"M" }}, {{ article.date_created | date:"Y" }}</p>
@@ -16,9 +19,9 @@
     </div>
     <div class="blog_details">
         <a class="d-inline-block" href="{{ article.get_absolute_url  }}">
-            <h2 class="blog-head" style="color: #2d2d2d;">{{article.article_title}}</h2>
+            <h2 class="blog-head" style="color: #2d2d2d;">{{article.public_title}}</h2>
         </a>
-        <p>{{article.article_content|safe|truncatewords_html:30|linebreaks}}</p>
+        <p>{% if article.public_excerpt %}{{ article.public_excerpt }}{% else %}{{ article.public_content|striptags|truncatewords:30 }}{% endif %}</p>
         <ul class="blog-info-link">
             <li>
                 <a href="{% url 'article:article-by-user' article.article_author.username %}">Written
@@ -42,6 +45,5 @@
     <h3>OEF articles are being updated</h3>
     <p>We are preparing current posts on the Feed Someone origin story, Feed Someone 1.0, Feed Someone 2.0, and OEF's grant-readiness journey.</p>
     <a href="{% url 'mainsite:impact' %}" class="genric-btn primary">View impact</a>
-    <a href="{% url 'mainsite:gallery' %}" class="genric-btn primary-border ml-3">View gallery</a>
 </div>
 {% endfor %}

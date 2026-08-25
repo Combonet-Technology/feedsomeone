@@ -7,7 +7,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        # ('taggit', '0004_auto_20260806_1752'),
+        ('taggit', '0006_rename_taggeditem_content_type_object_id_taggit_tagg_content_8fc721_idx'),
         ('blog', '0008_alter_comments_website'),
     ]
 

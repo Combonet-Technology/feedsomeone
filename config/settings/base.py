@@ -15,8 +15,6 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from ext_libs.ckeditor.config import base
-
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -55,8 +53,7 @@ INSTALLED_APPS = [
     'honeypot',
     'social_django',
     'django_extensions',
-    'ckeditor',
-    'ckeditor_uploader',
+    'django_prose_editor',
 ]
 
 MIDDLEWARE = [
@@ -150,6 +147,10 @@ CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+OEF_GALLERY_STAGING_ROOT = os.environ.get(
+    'OEF_GALLERY_STAGING_ROOT',
+    os.path.join(BASE_DIR, 'tmp', 'gallery-staging'),
+)
 
 LOGIN_REDIRECT_URL = 'profile'
 LOGIN_URL = 'login'
@@ -168,14 +169,24 @@ REGISTRATION_RATE_LIMIT = int(os.environ.get('REGISTRATION_RATE_LIMIT', '5'))
 REGISTRATION_RATE_LIMIT_WINDOW = int(os.environ.get('REGISTRATION_RATE_LIMIT_WINDOW', '3600'))
 
 # Historical public galleries are fetched server-side from an allow-list of
-# verified Cloudinary tags. Keep disabled until image consent/privacy review is
-# complete, then set CLOUDINARY_GALLERY_ENABLED=true in the deployment.
-CLOUDINARY_GALLERY_ENABLED = os.environ.get('CLOUDINARY_GALLERY_ENABLED', '').lower() == 'true'
-CLOUDINARY_GALLERY_CACHE_SECONDS = int(os.environ.get('CLOUDINARY_GALLERY_CACHE_SECONDS', '900'))
+# Internal delivery kill switch. Public templates must never expose its state.
+CLOUDINARY_GALLERY_ENABLED = os.environ.get('CLOUDINARY_GALLERY_ENABLED', 'true').lower() == 'true'
 CLOUDINARY_GALLERY_PUBLICATION_TAG = os.environ.get(
     'CLOUDINARY_GALLERY_PUBLICATION_TAG',
     'publication-approved',
 )
+OEF_CLOUDINARY_ROOT_FOLDER = os.environ.get('OEF_CLOUDINARY_ROOT_FOLDER', 'oef')
+# Local development is deliberately isolated. Production must opt in through
+# OEF_CLOUDINARY_ENVIRONMENT=production in its deployment environment.
+OEF_CLOUDINARY_ENVIRONMENT = os.environ.get('OEF_CLOUDINARY_ENVIRONMENT', 'local')
+OEF_CLOUDINARY_LEGACY_GALLERY_FALLBACK = (
+    os.environ.get('OEF_CLOUDINARY_LEGACY_GALLERY_FALLBACK', '').lower() == 'true'
+)
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': os.environ.get('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
+}
 CLOUDINARY_GALLERIES = {
     'feed-someone-1.0': {
         'tag': 'feed-someone-1.0',
@@ -218,11 +229,59 @@ BATON = {
         'url': '/search/',
     },
     'MENU': (
-        {'type': 'title', 'label': 'main', 'apps': ('auth',)},
+        {'type': 'title', 'label': 'Content', 'apps': ('blog', 'events')},
+        {
+            'type': 'model',
+            'label': 'Articles',
+            'name': 'article',
+            'app': 'blog',
+            'icon': 'fa fa-newspaper-o',
+        },
+        {
+            'type': 'model',
+            'label': 'Article reviews',
+            'name': 'articlerevision',
+            'app': 'blog',
+            'icon': 'fa fa-check-square-o',
+        },
+        {
+            'type': 'model',
+            'label': 'Editorial media',
+            'name': 'mediaasset',
+            'app': 'blog',
+            'icon': 'fa fa-picture-o',
+        },
+        {
+            'type': 'model',
+            'label': 'Events',
+            'name': 'events',
+            'app': 'events',
+            'icon': 'fa fa-calendar',
+        },
+        {
+            'type': 'model',
+            'label': 'Galleries',
+            'name': 'eventgalleryimage',
+            'app': 'events',
+            'icon': 'fa fa-picture-o',
+        },
+        {'type': 'title', 'label': 'People and access', 'apps': ('user', 'opportunities', 'auth')},
+        {
+            'type': 'app',
+            'name': 'opportunities',
+            'label': 'Recruitment',
+            'icon': 'fa fa-briefcase',
+        },
+        {
+            'type': 'app',
+            'name': 'user',
+            'label': 'People',
+            'icon': 'fa fa-users',
+        },
         {
             'type': 'app',
             'name': 'auth',
-            'label': 'Authentication',
+            'label': 'Access control',
             'icon': 'fa fa-lock',
             'models': (
                 {
@@ -234,19 +293,6 @@ BATON = {
                     'label': 'Groups'
                 },
             )
-        },
-        {'type': 'title', 'label': 'Contents', 'apps': ('flatpages',)},
-        {'type': 'model', 'label': 'Pages', 'name': 'flatpage', 'app': 'flatpages'},
-        {
-            'type': 'free', 'label': 'Custom Link', 'url': 'http://www.google.it',
-            'perms': ('flatpages.add_flatpage', 'auth.change_user')
-        },
-        {
-            'type': 'free', 'label': 'My parent voice', 'default_open': True, 'children':
-            [
-                {'type': 'model', 'label': 'A Model', 'name': 'mymodelname', 'app': 'myapp'},
-                {'type': 'free', 'label': 'Another custom link', 'url': 'http://www.google.it'},
-            ]
         },
     ),
     # 'ANALYTICS': {
@@ -384,30 +430,40 @@ VACANCY_CV_LINK_TTL_SECONDS = int(
     os.environ.get('VACANCY_CV_LINK_TTL_SECONDS', str(7 * 24 * 60 * 60))
 )
 
-CKEDITOR_BASEPATH = "/static/ckeditor/ckeditor/"
-CKEDITOR_UPLOAD_PATH = 'uploads/'
-CKEDITOR_FILENAME_GENERATOR = 'utils.file.get_filename'
-CKEDITOR_IMAGE_BACKEND = 'ckeditor_uploader.backends.PillowBackend'
-CKEDITOR_FORCE_JPEG_COMPRESSION = True
-CKEDITOR_IMAGE_QUALITY = 90
-CKEDITOR_RESTRICT_BY_USER = True
-CKEDITOR_BROWSE_SHOW_DIRS = True
-CKEDITOR_RESTRICT_BY_DATE = True
-CKEDITOR_CONFIGS = {
-    'default': {
-        'toolbar': 'Custom',
-        'toolbar_Custom': [
-            ['Bold', 'Italic', 'Underline'],
-            ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'JustifyLeft', 'JustifyCenter',
-             'JustifyRight', 'JustifyBlock'],
-            ['Link', 'Unlink'],
-            ['RemoveFormat', 'Source']
-        ],
-        'height': 300,
-        'width': 750,
+OEF_EDITORIAL_MEDIA_MAX_BYTES = int(
+    os.environ.get('OEF_EDITORIAL_MEDIA_MAX_BYTES', str(8 * 1024 * 1024))
+)
+OEF_EVENT_MEDIA_MAX_BYTES = int(
+    os.environ.get('OEF_EVENT_MEDIA_MAX_BYTES', str(12 * 1024 * 1024))
+)
+OEF_EVENT_MEDIA_MAX_BATCH_FILES = int(
+    os.environ.get('OEF_EVENT_MEDIA_MAX_BATCH_FILES', '100')
+)
+OEF_EVENT_MEDIA_MAX_BATCH_BYTES = int(
+    os.environ.get('OEF_EVENT_MEDIA_MAX_BATCH_BYTES', str(500 * 1024 * 1024))
+)
+OEF_EDITORIAL_MEDIA_PICKER_URL = '/bcx/blog/mediaasset/picker/'
+OEF_EDITORIAL_MEDIA_UPLOAD_URL = '/bcx/blog/mediaasset/upload/'
+OEF_EDITORIAL_MEDIA_LIBRARY_URL = '/bcx/blog/mediaasset/library/'
+OEF_EDITORIAL_IMAGE_HOSTS = tuple(
+    host.strip().lower()
+    for host in os.environ.get(
+        'OEF_EDITORIAL_IMAGE_HOSTS',
+        'res.cloudinary.com',
+    ).split(',')
+    if host.strip()
+)
+from django_prose_editor.config import html_tags  # noqa: E402
+from js_asset import static_lazy  # noqa: E402
+
+DJANGO_PROSE_EDITOR_EXTENSIONS = [
+    {
+        'js': [static_lazy('blog/js/inline-image-upload.js')],
+        'extensions': {
+            'InlineImageUpload': html_tags(tags=[], attributes={}),
+        },
     },
-    'article': base
-}
+]
 
 TEST_RUNNER = 'custom_test_runner.TestRunner'
 TEST_OUTPUT_DIR = 'test-reports'

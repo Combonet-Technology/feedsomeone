@@ -5,17 +5,19 @@ from django.conf import settings
 from django.db import models
 from django.urls import reverse
 
+from utils.cloudinary_paths import cloudinary_folder
+
 from .storage import VacancyCVStorage, VacancyPrivateDocumentStorage
 
 
 def vacancy_cv_upload_to(instance, filename):
     extension = Path(filename).suffix.lower()
-    return f'vacancy_applications/private_cv/{uuid4().hex}{extension}'
+    return f'{cloudinary_folder("vacancy-applications", "private-cv")}/{uuid4().hex}{extension}'
 
 
 def volunteer_offer_upload_to(instance, filename):
     extension = Path(filename).suffix.lower() or '.pdf'
-    return f'vacancy_applications/private_offers/{uuid4().hex}{extension}'
+    return f'{cloudinary_folder("vacancy-applications", "private-offers")}/{uuid4().hex}{extension}'
 
 
 vacancy_cv_storage = VacancyCVStorage()
@@ -235,6 +237,25 @@ class VacancyApplication(models.Model):
 
     def __str__(self):
         return f'{self.full_name} - {self.vacancy}'
+
+
+class PrivateDocumentDeletion(models.Model):
+    class Status(models.TextChoices):
+        PENDING = 'pending', 'Pending'
+        COMPLETED = 'completed', 'Completed'
+
+    storage_name = models.CharField(max_length=1000, unique=True)
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.PENDING)
+    attempts = models.PositiveIntegerField(default=0)
+    last_error = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ('created_at',)
+
+    def __str__(self):
+        return f'{self.get_status_display()}: {self.storage_name}'
 
 
 class VolunteerOffer(models.Model):

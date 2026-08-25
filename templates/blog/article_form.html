@@ -3,13 +3,13 @@
 {% load static %}
 {% load crispy_forms_tags %}
 {% block content %}
-
+    {{ form.media }}
 
     <div id = "container">
         <div class="row d-flex mb-5 h-100">
 	          <div class="col-md-12 mb-4 align-self-center">
-                  <form method="POST" name="Post" class="articleform" enctype="multipart/form-data" id="contentform"
-                        class="mt-5 ml-5 mr-5">
+                  <form method="POST" name="Post" class="articleform mt-5 ml-5 mr-5"
+                        enctype="multipart/form-data" id="contentform">
                       {% csrf_token %}
                       <fieldset>
                           <legend class="border-bottom mb-4"><h1>{%if action_to_perform == 'update'%}
@@ -33,6 +33,4 @@
             </div>
         </div>
     </div>
-<script type="text/javascript" src="{% static 'ckeditor/ckeditor-init.js' %}"></script>
-<script type="text/javascript" src="{% static 'ckeditor/ckeditor/ckeditor.js' %}"></script>
 {% endblock %}

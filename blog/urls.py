@@ -15,7 +15,8 @@ urlpatterns = [
     path('<slug:slug>/delete/', ArticleDeleteView.as_view(), name="delete-post"),
     path('<int:year>/<int:month>/<int:day>/<slug:slug>/', views.article_detail, name='article_detail'),
     path('all/', ArticleListView.as_view(), name="all-articles"),
-    path('all/<str:category>', ArticleListView.as_view(), name="articles-by-category"),
-    path('all/<slug:tag>', ArticleListView.as_view(), name="articles-by-slug"),
+    path('category/<str:category>/', ArticleListView.as_view(), name="articles-by-category"),
+    path('tag/<slug:tag>/', ArticleListView.as_view(), name="articles-by-slug"),
+    path('all/<slug:value>/', views.legacy_article_filter, name='legacy-article-filter'),
     path('<str:username>/', UserArticleListView.as_view(), name="article-by-user"),
 ]
