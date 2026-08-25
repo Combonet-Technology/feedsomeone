@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -Eeuo pipefail
+set -o errexit
 
 # environment setup
 python -m pip install "pip<24.1"
