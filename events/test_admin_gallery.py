@@ -7,15 +7,18 @@ from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 from django.core.management.base import CommandError
+from django.db.models.deletion import ProtectedError
 from django.test import TestCase, override_settings
-from django.urls import reverse
+from django.urls import NoReverseMatch, reverse
 from django.utils import timezone
 from PIL import Image
 
+from blog.media import validate_event_images_can_be_made_private
+from blog.models import Article, ArticleRevision, MediaAsset
 from events.models import (EventGallery, EventGalleryImage, Events,
                            GalleryUploadBatch, GalleryUploadItem)
 from mainsite.services.event_gallery import GalleryAsset
@@ -55,7 +58,7 @@ class EventGalleryAdminTests(TestCase):
         self.assertIn(
             {
                 'type': 'model',
-                'label': 'Galleries',
+                'label': 'Gallery images',
                 'name': 'eventgalleryimage',
                 'app': 'events',
                 'icon': 'fa fa-picture-o',
@@ -63,95 +66,69 @@ class EventGalleryAdminTests(TestCase):
             menu_entries,
         )
 
-    def test_gallery_is_a_first_class_admin_module(self):
-        response = self.client.get(reverse('admin:events_eventgallery_changelist'))
+    def test_duplicate_event_gallery_proxy_is_not_registered(self):
+        self.assertNotIn(EventGallery, admin.site._registry)
+        self.assertIn(EventGalleryImage, admin.site._registry)
 
-        self.assertRedirects(
-            response, reverse('admin:events_eventgalleryimage_changelist'),
-            fetch_redirect_response=False,
+    def test_event_deletion_is_protected_while_gallery_images_remain(self):
+        image = EventGalleryImage.objects.create(
+            event=self.event,
+            asset_id='asset-parent-delete-protected',
+            public_id='oef/local/events/future/parent-delete-protected',
+            secure_url='https://example.com/parent-delete-protected.jpg',
+            original_filename='parent-delete-protected.jpg',
+            uploaded_by=self.admin,
         )
-        gallery_admin = admin.site._registry[EventGallery]
-        self.assertFalse(gallery_admin.has_add_permission(response.wsgi_request))
 
-    @patch('events.admin.upload_event_image')
-    def test_ajax_upload_returns_asset_and_forwards_per_image_metadata(self, upload_image):
-        upload_image.return_value = GalleryAsset(
-            asset_id='asset-1', public_id='oef/local/events/future/photo',
-            url='https://example.com/photo.jpg', thumbnail_url='https://example.com/thumb.jpg',
-            width=1200, height=800, alt='Volunteers preparing food',
-            caption='Preparation before the outreach', tags=('future-event', 'volunteers'),
+        with self.assertRaises(ProtectedError):
+            self.event.delete()
+
+        self.assertTrue(Events.objects.filter(pk=self.event.pk).exists())
+        self.assertTrue(EventGalleryImage.objects.filter(pk=image.pk).exists())
+
+    def test_event_admin_removes_default_bulk_delete_action(self):
+        response = self.client.get(reverse('admin:events_events_changelist'))
+        events_admin = admin.site._registry[Events]
+
+        self.assertNotIn(
+            'delete_selected', events_admin.get_actions(response.wsgi_request),
         )
-        image = SimpleUploadedFile('photo.jpg', b'image-data', content_type='image/jpeg')
+
+    def test_event_delete_view_explains_required_gallery_cleanup(self):
+        image = EventGalleryImage.objects.create(
+            event=self.event,
+            asset_id='asset-admin-parent-delete-protected',
+            public_id='oef/local/events/future/admin-parent-delete-protected',
+            secure_url='https://example.com/admin-parent-delete-protected.jpg',
+            original_filename='admin-parent-delete-protected.jpg',
+            uploaded_by=self.admin,
+        )
 
         response = self.client.post(
-            reverse('admin:events_events_gallery_upload', args=(self.event.pk,)),
-            {
-                'images': image,
-                'alt_text_0': 'Volunteers preparing food',
-                'caption_0': 'Preparation before the outreach',
-                'tags_0': 'volunteers, food-relief',
-                'publish_0': '1',
-            },
-            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+            reverse('admin:events_events_delete', args=(self.event.pk,)),
+            {'post': 'yes'},
+            follow=True,
         )
 
-        self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.json()['results'][0]['asset']['public_id'], 'oef/local/events/future/photo')
-        upload_image.assert_called_once()
-        called_event, called_image = upload_image.call_args.args
-        self.assertEqual(called_event, self.event)
-        self.assertEqual(called_image.name, 'photo.jpg')
-        self.assertEqual(upload_image.call_args.kwargs, {
-            'alt_text': 'Volunteers preparing food',
-            'caption': 'Preparation before the outreach',
-            'tags': ['volunteers', ' food-relief'],
-        })
-
-    def test_ajax_upload_requires_an_image(self):
-        response = self.client.post(
-            reverse('admin:events_events_gallery_upload', args=(self.event.pk,)),
-            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
-        )
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.json()['errors'], ['Choose at least one image.'])
-
-    @patch('events.admin.upload_event_image')
-    def test_ajax_upload_allows_missing_alternative_text(self, upload_image):
-        upload_image.return_value = GalleryAsset(
-            asset_id='asset-2', public_id='oef/local/events/future/photo-2',
-            url='https://example.com/photo-2.jpg', thumbnail_url='https://example.com/thumb-2.jpg',
-            width=1200, height=800, alt='Future event photograph', caption='',
-            tags=('future-event',),
-        )
-        image = SimpleUploadedFile('photo.jpg', b'image-data', content_type='image/jpeg')
-        response = self.client.post(
-            reverse('admin:events_events_gallery_upload', args=(self.event.pk,)),
-            {'images': image}, HTTP_X_REQUESTED_WITH='XMLHttpRequest',
-        )
-        self.assertEqual(response.status_code, 201)
-        self.assertTrue(response.json()['ok'])
-        self.assertEqual(upload_image.call_args.kwargs['alt_text'], '')
-        self.assertNotIn('approved', upload_image.call_args.kwargs)
-
-    @patch('events.admin.update_event_image_metadata')
-    def test_image_metadata_and_publication_can_be_updated_after_upload(self, update_metadata):
-        response = self.client.post(
-            reverse('admin:events_events_gallery_update', args=(self.event.pk,)),
-            {'public_id': 'oef/local/events/future/photo', 'alt_text': 'Volunteers serving meals',
-             'caption': 'Community outreach', 'tags': 'food-relief, volunteers', 'publish': '1'},
-        )
         self.assertRedirects(
             response,
-            reverse('admin:events_events_gallery', args=(self.event.pk,)),
-            fetch_redirect_response=False,
+            reverse('admin:events_events_change', args=(self.event.pk,)),
         )
-        update_metadata.assert_called_once_with(
-            self.event, 'oef/local/events/future/photo', alt_text='Volunteers serving meals',
-            caption='Community outreach', tags=['food-relief', ' volunteers'],
-            is_public=True,
+        self.assertContains(
+            response,
+            'This event cannot be deleted while gallery images remain.',
         )
-        self.event.refresh_from_db()
-        self.assertTrue(self.event.gallery_is_public)
+        self.assertTrue(Events.objects.filter(pk=self.event.pk).exists())
+        self.assertTrue(EventGalleryImage.objects.filter(pk=image.pk).exists())
+
+    def test_obsolete_per_event_mutation_routes_are_removed(self):
+        for name in (
+            'admin:events_events_gallery_upload',
+            'admin:events_events_gallery_update',
+            'admin:events_events_gallery_delete',
+        ):
+            with self.subTest(name=name), self.assertRaises(NoReverseMatch):
+                reverse(name, args=(self.event.pk,))
 
     def test_legacy_frontend_uploader_redirects_to_event_admin(self):
         response = self.client.get(reverse('mainsite:imageuploader'))
@@ -160,50 +137,140 @@ class EventGalleryAdminTests(TestCase):
             fetch_redirect_response=False,
         )
 
-    @patch('events.admin.delete_event_image')
-    def test_delete_is_scoped_through_event_gallery_service(self, delete_image):
-        response = self.client.post(
-            reverse('admin:events_events_gallery_delete', args=(self.event.pk,)),
-            {'public_id': 'oef/test/events/future/photo'},
-        )
-        self.assertRedirects(
-            response, reverse('admin:events_events_gallery', args=(self.event.pk,)),
-            fetch_redirect_response=False,
-        )
-        delete_image.assert_called_once_with(self.event, 'oef/test/events/future/photo')
-
-    @patch('events.admin.delete_event_image')
-    def test_legacy_event_delete_requires_gallery_image_delete_permission(self, delete_image):
-        user = get_user_model().objects.create_user(
-            username='event-editor', email='event-editor@example.com',
-            password='test-pass-123', is_staff=True,
-        )
-        permissions = Permission.objects.filter(
-            content_type__app_label='events',
-            codename__in=('view_events', 'change_events'),
-        )
-        user.user_permissions.add(*permissions)
-        record = EventGalleryImage.objects.create(
-            event=self.event, asset_id='asset-legacy-protected',
-            public_id='oef/test/events/future/legacy-protected',
-            secure_url='https://example.com/legacy-protected.jpg',
-            original_filename='legacy-protected.jpg', uploaded_by=self.admin,
-        )
-        self.client.force_login(user)
-
-        response = self.client.post(
-            reverse('admin:events_events_gallery_delete', args=(self.event.pk,)),
-            {'public_id': record.public_id},
-        )
-
-        self.assertEqual(response.status_code, 403)
-        delete_image.assert_not_called()
-        self.assertTrue(EventGalleryImage.objects.filter(pk=record.pk).exists())
-
     def _image(self, name='photo.jpg'):
         stream = BytesIO()
         Image.new('RGB', (80, 60), '#1f2b7b').save(stream, format='JPEG')
         return SimpleUploadedFile(name, stream.getvalue(), content_type='image/jpeg')
+
+    def _published_event_asset(self, *, slug='published-event-media'):
+        Events.objects.filter(pk=self.event.pk).update(gallery_is_public=True)
+        self.event.refresh_from_db()
+        image = EventGalleryImage.objects.create(
+            event=self.event,
+            asset_id=f'asset-{slug}',
+            public_id=f'oef/local/events/future/{slug}',
+            secure_url=f'https://example.com/{slug}.jpg',
+            original_filename=f'{slug}.jpg',
+            is_public=True,
+            uploaded_by=self.admin,
+        )
+        asset = MediaAsset.objects.create(
+            source_event_image=image,
+            asset_id=image.asset_id,
+            public_id=image.public_id,
+            secure_url=image.secure_url,
+            original_filename=image.original_filename,
+            format='jpg', width=1600, height=900, bytes=0,
+            uploaded_by=self.admin,
+        )
+        article = Article.objects.create(
+            article_title='Published event media article',
+            article_slug=slug,
+            article_content='<p>Published copy.</p>',
+            article_author=self.admin,
+            is_published=True,
+        )
+        revision = ArticleRevision.objects.create(
+            article=article, number=1, title=article.article_title,
+            content='<p>Published copy.</p>', feature_image_url=image.secure_url,
+            status=ArticleRevision.Status.APPROVED, created_by=self.admin,
+        )
+        revision.media_assets.add(asset)
+        article.published_revision = revision
+        article.save(update_fields=('published_revision',))
+        return image
+
+    @patch('events.admin.remove_publication_tag')
+    def test_bulk_private_action_refuses_live_article_media(self, remove_tag):
+        image = self._published_event_asset(slug='bulk-private-live')
+
+        response = self.client.post(
+            reverse('admin:events_eventgalleryimage_changelist'),
+            {
+                'action': 'mark_selected_images_private',
+                '_selected_action': [image.pk],
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        remove_tag.assert_not_called()
+        image.refresh_from_db()
+        self.assertTrue(image.is_public)
+
+    def test_bulk_private_validation_uses_one_live_usage_query(self):
+        images = EventGalleryImage.objects.bulk_create([
+            EventGalleryImage(
+                event=self.event,
+                asset_id=f'bounded-validation-{index}',
+                public_id=f'oef/local/events/future/bounded-validation-{index}',
+                secure_url=f'https://example.com/bounded-validation-{index}.jpg',
+                original_filename=f'bounded-validation-{index}.jpg',
+                uploaded_by=self.admin,
+            )
+            for index in range(10)
+        ])
+
+        with self.assertNumQueries(1):
+            validate_event_images_can_be_made_private(images)
+
+    @patch('events.admin.remove_publication_tag')
+    @patch('events.admin.add_publication_tag')
+    def test_direct_private_edit_refuses_live_article_media(self, add_tag, remove_tag):
+        image = self._published_event_asset(slug='direct-private-live')
+        image.is_public = False
+        image_admin = admin.site._registry[EventGalleryImage]
+
+        with self.assertRaisesMessage(ValidationError, 'published articles'):
+            image_admin.save_model(
+                None, image, Mock(changed_data=['is_public']), True,
+            )
+
+        remove_tag.assert_not_called()
+        add_tag.assert_not_called()
+        image.refresh_from_db()
+        self.assertTrue(image.is_public)
+
+    def test_parent_gallery_cannot_be_hidden_while_live_article_uses_image(self):
+        self._published_event_asset(slug='parent-private-live')
+        candidate = Events.objects.get(pk=self.event.pk)
+        candidate.gallery_is_public = False
+        events_admin = admin.site._registry[Events]
+
+        with self.assertRaisesMessage(ValidationError, 'published articles'):
+            events_admin.save_model(
+                None, candidate, Mock(changed_data=['gallery_is_public']), True,
+            )
+
+        self.event.refresh_from_db()
+        self.assertTrue(self.event.gallery_is_public)
+
+    def test_parent_gallery_privacy_error_is_rendered_on_change_form(self):
+        self._published_event_asset(slug='parent-private-form-error')
+
+        response = self.client.post(
+            reverse('admin:events_events_change', args=(self.event.pk,)),
+            {
+                'title': self.event.title,
+                'event_date': self.event.event_date.isoformat(),
+                'description': self.event.description or '',
+                'location': self.event.location,
+                'max_volunteer_needed': '',
+                'budget': '',
+                'event_slug': self.event.event_slug,
+                'time': self.event.time,
+                'content': self.event.content,
+                '_save': 'Save',
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            'Remove or replace them in the published articles, then try again.',
+        )
+        self.event.refresh_from_db()
+        self.assertTrue(self.event.gallery_is_public)
 
     def test_central_upload_is_separate_from_compact_gallery_table(self):
         upload = self.client.get(reverse('admin:events_eventgalleryimage_upload'))
@@ -211,13 +278,15 @@ class EventGalleryAdminTests(TestCase):
 
         self.assertEqual(upload.status_code, 200)
         self.assertContains(upload, 'Drop photographs here')
-        self.assertContains(upload, 'staged locally first')
+        self.assertContains(upload, 'staged first')
         self.assertContains(upload, 'Alternative text can also be edited later')
         self.assertContains(upload, 'gallery-batch-upload.js')
         self.assertContains(upload, 'max-height:80vh')
         self.assertContains(upload, 'overflow-y:auto')
         self.assertContains(upload, 'Additional tags')
+        self.assertContains(upload, 'Upload images')
         self.assertNotContains(upload, 'Caption')
+        self.assertNotContains(upload, 'Cloudinary')
         self.assertEqual(table.status_code, 200)
         self.assertContains(table, 'Add images')
         self.assertNotContains(table, 'Cloudinary images')
@@ -258,14 +327,15 @@ class EventGalleryAdminTests(TestCase):
             for index in range(165)
         ])
 
-        response = self.client.post(
-            reverse('admin:events_eventgalleryimage_changelist'),
-            {
-                'action': 'mark_selected_images_public',
-                '_selected_action': [record.pk for record in records],
-            },
-            follow=True,
-        )
+        with self.assertLogs('events.admin', level='INFO') as captured:
+            response = self.client.post(
+                reverse('admin:events_eventgalleryimage_changelist'),
+                {
+                    'action': 'mark_selected_images_public',
+                    '_selected_action': [record.pk for record in records],
+                },
+                follow=True,
+            )
 
         self.assertEqual(response.status_code, 200)
         add_tag.assert_called_once()
@@ -274,10 +344,19 @@ class EventGalleryAdminTests(TestCase):
         self.assertEqual(
             EventGalleryImage.objects.filter(is_public=True).count(), 165,
         )
-        self.assertTrue(self.event.gallery_is_public)
+        self.assertFalse(self.event.gallery_is_public)
+        self.assertTrue(any(
+            'action=images_marked_public' in entry
+            and 'count=165' in entry
+            and 'occurred_at=' in entry
+            for entry in captured.output
+        ))
 
+    @patch('events.admin.remove_publication_tag')
     @patch('events.admin.add_publication_tag', side_effect=RuntimeError('provider unavailable'))
-    def test_bulk_public_action_keeps_database_private_when_tag_request_fails(self, add_tag):
+    def test_bulk_public_action_keeps_database_private_when_tag_request_fails(
+        self, add_tag, remove_tag,
+    ):
         record = EventGalleryImage.objects.create(
             event=self.event, asset_id='asset-private',
             public_id='oef/local/events/future/private-failed',
@@ -296,6 +375,7 @@ class EventGalleryAdminTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         add_tag.assert_called_once_with([record.public_id])
+        remove_tag.assert_called_once_with([record.public_id])
         record.refresh_from_db()
         self.event.refresh_from_db()
         self.assertFalse(record.is_public)
@@ -314,14 +394,15 @@ class EventGalleryAdminTests(TestCase):
             batch=batch, staged_file=self._image(), original_filename='photo.jpg',
         )
 
-        response = self.client.post(
-            reverse('admin:events_eventgalleryimage_commit'),
-            {
-                'batch_id': batch.pk, 'event': self.event.pk,
-                'tags': 'volunteers, food-relief',
-                f'alt_text_{item.pk}': 'Volunteers serving meals',
-            },
-        )
+        with self.assertLogs('events.admin', level='INFO') as captured:
+            response = self.client.post(
+                reverse('admin:events_eventgalleryimage_commit'),
+                {
+                    'batch_id': batch.pk, 'event': self.event.pk,
+                    'tags': 'volunteers, food-relief',
+                    f'alt_text_{item.pk}': 'Volunteers serving meals',
+                },
+            )
 
         self.assertEqual(response.status_code, 302)
         record = EventGalleryImage.objects.get(public_id='oef/local/events/future/photo-new')
@@ -332,6 +413,12 @@ class EventGalleryAdminTests(TestCase):
         self.assertFalse(GalleryUploadBatch.objects.filter(pk=batch.pk).exists())
         self.assertEqual(upload_image.call_args.kwargs['caption'], '')
         self.assertNotIn('approved', upload_image.call_args.kwargs)
+        self.assertTrue(any(
+            'action=images_uploaded' in entry
+            and 'count=1' in entry
+            and 'occurred_at=' in entry
+            for entry in captured.output
+        ))
 
     @patch('events.admin.upload_event_image')
     def test_confirmed_batch_upload_runs_cloudinary_calls_concurrently(self, upload_image):
@@ -434,14 +521,124 @@ class EventGalleryAdminTests(TestCase):
             uploaded_by=self.admin,
         )
         delete_images.return_value = ({record.public_id}, {})
-        response = self.client.post(
-            reverse('admin:events_eventgalleryimage_changelist'),
-            {'action': 'delete_selected_gallery_images', '_selected_action': [record.pk]},
-            follow=True,
-        )
+        with self.assertLogs('events.admin', level='INFO') as captured:
+            response = self.client.post(
+                reverse('admin:events_eventgalleryimage_changelist'),
+                {'action': 'delete_selected_gallery_images', '_selected_action': [record.pk]},
+                follow=True,
+            )
         self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '1 image(s) deleted.')
+        self.assertNotContains(response, 'deleted from Cloudinary')
+        self.assertNotContains(response, 'gallery table')
         delete_images.assert_called_once_with([record.public_id])
         self.assertFalse(EventGalleryImage.objects.filter(pk=record.pk).exists())
+        self.assertTrue(any(
+            'action=images_deleted' in entry
+            and 'count=1' in entry
+            and 'occurred_at=' in entry
+            for entry in captured.output
+        ))
+
+    @patch('events.admin.delete_event_images')
+    def test_table_bulk_delete_logs_staging_error_without_exposing_details(self, delete_images):
+        record = EventGalleryImage.objects.create(
+            event=self.event, asset_id='asset-staging-error',
+            public_id='oef/local/events/future/staging-error',
+            secure_url='https://example.com/staging-error.jpg',
+            original_filename='staging-error.jpg', uploaded_by=self.admin,
+        )
+
+        with (
+            patch(
+                'events.admin.event_image_ids_with_editorial_usage',
+                side_effect=RuntimeError('sensitive database implementation details'),
+            ),
+            patch('events.admin.logger.exception') as log_exception,
+        ):
+            response = self.client.post(
+                reverse('admin:events_eventgalleryimage_changelist'),
+                {
+                    'action': 'delete_selected_gallery_images',
+                    '_selected_action': [record.pk],
+                },
+                follow=True,
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'The deletion request could not be started')
+        self.assertNotContains(response, 'sensitive database implementation details')
+        log_exception.assert_called_once()
+        delete_images.assert_not_called()
+        record.refresh_from_db()
+        self.assertEqual(
+            record.deletion_status,
+            EventGalleryImage.DeletionStatus.ACTIVE,
+        )
+
+    @patch('events.admin.delete_event_images')
+    def test_table_bulk_delete_skips_editorial_sources_before_provider_call(self, delete_images):
+        protected = EventGalleryImage.objects.create(
+            event=self.event, asset_id='asset-used', public_id='oef/local/events/future/used',
+            secure_url='https://example.com/used.jpg', original_filename='used.jpg',
+            uploaded_by=self.admin,
+        )
+        asset = MediaAsset.objects.create(
+            source_event_image=protected,
+            asset_id=protected.asset_id,
+            public_id=protected.public_id,
+            secure_url=protected.secure_url,
+            original_filename=protected.original_filename,
+            format='jpg', width=1600, height=900, bytes=0,
+            uploaded_by=self.admin,
+        )
+        Article.objects.create(
+            article_title='Article using event image',
+            article_slug='article-using-event-image',
+            article_content='<p>Editorial copy.</p>',
+            article_author=self.admin,
+            feature_media=asset,
+        )
+
+        response = self.client.post(
+            reverse('admin:events_eventgalleryimage_changelist'),
+            {'action': 'delete_selected_gallery_images', '_selected_action': [protected.pk]},
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        delete_images.assert_not_called()
+        self.assertTrue(EventGalleryImage.objects.filter(pk=protected.pk).exists())
+
+    @patch('events.admin.delete_event_images')
+    def test_table_bulk_delete_removes_an_unused_editorial_adoption(self, delete_images):
+        image = EventGalleryImage.objects.create(
+            event=self.event, asset_id='asset-unused',
+            public_id='oef/local/events/future/unused',
+            secure_url='https://example.com/unused.jpg', original_filename='unused.jpg',
+            uploaded_by=self.admin,
+        )
+        asset = MediaAsset.objects.create(
+            source_event_image=image,
+            asset_id=image.asset_id,
+            public_id=image.public_id,
+            secure_url=image.secure_url,
+            original_filename=image.original_filename,
+            format='jpg', width=1600, height=900, bytes=0,
+            uploaded_by=self.admin,
+        )
+        delete_images.return_value = ({image.public_id}, {})
+
+        response = self.client.post(
+            reverse('admin:events_eventgalleryimage_changelist'),
+            {'action': 'delete_selected_gallery_images', '_selected_action': [image.pk]},
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        delete_images.assert_called_once_with([image.public_id])
+        self.assertFalse(MediaAsset.objects.filter(pk=asset.pk).exists())
+        self.assertFalse(EventGalleryImage.objects.filter(pk=image.pk).exists())
 
     @patch('events.admin.delete_event_images')
     def test_table_bulk_delete_preserves_unconfirmed_database_rows(self, delete_images):
@@ -471,6 +668,87 @@ class EventGalleryAdminTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertFalse(EventGalleryImage.objects.filter(pk=deleted_record.pk).exists())
         self.assertTrue(EventGalleryImage.objects.filter(pk=failed_record.pk).exists())
+        failed_record.refresh_from_db()
+        self.assertEqual(
+            failed_record.deletion_status,
+            EventGalleryImage.DeletionStatus.ACTIVE,
+        )
+        self.assertNotIn('provider unavailable', failed_record.deletion_error)
+        self.assertIn('Check the server logs', failed_record.deletion_error)
+
+    @patch('events.admin.delete_event_images')
+    def test_provider_deleted_state_resumes_local_finalisation_without_second_remote_delete(
+        self, delete_images,
+    ):
+        record = EventGalleryImage.objects.create(
+            event=self.event, asset_id='asset-resumable-delete',
+            public_id='oef/local/events/future/resumable-delete',
+            secure_url='https://example.com/resumable-delete.jpg',
+            original_filename='resumable-delete.jpg', uploaded_by=self.admin,
+        )
+        delete_images.return_value = ({record.public_id}, {})
+        action_data = {
+            'action': 'delete_selected_gallery_images',
+            '_selected_action': [record.pk],
+        }
+
+        with patch(
+            'django.db.models.query.QuerySet.delete',
+            side_effect=RuntimeError('local finalisation unavailable'),
+        ):
+            first = self.client.post(
+                reverse('admin:events_eventgalleryimage_changelist'),
+                action_data,
+                follow=True,
+            )
+
+        self.assertEqual(first.status_code, 200)
+        record.refresh_from_db()
+        self.assertEqual(
+            record.deletion_status,
+            EventGalleryImage.DeletionStatus.PROVIDER_DELETED,
+        )
+        self.assertNotIn('local finalisation unavailable', record.deletion_error)
+        self.assertIn('Check the server logs', record.deletion_error)
+        delete_images.assert_called_once_with([record.public_id])
+
+        second = self.client.post(
+            reverse('admin:events_eventgalleryimage_changelist'),
+            action_data,
+            follow=True,
+        )
+
+        self.assertEqual(second.status_code, 200)
+        self.assertEqual(delete_images.call_count, 1)
+        self.assertFalse(EventGalleryImage.objects.filter(pk=record.pk).exists())
+
+    @patch('events.admin.delete_event_images')
+    def test_recent_pending_deletion_is_not_started_twice(self, delete_images):
+        record = EventGalleryImage.objects.create(
+            event=self.event, asset_id='asset-delete-in-progress',
+            public_id='oef/local/events/future/delete-in-progress',
+            secure_url='https://example.com/delete-in-progress.jpg',
+            original_filename='delete-in-progress.jpg', uploaded_by=self.admin,
+            deletion_status=EventGalleryImage.DeletionStatus.PENDING,
+            deletion_requested_at=timezone.now(),
+        )
+
+        response = self.client.post(
+            reverse('admin:events_eventgalleryimage_changelist'),
+            {
+                'action': 'delete_selected_gallery_images',
+                '_selected_action': [record.pk],
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        delete_images.assert_not_called()
+        record.refresh_from_db()
+        self.assertEqual(
+            record.deletion_status,
+            EventGalleryImage.DeletionStatus.PENDING,
+        )
 
     @patch('events.admin.delete_event_images')
     def test_bulk_delete_requires_delete_permission(self, delete_images):
@@ -505,8 +783,23 @@ class EventGalleryAdminTests(TestCase):
         delete_images.assert_not_called()
         self.assertTrue(EventGalleryImage.objects.filter(pk=record.pk).exists())
 
+    def test_standard_single_record_delete_is_disabled(self):
+        record = EventGalleryImage.objects.create(
+            event=self.event, asset_id='asset-no-direct-delete',
+            public_id='oef/local/events/future/no-direct-delete',
+            secure_url='https://example.com/no-direct-delete.jpg',
+            original_filename='no-direct-delete.jpg', uploaded_by=self.admin,
+        )
+
+        response = self.client.get(
+            reverse('admin:events_eventgalleryimage_delete', args=(record.pk,))
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(EventGalleryImage.objects.filter(pk=record.pk).exists())
+
     @patch('events.admin.remove_publication_tag')
-    def test_direct_unpublish_updates_provider_and_event_gate(self, remove_tag):
+    def test_direct_unpublish_preserves_explicit_parent_gate(self, remove_tag):
         record = EventGalleryImage.objects.create(
             event=self.event, asset_id='asset-public',
             public_id='oef/local/events/future/public',
@@ -524,6 +817,26 @@ class EventGalleryAdminTests(TestCase):
         record.refresh_from_db()
         self.event.refresh_from_db()
         self.assertFalse(record.is_public)
+        self.assertTrue(self.event.gallery_is_public)
+
+    @patch('events.admin.update_event_image_metadata')
+    def test_metadata_edit_does_not_reopen_private_parent_gallery(self, update_metadata):
+        record = EventGalleryImage.objects.create(
+            event=self.event, asset_id='asset-private-parent-edit',
+            public_id='oef/local/events/future/private-parent-edit',
+            secure_url='https://example.com/private-parent-edit.jpg',
+            original_filename='private-parent-edit.jpg', is_public=True,
+            uploaded_by=self.admin,
+        )
+        record.alt_text = 'Updated alternative text'
+        image_admin = admin.site._registry[EventGalleryImage]
+
+        image_admin.save_model(
+            None, record, Mock(changed_data=['alt_text']), True,
+        )
+
+        update_metadata.assert_called_once()
+        self.event.refresh_from_db()
         self.assertFalse(self.event.gallery_is_public)
 
     def test_existing_image_event_is_read_only(self):
@@ -562,9 +875,35 @@ class EventGalleryAdminTests(TestCase):
         response = self.client.get(reverse('admin:events_eventgalleryimage_changelist'))
         image_admin = admin.site._registry[EventGalleryImage]
 
-        with patch('events.admin.Events.objects.filter', side_effect=RuntimeError('database unavailable')):
+        with patch(
+            'django.db.models.query.QuerySet.update',
+            side_effect=RuntimeError('database unavailable'),
+        ):
             image_admin.mark_selected_images_public(
                 response.wsgi_request, EventGalleryImage.objects.filter(pk=record.pk),
+            )
+
+        add_tag.assert_called_once_with([record.public_id])
+        remove_tag.assert_called_once_with([record.public_id])
+        record.refresh_from_db()
+        self.assertFalse(record.is_public)
+
+    @patch('events.admin.remove_publication_tag')
+    @patch('events.admin.add_publication_tag')
+    def test_bulk_publication_compensates_any_row_not_updated(self, add_tag, remove_tag):
+        record = EventGalleryImage.objects.create(
+            event=self.event, asset_id='asset-not-updated',
+            public_id='oef/local/events/future/not-updated',
+            secure_url='https://example.com/not-updated.jpg',
+            original_filename='not-updated.jpg', uploaded_by=self.admin,
+        )
+        response = self.client.get(reverse('admin:events_eventgalleryimage_changelist'))
+        image_admin = admin.site._registry[EventGalleryImage]
+
+        with patch('django.db.models.query.QuerySet.update', return_value=0):
+            image_admin.mark_selected_images_public(
+                response.wsgi_request,
+                EventGalleryImage.objects.filter(pk=record.pk),
             )
 
         add_tag.assert_called_once_with([record.public_id])
@@ -615,7 +954,7 @@ class EventGalleryAdminTests(TestCase):
         self.assertEqual(image.tags, ['volunteers'])
         self.assertTrue(image.is_public)
         self.event.refresh_from_db()
-        self.assertTrue(self.event.gallery_is_public)
+        self.assertFalse(self.event.gallery_is_public)
 
     @patch('events.management.commands.sync_event_gallery_index.get_admin_gallery_page')
     def test_cloudinary_sync_preserves_existing_database_publication(self, get_page):

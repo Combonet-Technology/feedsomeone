@@ -5,15 +5,65 @@ from django.utils import timezone
 
 from blog.content import (image_urls, remove_incomplete_figures,
                           validate_article_content)
-from blog.media import (editorial_public_id_from_url,
-                        editorial_public_ids_from_urls)
+from blog.media import (managed_media_public_id_from_url,
+                        managed_media_public_ids_from_urls)
 from blog.models import Article, ArticleRevision, MediaAsset
+from events.models import (EventGalleryImage, Events,
+                           event_image_effectively_public_q)
 from utils.cloudinary_paths import cloudinary_folder
 
 
 def _require_permission(user, codename):
     if not user.is_active or not user.is_staff or not user.has_perm(codename):
         raise PermissionDenied
+
+
+def _lock_and_validate_assets(public_ids):
+    public_ids = set(public_ids)
+    asset_refs = list(MediaAsset.objects.filter(
+        public_id__in=public_ids,
+    ).values('public_id', 'source_event_image_id'))
+    source_event_ids = [
+        asset['source_event_image_id'] for asset in asset_refs
+        if asset['source_event_image_id']
+    ]
+    event_ids = list(EventGalleryImage.objects.filter(
+        pk__in=source_event_ids,
+    ).values_list('event_id', flat=True))
+    list(Events.objects.select_for_update().filter(pk__in=event_ids))
+    event_sources = EventGalleryImage.objects.select_for_update().filter(
+        pk__in=source_event_ids,
+    )
+    if event_sources.exclude(event_image_effectively_public_q()).exists():
+        raise ValidationError(
+            'An event image used by this article or its parent gallery is now private. '
+            'Remove or replace it before continuing.'
+        )
+    assets = list(MediaAsset.objects.select_for_update().filter(
+        public_id__in=public_ids,
+    ))
+    if {asset.public_id for asset in assets} != set(public_ids):
+        raise ValidationError(
+            'Every image must be selected from the managed OEF media library.'
+        )
+    event_prefix = f'{cloudinary_folder("events")}/'
+    editorial_prefix = f'{cloudinary_folder("editorial")}/'
+    if any(
+        (
+            asset.public_id.startswith(event_prefix)
+            and not asset.source_event_image_id
+        )
+        or (
+            asset.public_id.startswith(editorial_prefix)
+            and asset.source_event_image_id
+        )
+        for asset in assets
+    ):
+        raise ValidationError(
+            'Event media must have a valid gallery source, and editorial uploads '
+            'cannot use event-gallery provenance.'
+        )
+    return assets
 
 
 @transaction.atomic
@@ -30,32 +80,30 @@ def submit_article(article, user):
     article.full_clean(exclude=('pending_revision', 'published_revision'))
     validate_article_content(article.article_content)
     content_urls = image_urls(article.article_content)
-    referenced_public_ids = editorial_public_ids_from_urls(content_urls)
-    referenced_assets = MediaAsset.objects.filter(public_id__in=referenced_public_ids)
-    if set(referenced_assets.values_list('public_id', flat=True)) != referenced_public_ids:
-        raise ValidationError(
-            'Every inline image must be selected from the managed OEF media library.'
-        )
+    referenced_public_ids = managed_media_public_ids_from_urls(content_urls)
     next_number = (
         article.revisions.aggregate(number=Max('number'))['number'] or 0
     ) + 1
     feature_image_url = ''
     if article.feature_media_id:
         if (
-            not article.feature_media.public_id.startswith(
-                f'{cloudinary_folder("editorial")}/'
-            )
-            or editorial_public_id_from_url(article.feature_media.secure_url)
+            not article.feature_media.public_id.startswith((
+                f'{cloudinary_folder("editorial")}/',
+                f'{cloudinary_folder("events")}/',
+            ))
+            or managed_media_public_id_from_url(article.feature_media.secure_url)
             != article.feature_media.public_id
         ):
             raise ValidationError(
                 'The feature image must use OEF media from this environment.'
             )
+        referenced_public_ids.add(article.feature_media.public_id)
         feature_image_url = article.feature_media.cropped_url(article.feature_crop, 'feature')
     elif article.feature_img and str(article.feature_img) != 'feature_default.jpg':
         raise ValidationError(
             'This draft still uses a legacy feature image. Choose an OEF media image or remove it before review.'
         )
+    referenced_assets = _lock_and_validate_assets(referenced_public_ids)
 
     revision = ArticleRevision.objects.create(
         article=article,
@@ -66,8 +114,6 @@ def submit_article(article, user):
         feature_image_url=feature_image_url,
         created_by=user,
     )
-    if article.feature_media_id:
-        referenced_assets = referenced_assets | MediaAsset.objects.filter(pk=article.feature_media_id)
     revision.media_assets.set(referenced_assets)
 
     article.pending_revision = revision
@@ -96,6 +142,9 @@ def approve_revision(revision, reviewer):
     _validate_reviewer(revision, reviewer, 'blog.publish_article')
     if article.pending_revision_id != revision.pk:
         raise ValidationError('This is no longer the article revision awaiting review.')
+    _lock_and_validate_assets(set(
+        revision.media_assets.values_list('public_id', flat=True)
+    ))
 
     now = timezone.now()
     if article.published_revision_id:

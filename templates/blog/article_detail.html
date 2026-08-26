@@ -215,7 +215,12 @@
                             <h3 class="widget_title" style="color: #2d2d2d;">You may also like</h3>
                             {% for post in similar %}
                             <div class="media post_item">
+                                {% if post.public_feature_image_url %}
                                 <img src="{{ post.public_feature_image_url }}" alt="{{ post.public_title }}">
+                                {% else %}
+                                <img src="{% static 'img/blog/article-sidebar-default.svg' %}"
+                                     alt="">
+                                {% endif %}
                                 <div class="media-body">
                                     <a href="{{ post.get_absolute_url }}">
                                         <h3 style="color: #2d2d2d;">{{post.public_title}}</h3>

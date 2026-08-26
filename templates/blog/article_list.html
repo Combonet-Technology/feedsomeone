@@ -4,6 +4,9 @@
 {% block social_description %}OEF news, briefings and articles about outreach evidence, relief work, transparency and practical support in Nigeria.{% endblock %}
 {% load static %}
 {% load blog_tags %}
+{% block extra_styles %}
+<link rel="stylesheet" href="{% static 'css/article-list.css' %}">
+{% endblock %}
 {% block content %}
 <main>
     <!--? Hero Start -->

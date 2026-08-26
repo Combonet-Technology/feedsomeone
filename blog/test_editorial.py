@@ -10,12 +10,15 @@ from django.urls import reverse
 from PIL import Image
 
 from blog.forms import ArticleForm
-from blog.media import (editorial_public_id_from_url,
-                        editorial_public_ids_from_urls)
+from blog.media import (adopt_event_gallery_image,
+                        editorial_public_id_from_url,
+                        editorial_public_ids_from_urls,
+                        managed_media_public_id_from_url)
 from blog.models import Article, ArticleRevision, MediaAsset
 from blog.workflow import (approve_revision, publish_article_directly,
                            request_changes, submit_article)
-from utils.cloudinary_paths import cloudinary_folder
+from events.models import EventGalleryImage, Events
+from utils.cloudinary_paths import cloudinary_environment, cloudinary_folder
 
 
 @override_settings(
@@ -35,7 +38,13 @@ class EditorialMediaURLTests(TestCase):
 
     def test_rejects_other_accounts_environments_and_query_string_lookalikes(self):
         public_id = f'{cloudinary_folder("editorial")}/community/photo-one'
-        wrong_environment = public_id.replace('/test/', '/production/')
+        current_environment = cloudinary_environment()
+        other_environment = (
+            'local' if current_environment == 'production' else 'production'
+        )
+        wrong_environment = public_id.replace(
+            f'/{current_environment}/', f'/{other_environment}/', 1,
+        )
         urls = {
             f'https://res.cloudinary.com/another-account/image/upload/v1/{public_id}.jpg',
             f'https://res.cloudinary.com/oef/image/upload/v1/{wrong_environment}.jpg',
@@ -53,6 +62,22 @@ class EditorialMediaURLTests(TestCase):
         )
 
         self.assertEqual(editorial_public_id_from_url(encoded_url), public_id)
+
+    def test_managed_media_parser_accepts_current_environment_event_images(self):
+        public_id = f'{cloudinary_folder("events")}/feed-someone/photo-one'
+        url = f'https://res.cloudinary.com/oef/image/upload/v9/{public_id}.jpg'
+
+        self.assertEqual(managed_media_public_id_from_url(url), public_id)
+        self.assertIsNone(editorial_public_id_from_url(url))
+
+    def test_managed_media_parser_rejects_folder_name_inside_unmanaged_public_id(self):
+        public_id = f'{cloudinary_folder("events")}/feed-someone/photo-one'
+        lookalike = (
+            'https://res.cloudinary.com/oef/image/upload/'
+            f'unmanaged-prefix/{public_id}.jpg'
+        )
+
+        self.assertIsNone(managed_media_public_id_from_url(lookalike))
 
 
 def grant(user, *codenames):
@@ -316,6 +341,133 @@ class EditorialWorkflowTests(TestCase):
 
         self.assertEqual(list(revision.media_assets.all()), [asset])
 
+    def test_adopted_event_image_is_valid_for_feature_and_inline_placements(self):
+        event = Events.objects.create(
+            title='Adopted Media Event', event_slug='adopted-media-event',
+            event_date='2026-08-25', location='Akure', time='10:00',
+            content='Community outreach.', gallery_is_public=True,
+        )
+        public_id = f'{cloudinary_folder("events")}/feed-someone/adopted-photo'
+        image = EventGalleryImage.objects.create(
+            event=event,
+            asset_id='event-asset-workflow',
+            public_id=public_id,
+            secure_url=f'https://res.cloudinary.com/oef/image/upload/v1/{public_id}.jpg',
+            original_filename='adopted-photo.jpg',
+            width=1600,
+            height=900,
+            alt_text='Volunteers supporting community members',
+            uploaded_by=self.writer,
+            is_public=True,
+        )
+        asset, _ = adopt_event_gallery_image(image, self.writer)
+        self.article.feature_media = asset
+        self.article.article_content = (
+            f'<p>Copy.</p><img src="{asset.secure_url}" alt="{asset.alt_text}">'
+        )
+        self.article.save()
+
+        revision = submit_article(self.article, self.writer)
+
+        self.assertIn(asset, revision.media_assets.all())
+        self.assertEqual(revision.feature_image_url, asset.feature_url)
+
+    def test_event_folder_asset_without_gallery_provenance_is_rejected(self):
+        public_id = f'{cloudinary_folder("events")}/unlinked/orphaned-photo'
+        asset = MediaAsset.objects.create(
+            asset_id='unlinked-event-workflow', public_id=public_id,
+            secure_url=f'https://res.cloudinary.com/oef/image/upload/v1/{public_id}.jpg',
+            original_filename='orphaned-photo.jpg', format='jpg',
+            width=1600, height=900, bytes=0,
+            alt_text='Unlinked event photograph', uploaded_by=self.writer,
+        )
+        self.article.feature_media = asset
+        self.article.save()
+
+        with self.assertRaisesMessage(ValidationError, 'valid gallery source'):
+            submit_article(self.article, self.writer)
+
+        self.assertFalse(self.article.revisions.exists())
+
+    def test_private_event_source_cannot_be_submitted(self):
+        event = Events.objects.create(
+            title='Submission Privacy Test', event_slug='submission-privacy-test',
+            event_date='2026-08-25', location='Akure', time='10:00',
+            content='Community outreach.', gallery_is_public=True,
+        )
+        public_id = f'{cloudinary_folder("events")}/privacy/submission'
+        image = EventGalleryImage.objects.create(
+            event=event, asset_id='privacy-submission', public_id=public_id,
+            secure_url=f'https://res.cloudinary.com/oef/image/upload/v1/{public_id}.jpg',
+            original_filename='submission.jpg', width=1600, height=900,
+            is_public=True, uploaded_by=self.writer,
+        )
+        asset, _ = adopt_event_gallery_image(image, self.writer)
+        self.article.feature_media = asset
+        self.article.save()
+        image.is_public = False
+        image.save(update_fields=('is_public',))
+
+        with self.assertRaisesMessage(ValidationError, 'now private'):
+            submit_article(self.article, self.writer)
+
+        self.assertFalse(self.article.revisions.exists())
+
+    def test_event_source_made_private_after_submission_cannot_be_approved(self):
+        event = Events.objects.create(
+            title='Approval Privacy Test', event_slug='approval-privacy-test',
+            event_date='2026-08-25', location='Akure', time='10:00',
+            content='Community outreach.', gallery_is_public=True,
+        )
+        public_id = f'{cloudinary_folder("events")}/privacy/approval'
+        image = EventGalleryImage.objects.create(
+            event=event, asset_id='privacy-approval', public_id=public_id,
+            secure_url=f'https://res.cloudinary.com/oef/image/upload/v1/{public_id}.jpg',
+            original_filename='approval.jpg', width=1600, height=900,
+            is_public=True, uploaded_by=self.writer,
+        )
+        asset, _ = adopt_event_gallery_image(image, self.writer)
+        self.article.feature_media = asset
+        self.article.save()
+        revision = submit_article(self.article, self.writer)
+        image.is_public = False
+        image.save(update_fields=('is_public',))
+
+        with self.assertRaisesMessage(ValidationError, 'now private'):
+            approve_revision(revision, self.reviewer)
+
+        revision.refresh_from_db()
+        self.article.refresh_from_db()
+        self.assertEqual(revision.status, ArticleRevision.Status.IN_REVIEW)
+        self.assertEqual(self.article.pending_revision, revision)
+        self.assertFalse(self.article.is_published)
+
+    def test_parent_gallery_made_private_after_submission_cannot_be_approved(self):
+        event = Events.objects.create(
+            title='Parent Approval Privacy', event_slug='parent-approval-privacy',
+            event_date='2026-08-25', location='Akure', time='10:00',
+            content='Community outreach.', gallery_is_public=True,
+        )
+        public_id = f'{cloudinary_folder("events")}/privacy/parent-approval'
+        image = EventGalleryImage.objects.create(
+            event=event, asset_id='privacy-parent-approval', public_id=public_id,
+            secure_url=f'https://res.cloudinary.com/oef/image/upload/v1/{public_id}.jpg',
+            original_filename='parent-approval.jpg', width=1600, height=900,
+            is_public=True, uploaded_by=self.writer,
+        )
+        asset, _ = adopt_event_gallery_image(image, self.writer)
+        self.article.feature_media = asset
+        self.article.save()
+        revision = submit_article(self.article, self.writer)
+        event.gallery_is_public = False
+        event.save(update_fields=('gallery_is_public',))
+
+        with self.assertRaisesMessage(ValidationError, 'parent gallery is now private'):
+            approve_revision(revision, self.reviewer)
+
+        self.article.refresh_from_db()
+        self.assertFalse(self.article.is_published)
+
     def test_writer_cannot_access_article_import_but_superuser_can(self):
         self.client.force_login(self.writer)
         writer_response = self.client.get(reverse('admin:blog_article_import'))
@@ -576,6 +728,7 @@ class EditorialWorkflowTests(TestCase):
         self.assertContains(response, 'Add Image')
         self.assertContains(response, '/bcx/blog/mediaasset/upload/')
         self.assertContains(response, '/bcx/blog/mediaasset/library/')
+        self.assertContains(response, '/bcx/blog/mediaasset/event-library/')
         self.assertNotContains(response, 'Replace Image')
         self.assertNotContains(response, 'data-feature-action="upload"')
         self.assertContains(response, 'Remove')
@@ -593,6 +746,7 @@ class EditorialMediaUploadTests(TestCase):
         self.client.force_login(self.writer)
         self.url = reverse('admin:blog_mediaasset_upload')
         self.library_url = reverse('admin:blog_mediaasset_library')
+        self.event_library_url = reverse('admin:blog_mediaasset_event_library')
 
     def test_writer_can_load_media_library_as_json(self):
         asset = make_media_asset(self.writer, 'library')
@@ -609,6 +763,215 @@ class EditorialMediaUploadTests(TestCase):
             reverse('admin:blog_mediaasset_crop', args=(asset.pk,)),
         )
         self.assertTrue(response.json()['assets'][0]['can_edit'])
+
+    @patch('blog.admin.cloudinary_url')
+    def test_writer_can_load_and_adopt_event_image_without_cloudinary_upload(self, cloudinary_url):
+        cloudinary_url.return_value = ('https://res.cloudinary.com/oef/image/upload/thumb.jpg', {})
+        event = Events.objects.create(
+            title='Feed Someone Test', event_slug='feed-someone-test',
+            event_date='2026-08-25', location='Akure', time='10:00',
+            content='Community outreach.', gallery_is_public=True,
+        )
+        public_id = f'{cloudinary_folder("events")}/feed-someone/photo-one'
+        image = EventGalleryImage.objects.create(
+            event=event,
+            asset_id='event-asset-1',
+            public_id=public_id,
+            secure_url=f'https://res.cloudinary.com/oef/image/upload/v1/{public_id}.jpg',
+            original_filename='photo-one.jpg',
+            width=1600,
+            height=900,
+            alt_text='Volunteers sharing relief materials',
+            is_public=True,
+            uploaded_by=self.writer,
+        )
+
+        library_response = self.client.get(self.event_library_url)
+
+        self.assertEqual(library_response.status_code, 200)
+        event_asset = library_response.json()['assets'][0]
+        self.assertEqual(event_asset['event_title'], event.title)
+        self.assertEqual(event_asset['url'], cloudinary_url.return_value[0])
+        self.assertEqual(event_asset['original_url'], image.secure_url)
+        self.assertNotEqual(event_asset['url'], event_asset['original_url'])
+        cloudinary_url.assert_called_once_with(
+            image.public_id,
+            secure=True,
+            type='upload',
+            width=360,
+            height=240,
+            crop='fill',
+            gravity='auto',
+            fetch_format='auto',
+            quality='auto',
+            dpr='auto',
+        )
+        self.assertEqual(
+            event_asset['adopt_url'],
+            reverse('admin:blog_mediaasset_adopt_event', args=(image.pk,)),
+        )
+
+        with patch('blog.media.cloudinary.uploader.upload') as upload:
+            adopt_response = self.client.post(event_asset['adopt_url'])
+
+        self.assertEqual(adopt_response.status_code, 201)
+        upload.assert_not_called()
+        adopted = MediaAsset.objects.get(public_id=public_id)
+        self.assertEqual(adopted.secure_url, image.secure_url)
+        self.assertEqual(adopted.asset_id, image.asset_id)
+        self.assertEqual(adopted.source_event_image, image)
+        self.assertTrue(adopted.approved_for_publication)
+        self.assertEqual(adopt_response.json()['id'], adopted.pk)
+        self.assertEqual(
+            adopt_response.json()['crop_url'],
+            reverse('admin:blog_mediaasset_crop', args=(adopted.pk,)),
+        )
+
+        second_response = self.client.post(event_asset['adopt_url'])
+        self.assertEqual(second_response.status_code, 200)
+        self.assertEqual(MediaAsset.objects.filter(public_id=public_id).count(), 1)
+
+    def test_private_event_image_is_hidden_and_cannot_be_adopted(self):
+        event = Events.objects.create(
+            title='Private Gallery', event_slug='private-gallery',
+            event_date='2026-08-25', location='Akure', time='10:00',
+            content='Community outreach.',
+        )
+        private_image = EventGalleryImage.objects.create(
+            event=event,
+            asset_id='private-event-asset',
+            public_id=f'{cloudinary_folder("events")}/private/photo',
+            secure_url='https://res.cloudinary.com/oef/image/upload/private.jpg',
+            original_filename='private.jpg',
+            is_public=False,
+            uploaded_by=self.writer,
+        )
+
+        library_response = self.client.get(self.event_library_url)
+        adopt_response = self.client.post(
+            reverse('admin:blog_mediaasset_adopt_event', args=(private_image.pk,))
+        )
+
+        self.assertEqual(library_response.status_code, 200)
+        self.assertEqual(library_response.json()['assets'], [])
+        self.assertEqual(adopt_response.status_code, 404)
+        self.assertFalse(MediaAsset.objects.filter(public_id=private_image.public_id).exists())
+
+    def test_image_from_private_parent_gallery_is_hidden_and_cannot_be_adopted(self):
+        event = Events.objects.create(
+            title='Private Parent Gallery', event_slug='private-parent-gallery',
+            event_date='2026-08-25', location='Akure', time='10:00',
+            content='Community outreach.', gallery_is_public=False,
+        )
+        image = EventGalleryImage.objects.create(
+            event=event,
+            asset_id='private-parent-asset',
+            public_id=f'{cloudinary_folder("events")}/private-parent/photo',
+            secure_url='https://res.cloudinary.com/oef/image/upload/private-parent.jpg',
+            original_filename='private-parent.jpg',
+            is_public=True,
+            uploaded_by=self.writer,
+        )
+
+        library_response = self.client.get(self.event_library_url)
+        adopt_response = self.client.post(
+            reverse('admin:blog_mediaasset_adopt_event', args=(image.pk,))
+        )
+
+        self.assertEqual(library_response.json()['assets'], [])
+        self.assertEqual(adopt_response.status_code, 404)
+        with self.assertRaisesMessage(ValidationError, 'not available'):
+            adopt_event_gallery_image(image, self.writer)
+
+    def test_adopted_event_image_is_hidden_if_its_source_becomes_private(self):
+        event = Events.objects.create(
+            title='Changing Gallery', event_slug='changing-gallery',
+            event_date='2026-08-25', location='Akure', time='10:00',
+            content='Community outreach.', gallery_is_public=True,
+        )
+        public_id = f'{cloudinary_folder("events")}/changing/photo'
+        image = EventGalleryImage.objects.create(
+            event=event,
+            asset_id='changing-event-asset',
+            public_id=public_id,
+            secure_url=f'https://res.cloudinary.com/oef/image/upload/v1/{public_id}.jpg',
+            original_filename='changing.jpg', width=1600, height=900,
+            is_public=True, uploaded_by=self.writer,
+        )
+        asset, _ = adopt_event_gallery_image(image, self.writer)
+        image.is_public = False
+        image.save(update_fields=('is_public',))
+
+        library_response = self.client.get(self.library_url)
+        changelist_response = self.client.get(
+            reverse('admin:blog_mediaasset_changelist')
+        )
+        crop_response = self.client.post(
+            reverse('admin:blog_mediaasset_crop', args=(asset.pk,)),
+            {'usage': 'inline', 'crop_mode': 'fixed'},
+        )
+
+        self.assertEqual(library_response.status_code, 200)
+        self.assertEqual(library_response.json()['assets'], [])
+        self.assertEqual(changelist_response.status_code, 200)
+        self.assertNotContains(changelist_response, asset.original_filename)
+        self.assertEqual(crop_response.status_code, 404)
+
+    def test_deletion_pending_event_image_is_hidden_and_cannot_be_submitted(self):
+        event = Events.objects.create(
+            title='Deletion Pending Gallery', event_slug='deletion-pending-gallery',
+            event_date='2026-08-25', location='Akure', time='10:00',
+            content='Community outreach.', gallery_is_public=True,
+        )
+        public_id = f'{cloudinary_folder("events")}/deletion-pending/photo'
+        image = EventGalleryImage.objects.create(
+            event=event, asset_id='deletion-pending-asset', public_id=public_id,
+            secure_url=f'https://res.cloudinary.com/oef/image/upload/v1/{public_id}.jpg',
+            original_filename='deletion-pending.jpg', width=1600, height=900,
+            is_public=True, uploaded_by=self.writer,
+        )
+        asset, _ = adopt_event_gallery_image(image, self.writer)
+        image.deletion_status = EventGalleryImage.DeletionStatus.PENDING
+        image.save(update_fields=('deletion_status',))
+        grant(self.writer, 'submit_article')
+        article = Article.objects.create(
+            article_title='Deletion pending media article',
+            article_slug='deletion-pending-media-article',
+            article_content='<p>Editorial copy.</p>',
+            article_author=self.writer,
+            feature_media=asset,
+        )
+
+        self.assertEqual(self.client.get(self.event_library_url).json()['assets'], [])
+        with self.assertRaisesMessage(ValidationError, 'now private'):
+            submit_article(article, self.writer)
+
+    @override_settings(OEF_EVENT_MEDIA_LIBRARY_PAGE_SIZE=1)
+    def test_event_library_is_paginated_and_all_public_images_are_reachable(self):
+        event = Events.objects.create(
+            title='Paginated Gallery', event_slug='paginated-gallery',
+            event_date='2026-08-25', location='Akure', time='10:00',
+            content='Community outreach.', gallery_is_public=True,
+        )
+        for index in range(2):
+            EventGalleryImage.objects.create(
+                event=event,
+                asset_id=f'page-asset-{index}',
+                public_id=f'{cloudinary_folder("events")}/page/photo-{index}',
+                secure_url=f'https://res.cloudinary.com/oef/image/upload/page-{index}.jpg',
+                original_filename=f'page-{index}.jpg',
+                is_public=True,
+                uploaded_by=self.writer,
+            )
+
+        first = self.client.get(self.event_library_url)
+        second = self.client.get(first.json()['next_url'])
+
+        self.assertEqual(len(first.json()['assets']), 1)
+        self.assertEqual(first.json()['total_count'], 2)
+        self.assertIsNotNone(first.json()['next_url'])
+        self.assertEqual(len(second.json()['assets']), 1)
+        self.assertIsNone(second.json()['next_url'])
 
     @patch('blog.media.cloudinary.uploader.upload')
     def test_authenticated_writer_can_upload_a_valid_image(self, upload):
@@ -654,6 +1017,58 @@ class EditorialMediaUploadTests(TestCase):
         })
         self.assertEqual(response.json()['crop_mode'], 'fixed')
         self.assertIn(asset.public_id, response.json()['url'])
+
+    def test_crop_coordinates_are_scaled_from_rendition_to_original_image(self):
+        asset = make_media_asset(self.writer, 'scaled-feature-crop')
+        asset.width = 6016
+        asset.height = 4016
+        asset.save(update_fields=('width', 'height'))
+
+        response = self.client.post(
+            reverse('admin:blog_mediaasset_crop', args=(asset.pk,)),
+            {
+                'usage': 'feature',
+                'crop_mode': 'fixed',
+                'x': 0,
+                'y': 60,
+                'width': 1600,
+                'height': 900,
+                'source_width': 1600,
+                'source_height': 1068,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['crop'], {
+            'x': 0.0,
+            'y': 225.62,
+            'width': 6016.0,
+            'height': 3384.27,
+        })
+        self.assertIn('c_crop,h_3384,w_6016,x_0,y_226', response.json()['url'])
+
+    def test_crop_endpoint_rejects_invalid_source_dimensions(self):
+        asset = make_media_asset(self.writer, 'invalid-source-dimensions')
+
+        response = self.client.post(
+            reverse('admin:blog_mediaasset_crop', args=(asset.pk,)),
+            {
+                'usage': 'feature',
+                'crop_mode': 'fixed',
+                'x': 0,
+                'y': 0,
+                'width': 32,
+                'height': 18,
+                'source_width': 0,
+                'source_height': 800,
+            },
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.json()['error'],
+            'The crop source dimensions are invalid.',
+        )
 
     def test_writer_can_generate_constrained_flexible_inline_crop(self):
         asset = make_media_asset(self.writer, 'flexible-crop')

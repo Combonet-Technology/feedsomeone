@@ -53,7 +53,6 @@ class Article(models.Model):
     feature_img = models.ImageField(
         upload_to='article_feature_img',
         blank=True,
-        default='feature_default.jpg',
         help_text='Legacy local feature image. New editorial images use managed OEF media.',
     )
     feature_media = models.ForeignKey(
@@ -230,6 +229,14 @@ class InnerComments(models.Model):
 
 
 class MediaAsset(models.Model):
+    source_event_image = models.OneToOneField(
+        'events.EventGalleryImage',
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name='editorial_media_asset',
+        help_text='Event-gallery source retained while this image is available to articles.',
+    )
     asset_id = models.CharField(max_length=255, unique=True)
     public_id = models.CharField(max_length=500, unique=True)
     secure_url = models.URLField(max_length=1000, unique=True)

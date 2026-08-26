@@ -25,7 +25,7 @@ def validate_article_content(html):
     if not strip_tags(html or '').strip() and not image_references(html):
         raise ValidationError('Article content cannot be empty.')
 
-    from blog.media import editorial_public_id_from_url
+    from blog.media import managed_media_public_id_from_url
 
     errors = []
     for index, image in enumerate(image_references(html), start=1):
@@ -33,7 +33,7 @@ def validate_article_content(html):
         alt_text = (image.get('alt') or '').strip()
         if not alt_text:
             errors.append(f'Image {index} requires alternative text.')
-        if editorial_public_id_from_url(source) is None:
+        if managed_media_public_id_from_url(source) is None:
             errors.append(f'Image {index} must use an approved secure OEF media URL.')
 
     if errors:

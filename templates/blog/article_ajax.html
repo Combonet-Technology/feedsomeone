@@ -1,22 +1,23 @@
-{% load static %}
 {% for article in objects %}
-<article class="blog_item">
+<article class="blog_item{% if not article.public_feature_image_url %} blog_item--without-image{% endif %}">
+    {% if article.public_feature_image_url %}
     <div class="blog_item_img">
         <a href="{{ article.get_absolute_url }}">
-            {% if article.public_feature_image_url %}
             <img class="card-img rounded-0" src="{{ article.public_feature_image_url }}"
                  alt="{{ article.public_title }}" loading="lazy" decoding="async">
-            {% else %}
-            <img class="card-img rounded-0" src="{% static 'img/logo/oef-logo.svg' %}"
-                 alt="" loading="lazy" decoding="async"
-                 style="height:320px;object-fit:contain;padding:70px;background:#f5f7fa">
-            {% endif %}
         </a>
         <a href="{{ article.get_absolute_url }}" class="blog_item_date">
             <h3>{{ article.date_created | date:"d" }}</h3>
             <p>{{ article.date_created | date:"M" }}, {{ article.date_created | date:"Y" }}</p>
         </a>
     </div>
+    {% endif %}
+    {% if not article.public_feature_image_url %}
+    <a href="{{ article.get_absolute_url }}" class="blog_item_date blog_item_date--standalone">
+        <h3>{{ article.date_created | date:"d" }}</h3>
+        <p>{{ article.date_created | date:"M" }}, {{ article.date_created | date:"Y" }}</p>
+    </a>
+    {% endif %}
     <div class="blog_details">
         <a class="d-inline-block" href="{{ article.get_absolute_url  }}">
             <h2 class="blog-head" style="color: #2d2d2d;">{{article.public_title}}</h2>

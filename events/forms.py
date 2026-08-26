@@ -1,6 +1,39 @@
 from django import forms
+from django.core.exceptions import ValidationError
 
-from events.models import EventGalleryImage
+from blog.media import validate_event_images_can_be_made_private
+from events.models import EventGalleryImage, Events
+
+
+class EventsAdminForm(forms.ModelForm):
+    """Surface gallery publication invariants as actionable form errors."""
+
+    class Meta:
+        model = Events
+        fields = '__all__'
+
+    def clean_gallery_is_public(self):
+        gallery_is_public = self.cleaned_data['gallery_is_public']
+        if gallery_is_public or not self.instance.pk:
+            return gallery_is_public
+
+        was_public = Events.objects.filter(pk=self.instance.pk).values_list(
+            'gallery_is_public', flat=True,
+        ).first()
+        if not was_public:
+            return gallery_is_public
+
+        public_images = EventGalleryImage.objects.filter(
+            event_id=self.instance.pk,
+            is_public=True,
+            deletion_status=EventGalleryImage.DeletionStatus.ACTIVE,
+        )
+        try:
+            validate_event_images_can_be_made_private(public_images)
+        except ValidationError as exc:
+            raise ValidationError(' '.join(exc.messages)) from exc
+
+        return gallery_is_public
 
 
 class EventGalleryImageAdminForm(forms.ModelForm):

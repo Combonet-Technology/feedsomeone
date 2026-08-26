@@ -3,15 +3,34 @@ from uuid import uuid4
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.db.models import Q
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 from django.urls import reverse
 
 User = get_user_model()
+EVENT_IMAGE_DELETION_ACTIVE = 'active'
 
 
 def generate_event_gallery_tag():
     return f'oef-event-{uuid4().hex}'
+
+
+def event_image_effectively_public_q(prefix=''):
+    """Return the shared predicate for images approved at both visibility levels."""
+    return Q(**{
+        f'{prefix}is_public': True,
+        f'{prefix}event__gallery_is_public': True,
+        f'{prefix}deletion_status': EVENT_IMAGE_DELETION_ACTIVE,
+    })
+
+
+def is_event_image_effectively_public(image):
+    return bool(
+        image.is_public
+        and image.event.gallery_is_public
+        and image.deletion_status == EVENT_IMAGE_DELETION_ACTIVE
+    )
 
 
 # Create your models here.
@@ -62,11 +81,11 @@ class Events(models.Model):
         max_length=96,
         unique=True,
         default=generate_event_gallery_tag,
-        help_text='Stable Cloudinary tag used to attach images to this event.',
+        help_text='Stable tag used to organise images for this event.',
     )
     gallery_is_public = models.BooleanField(
         default=False,
-        help_text='Show database-approved gallery images on the public website.',
+        help_text='Show approved gallery images on the public website.',
     )
 
     def __str__(self):
@@ -95,8 +114,13 @@ class EventGallery(Events):
 class EventGalleryImage(models.Model):
     """Database index for an event image whose binary is stored in Cloudinary."""
 
+    class DeletionStatus(models.TextChoices):
+        ACTIVE = EVENT_IMAGE_DELETION_ACTIVE, 'Active'
+        PENDING = 'pending', 'Deletion pending'
+        PROVIDER_DELETED = 'provider_deleted', 'Deletion confirmed'
+
     event = models.ForeignKey(
-        Events, on_delete=models.CASCADE, related_name='gallery_images',
+        Events, on_delete=models.PROTECT, related_name='gallery_images',
     )
     asset_id = models.CharField(max_length=255, blank=True)
     public_id = models.CharField(max_length=255, unique=True)
@@ -107,6 +131,14 @@ class EventGalleryImage(models.Model):
     alt_text = models.CharField(max_length=255, blank=True)
     tags = models.JSONField(default=list, blank=True)
     is_public = models.BooleanField(default=False)
+    deletion_status = models.CharField(
+        max_length=24,
+        choices=DeletionStatus.choices,
+        default=DeletionStatus.ACTIVE,
+        db_index=True,
+    )
+    deletion_error = models.TextField(blank=True)
+    deletion_requested_at = models.DateTimeField(null=True, blank=True)
     uploaded_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
         related_name='uploaded_event_gallery_images',

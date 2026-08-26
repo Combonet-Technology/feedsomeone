@@ -1,0 +1,91 @@
+.blog_left_sidebar .blog_item {
+  margin-bottom: 80px;
+}
+
+.blog_left_sidebar .blog_item:last-child {
+  margin-bottom: 0;
+}
+
+.blog_left_sidebar .blog_item_date {
+  align-items: center;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 92px;
+  padding: 10px;
+  text-align: center;
+  transition: background 0.4s ease, box-shadow 0.35s ease;
+  width: 124px;
+}
+
+.blog_left_sidebar .blog_item--without-image {
+  position: relative;
+}
+
+.blog_left_sidebar .blog_item--without-image .blog_details {
+  padding-top: 76px;
+}
+
+.blog_left_sidebar .blog_item_date--standalone {
+  -webkit-text-fill-color: #fff;
+  background-color: #09cc7f;
+  border-radius: 5px;
+  color: #fff;
+  display: inline-flex;
+  left: 10px;
+  margin: 0;
+  position: absolute;
+  top: 0;
+  transform: translateY(-50%);
+  z-index: 2;
+}
+
+.blog_left_sidebar .blog_item_date:hover,
+.blog_left_sidebar .blog_item_date:focus-visible {
+  -webkit-text-fill-color: #eee;
+  background: -webkit-linear-gradient(131deg, #007bff 0%, #09cc7f 99%);
+  box-shadow: 0 8px 18px rgba(38, 59, 143, 0.22);
+  color: #fff;
+}
+
+.blog_left_sidebar .blog_item_date:hover h3,
+.blog_left_sidebar .blog_item_date:hover p,
+.blog_left_sidebar .blog_item_date:focus-visible h3,
+.blog_left_sidebar .blog_item_date:focus-visible p {
+  -webkit-text-fill-color: #eee;
+  color: #fff;
+}
+
+.blog_left_sidebar .blog_item_date--standalone h3 {
+  color: #fff;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.2;
+  margin-bottom: 0;
+}
+
+.blog_left_sidebar .blog_item_date--standalone p {
+  color: #fff;
+  font-size: 18px;
+  margin-bottom: 0;
+}
+
+@media (min-width: 768px) {
+  .blog_left_sidebar .blog_item_date {
+    min-height: 102px;
+    width: 132px;
+  }
+
+  .blog_left_sidebar .blog_item--without-image .blog_details {
+    padding-top: 92px;
+  }
+
+  .blog_left_sidebar .blog_item_date--standalone {
+    left: 40px;
+  }
+
+  .blog_left_sidebar .blog_item_date--standalone h3 {
+    font-size: 30px;
+  }
+}

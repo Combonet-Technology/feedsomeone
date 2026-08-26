@@ -23,6 +23,7 @@ ARTICLE_EDITOR_EXTENSIONS = {
     'InlineImageUpload': {
         'uploadUrl': settings.OEF_EDITORIAL_MEDIA_UPLOAD_URL,
         'libraryUrl': settings.OEF_EDITORIAL_MEDIA_LIBRARY_URL,
+        'eventLibraryUrl': settings.OEF_EVENT_MEDIA_LIBRARY_URL,
         'maxFileSize': settings.OEF_EDITORIAL_MEDIA_MAX_BYTES,
         'allowedTypes': ['image/jpeg', 'image/png', 'image/webp'],
     },

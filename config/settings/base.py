@@ -260,7 +260,7 @@ BATON = {
         },
         {
             'type': 'model',
-            'label': 'Galleries',
+            'label': 'Gallery images',
             'name': 'eventgalleryimage',
             'app': 'events',
             'icon': 'fa fa-picture-o',
@@ -442,9 +442,13 @@ OEF_EVENT_MEDIA_MAX_BATCH_FILES = int(
 OEF_EVENT_MEDIA_MAX_BATCH_BYTES = int(
     os.environ.get('OEF_EVENT_MEDIA_MAX_BATCH_BYTES', str(500 * 1024 * 1024))
 )
+OEF_EVENT_MEDIA_LIBRARY_PAGE_SIZE = max(
+    1, int(os.environ.get('OEF_EVENT_MEDIA_LIBRARY_PAGE_SIZE', '100'))
+)
 OEF_EDITORIAL_MEDIA_PICKER_URL = '/bcx/blog/mediaasset/picker/'
 OEF_EDITORIAL_MEDIA_UPLOAD_URL = '/bcx/blog/mediaasset/upload/'
 OEF_EDITORIAL_MEDIA_LIBRARY_URL = '/bcx/blog/mediaasset/library/'
+OEF_EVENT_MEDIA_LIBRARY_URL = '/bcx/blog/mediaasset/event-library/'
 OEF_EDITORIAL_IMAGE_HOSTS = tuple(
     host.strip().lower()
     for host in os.environ.get(
@@ -464,6 +468,30 @@ DJANGO_PROSE_EDITOR_EXTENSIONS = [
         },
     },
 ]
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'oef_console': {
+            'format': '{asctime} {levelname} {name} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'oef_console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'oef_console',
+        },
+    },
+    'loggers': {
+        'events.admin': {
+            'handlers': ['oef_console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}
 
 TEST_RUNNER = 'custom_test_runner.TestRunner'
 TEST_OUTPUT_DIR = 'test-reports'

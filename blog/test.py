@@ -63,6 +63,33 @@ class ArticleListRenderingTests(TestCase):
         self.assertContains(response, 'Text that belongs in the article preview.')
         self.assertNotContains(response, 'https://example.com/private-test-image.jpg')
 
+    def test_article_without_feature_image_omits_list_image_wrapper_and_default(self):
+        author = get_user_model().objects.create_user(
+            email='no-list-image@example.com', username='no-list-image',
+        )
+        article = Article.objects.create(
+            article_title='Article without a feature image',
+            article_excerpt='A text-only card should not reserve an empty image area.',
+            article_slug='article-without-a-feature-image',
+            article_content='<p>Text-only article.</p>',
+            article_author=author,
+            is_published=True,
+            publish_date=timezone.now(),
+        )
+
+        response = self.client.get(reverse('article:all-articles'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'class="blog_item_img"')
+        self.assertNotContains(response, 'style="height:320px;object-fit:contain')
+        self.assertContains(
+            response,
+            'class="blog_item_date blog_item_date--standalone"',
+        )
+        self.assertContains(response, 'css/article-list.css')
+        self.assertContains(response, article.date_created.strftime('%d'))
+        self.assertContains(response, article.date_created.strftime('%b, %Y'))
+
 
 class ArticleAccessAndPaginationTests(TestCase):
     def setUp(self):

@@ -1,8 +1,13 @@
 import json
 import logging
+import math
 
+from cloudinary.utils import cloudinary_url
+from django.conf import settings
 from django.contrib import admin, messages
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.paginator import Paginator
+from django.db.models import Q
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import path, reverse
@@ -13,13 +18,32 @@ from django.views.decorators.http import require_POST
 from import_export.admin import ImportExportActionModelAdmin
 
 from blog.forms import ArticleForm
-from blog.media import upload_editorial_image
+from blog.media import adopt_event_gallery_image, upload_editorial_image
 from blog.models import (Article, ArticleRevision, Categories, Comments,
                          MediaAsset)
 from blog.workflow import (approve_revision, publish_article_directly,
                            request_changes, submit_article)
+from events.models import EventGalleryImage, event_image_effectively_public_q
+from utils.cloudinary_paths import cloudinary_folder
 
 logger = logging.getLogger(__name__)
+
+
+def _visible_editorial_assets_q():
+    return (
+        Q(
+            source_event_image__isnull=True,
+            public_id__startswith=f'{cloudinary_folder("editorial")}/',
+        )
+        | (
+            Q(public_id__startswith=f'{cloudinary_folder("events")}/')
+            & event_image_effectively_public_q('source_event_image__')
+        )
+    )
+
+
+def _visible_editorial_assets():
+    return MediaAsset.objects.filter(_visible_editorial_assets_q())
 
 
 def _media_asset_payload(asset, *, can_edit=False):
@@ -27,7 +51,7 @@ def _media_asset_payload(asset, *, can_edit=False):
     if asset.width < 1200 or asset.height < 675:
         warnings.append('This image is relatively small and may look soft in large placements.')
     if asset.quality_score is not None and asset.quality_score < 0.45:
-        warnings.append('Cloudinary detected a low focus-quality score; review the image before publication.')
+        warnings.append('This image has a low focus-quality score; review it before publication.')
     return {
         'id': asset.pk,
         'url': asset.transformed_url('inline'),
@@ -42,6 +66,32 @@ def _media_asset_payload(asset, *, can_edit=False):
         'filename': asset.original_filename,
         'warnings': warnings,
         'can_edit': can_edit,
+    }
+
+
+def _event_gallery_asset_payload(image):
+    thumbnail_url, _ = cloudinary_url(
+        image.public_id,
+        secure=True,
+        type='upload',
+        width=360,
+        height=240,
+        crop='fill',
+        gravity='auto',
+        fetch_format='auto',
+        quality='auto',
+        dpr='auto',
+    )
+    return {
+        'id': image.pk,
+        'url': thumbnail_url,
+        'original_url': image.secure_url,
+        'alt_text': image.alt_text,
+        'width': image.width or 0,
+        'height': image.height or 0,
+        'filename': image.original_filename or image.public_id.rsplit('/', 1)[-1],
+        'event_title': image.event.title,
+        'adopt_url': reverse('admin:blog_mediaasset_adopt_event', args=(image.pk,)),
     }
 
 
@@ -167,7 +217,8 @@ class ArticleAdmin(ImportExportActionModelAdmin):
         )
         return format_html(
             '<div class="oef-feature-image" data-current-id="{}" data-current-url="{}" '
-            'data-current-alt="{}" data-current-crop="{}" data-library-url="{}" data-upload-url="{}">'
+            'data-current-alt="{}" data-current-crop="{}" data-library-url="{}" '
+            'data-event-library-url="{}" data-upload-url="{}">'
             '{}'
             '<div class="oef-feature-image__details">'
             '<strong class="oef-feature-image__name">{}</strong>'
@@ -185,6 +236,7 @@ class ArticleAdmin(ImportExportActionModelAdmin):
             current_alt,
             current_crop,
             reverse('admin:blog_mediaasset_library'),
+            reverse('admin:blog_mediaasset_event_library'),
             reverse('admin:blog_mediaasset_upload'),
             preview,
             current_name,
@@ -503,6 +555,9 @@ class MediaAssetAdmin(admin.ModelAdmin):
     def has_add_permission(self, request):
         return False
 
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(_visible_editorial_assets_q())
+
     def has_change_permission(self, request, obj=None):
         globally_allowed = super().has_change_permission(request, obj)
         if request.user.is_superuser or request.user.has_perm('blog.approve_mediaasset'):
@@ -533,6 +588,16 @@ class MediaAssetAdmin(admin.ModelAdmin):
                 name='blog_mediaasset_library',
             ),
             path(
+                'event-library/',
+                self.admin_site.admin_view(self.event_library_view),
+                name='blog_mediaasset_event_library',
+            ),
+            path(
+                'event-library/<int:object_id>/adopt/',
+                self.admin_site.admin_view(require_POST(self.adopt_event_image_view)),
+                name='blog_mediaasset_adopt_event',
+            ),
+            path(
                 '<path:object_id>/crop/',
                 self.admin_site.admin_view(require_POST(self.crop_view)),
                 name='blog_mediaasset_crop',
@@ -550,7 +615,7 @@ class MediaAssetAdmin(admin.ModelAdmin):
             raise PermissionDenied
         return render(request, 'admin/blog/mediaasset/picker.html', {
             **self.admin_site.each_context(request),
-            'assets': MediaAsset.objects.select_related('uploaded_by')[:100],
+            'assets': _visible_editorial_assets().select_related('uploaded_by')[:100],
             'func_num': request.GET.get('CKEditorFuncNum', ''),
             'upload_url': reverse('admin:blog_mediaasset_upload'),
             'title': 'OEF editorial media',
@@ -576,7 +641,7 @@ class MediaAssetAdmin(admin.ModelAdmin):
     def library_view(self, request):
         if not self.has_view_permission(request):
             raise PermissionDenied
-        assets = MediaAsset.objects.select_related('uploaded_by')[:100]
+        assets = _visible_editorial_assets().select_related('uploaded_by')[:100]
         return JsonResponse({
             'assets': [
                 _media_asset_payload(
@@ -587,8 +652,51 @@ class MediaAssetAdmin(admin.ModelAdmin):
             ],
         })
 
+    def event_library_view(self, request):
+        if not self.has_view_permission(request):
+            raise PermissionDenied
+        images = EventGalleryImage.objects.select_related('event').filter(
+            public_id__startswith=f'{cloudinary_folder("events")}/',
+        ).filter(
+            event_image_effectively_public_q(),
+        ).order_by('-created_at', '-pk')
+        page = Paginator(
+            images,
+            settings.OEF_EVENT_MEDIA_LIBRARY_PAGE_SIZE,
+        ).get_page(request.GET.get('page'))
+        return JsonResponse({
+            'assets': [_event_gallery_asset_payload(image) for image in page.object_list],
+            'next_url': (
+                f'{reverse("admin:blog_mediaasset_event_library")}?page={page.next_page_number()}'
+                if page.has_next() else None
+            ),
+            'total_count': page.paginator.count,
+        })
+
+    def adopt_event_image_view(self, request, object_id):
+        if not request.user.has_perm('blog.add_mediaasset'):
+            raise PermissionDenied
+        image = get_object_or_404(
+            EventGalleryImage.objects.select_related('event').filter(
+                event_image_effectively_public_q(),
+            ),
+            pk=object_id,
+            public_id__startswith=f'{cloudinary_folder("events")}/',
+        )
+        try:
+            asset, _created = adopt_event_gallery_image(image, request.user)
+        except ValidationError as exc:
+            return JsonResponse({'error': ' '.join(exc.messages)}, status=409)
+        return JsonResponse(
+            _media_asset_payload(
+                asset,
+                can_edit=self.has_change_permission(request, asset),
+            ),
+            status=201 if _created else 200,
+        )
+
     def crop_view(self, request, object_id):
-        asset = get_object_or_404(MediaAsset, pk=object_id)
+        asset = get_object_or_404(_visible_editorial_assets(), pk=object_id)
         if not self.has_view_permission(request, asset):
             raise PermissionDenied
         usage = request.POST.get('usage', 'inline')
@@ -600,8 +708,30 @@ class MediaAssetAdmin(admin.ModelAdmin):
             'height': request.POST.get('height'),
         }
         try:
-            url = asset.cropped_url(crop, usage, crop_mode)
-            normalised = {key: round(float(value), 2) for key, value in crop.items()}
+            source_width = float(request.POST.get('source_width') or asset.width)
+            source_height = float(request.POST.get('source_height') or asset.height)
+            display_crop = {key: float(value) for key, value in crop.items()}
+            if (
+                not math.isfinite(source_width)
+                or not math.isfinite(source_height)
+                or source_width <= 0
+                or source_height <= 0
+            ):
+                raise ValidationError('The crop source dimensions are invalid.')
+            original_crop = {
+                'x': display_crop['x'] * asset.width / source_width,
+                'y': display_crop['y'] * asset.height / source_height,
+                'width': display_crop['width'] * asset.width / source_width,
+                'height': display_crop['height'] * asset.height / source_height,
+            }
+            url = asset.cropped_url(original_crop, usage, crop_mode)
+            normalised = {
+                key: round(value, 2) for key, value in original_crop.items()
+            }
+        except (TypeError, ValueError, OverflowError):
+            return JsonResponse(
+                {'error': 'The image crop coordinates are invalid.'}, status=400,
+            )
         except ValidationError as exc:
             return JsonResponse({'error': ' '.join(exc.messages)}, status=400)
         return JsonResponse({
@@ -609,7 +739,7 @@ class MediaAssetAdmin(admin.ModelAdmin):
         })
 
     def metadata_view(self, request, object_id):
-        asset = get_object_or_404(MediaAsset, pk=object_id)
+        asset = get_object_or_404(_visible_editorial_assets(), pk=object_id)
         if not self.has_change_permission(request, asset):
             raise PermissionDenied
         alt_text = request.POST.get('alt_text', '').strip()

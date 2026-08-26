@@ -9,6 +9,8 @@
   var cropMode = "fixed";
   var flexibleCropValid = true;
   var lastValidCrop = null;
+  var returnPanel = "library";
+  var eventLibraryNextUrl = null;
 
   function csrfToken() {
     var match = document.cookie.match(/(?:^|; )csrftoken=([^;]+)/);
@@ -48,8 +50,9 @@
     dialog.innerHTML = [
       '<div class="oef-media-dialog__shell">',
       '  <header class="oef-media-dialog__header"><div><strong>OEF editorial media</strong><p>Originals stay unchanged. Crops apply only to the article placement.</p></div><button type="button" class="oef-media-dialog__close" aria-label="Close media library">×</button></header>',
-      '  <nav class="oef-media-dialog__tabs" aria-label="Media options"><button type="button" data-media-tab="library">Media library</button><button type="button" data-media-tab="upload">Upload image</button></nav>',
+      '  <nav class="oef-media-dialog__tabs" aria-label="Media options"><button type="button" data-media-tab="library">Media library</button><button type="button" data-media-tab="events">Event library</button><button type="button" data-media-tab="upload">Upload image</button></nav>',
       '  <section class="oef-media-dialog__panel" data-media-panel="library"><p class="oef-media-dialog__status" data-library-status role="status"></p><div class="oef-media-dialog__grid" data-media-grid></div></section>',
+      '  <section class="oef-media-dialog__panel" data-media-panel="events" hidden><p class="oef-media-dialog__status" data-event-library-status role="status"></p><div class="oef-media-dialog__grid" data-event-media-grid></div><button type="button" class="button oef-media-load-more" data-event-load-more hidden>Load more images</button></section>',
       '  <section class="oef-media-dialog__panel" data-media-panel="upload" hidden><form class="oef-media-upload"><label>Image<input name="image" type="file" accept="image/jpeg,image/png,image/webp" required></label><label>Alternative text<input name="alt_text" type="text" maxlength="255" required><small>Describe what matters for someone who cannot see the image.</small></label><label>Caption <span>(optional)</span><input name="caption" type="text" maxlength="500"></label><p class="oef-media-dialog__status" data-upload-status role="status"></p><button type="submit" class="button default">Upload image</button></form></section>',
       '  <section class="oef-media-dialog__panel" data-media-panel="details" hidden><button type="button" class="oef-back-button" data-detail-back>← Media library</button><div class="oef-media-detail"><div class="oef-media-detail__source"><img data-detail-image alt=""><span>Original source · unchanged</span></div><div><h2 data-detail-name></h2><p data-detail-dimensions></p><form data-metadata-form><label>Alternative text<input name="alt_text" maxlength="255" required></label><label>Caption <span>(optional)</span><input name="caption" maxlength="500"></label><p class="oef-media-dialog__status" data-metadata-status role="status"></p><button type="submit" class="button" data-save-metadata>Save metadata</button></form><button type="button" class="button default" data-open-crop>Use image</button></div></div></section>',
       '  <section class="oef-media-dialog__panel oef-crop-panel" data-media-panel="crop" hidden><div class="oef-crop-heading"><button type="button" class="oef-back-button" data-crop-back>← Media library</button><div><h2>Prepare image</h2><p data-crop-guidance></p><small>The original media-library image will not be changed.</small></div></div><div class="oef-crop-mode" data-crop-mode-controls hidden><span>Crop mode</span><button type="button" data-crop-mode="fixed">Fixed 16:9</button><button type="button" data-crop-mode="flexible">Flexible</button></div><div class="oef-crop-workspace"><div class="oef-crop-stage"><img data-crop-image alt="Image being cropped"></div><aside class="oef-placement-preview"><strong>Article preview</strong><p>This is how the image proportions will appear in the article.</p><div class="oef-placement-preview__frame"><div class="oef-crop-preview"></div></div></aside></div><p class="oef-media-dialog__status" data-crop-status role="status"></p><div class="oef-crop-actions"><button type="button" class="button" data-crop-reset>Reset</button><button type="button" class="button" data-use-original hidden>Use original</button><button type="button" class="button default" data-crop-confirm>Use this crop</button></div></section>',
@@ -61,8 +64,8 @@
     dialog.querySelectorAll("[data-media-tab]").forEach(function (button) { button.addEventListener("click", function () { showPanel(button.dataset.mediaTab); }); });
     dialog.querySelector(".oef-media-upload").addEventListener("submit", uploadImage);
     dialog.querySelector("[data-detail-back]").addEventListener("click", function () { showPanel("library"); });
-    dialog.querySelector("[data-crop-back]").addEventListener("click", function () { destroyCropper(); showPanel("library"); });
-    dialog.querySelector("[data-open-crop]").addEventListener("click", function () { openCropper(activeAsset); });
+    dialog.querySelector("[data-crop-back]").addEventListener("click", function () { destroyCropper(); showPanel(returnPanel); });
+    dialog.querySelector("[data-open-crop]").addEventListener("click", function () { openCropper(activeAsset, "library"); });
     dialog.querySelector("[data-crop-reset]").addEventListener("click", function () { if (cropper) cropper.reset(); });
     dialog.querySelector("[data-crop-confirm]").addEventListener("click", confirmCrop);
     dialog.querySelector("[data-use-original]").addEventListener("click", useOriginal);
@@ -70,6 +73,9 @@
       button.addEventListener("click", function () { setCropMode(button.dataset.cropMode); });
     });
     dialog.querySelector("[data-metadata-form]").addEventListener("submit", saveMetadata);
+    dialog.querySelector("[data-event-load-more]").addEventListener("click", function () {
+      if (eventLibraryNextUrl) loadEventLibrary(eventLibraryNextUrl, true);
+    });
     return dialog;
   }
 
@@ -82,6 +88,7 @@
       button.setAttribute("aria-current", selected ? "page" : "false");
     });
     if (name === "library") loadLibrary();
+    if (name === "events") loadEventLibrary();
   }
 
   function renderAsset(asset) {
@@ -94,18 +101,41 @@
     image.alt = "";
     image.loading = "lazy";
     open.appendChild(image);
-    open.addEventListener("click", function () { openCropper(asset); });
+    open.addEventListener("click", function () { openCropper(asset, "library"); });
     card.appendChild(open);
     card.appendChild(element("strong", "oef-media-card__name", asset.filename || "Editorial image"));
     var actions = element("div", "oef-media-card__actions");
     var use = element("button", "button default", "Use image");
     use.type = "button";
-    use.addEventListener("click", function () { openCropper(asset); });
+    use.addEventListener("click", function () { openCropper(asset, "library"); });
     var details = element("button", "button", "View details");
     details.type = "button";
     details.addEventListener("click", function () { showDetails(asset); });
     actions.appendChild(use);
     actions.appendChild(details);
+    card.appendChild(actions);
+    return card;
+  }
+
+  function renderEventAsset(asset) {
+    var card = element("article", "oef-media-card");
+    var open = element("button", "oef-media-card__open");
+    open.type = "button";
+    open.setAttribute("aria-label", "Use " + (asset.filename || "event image"));
+    var image = element("img");
+    image.src = asset.url;
+    image.alt = "";
+    image.loading = "lazy";
+    open.appendChild(image);
+    open.addEventListener("click", function () { prepareEventAsset(asset); });
+    card.appendChild(open);
+    card.appendChild(element("strong", "oef-media-card__name", asset.filename || "Event image"));
+    card.appendChild(element("p", "oef-media-card__event", asset.event_title || "OEF event"));
+    var actions = element("div", "oef-media-card__actions oef-media-card__actions--single");
+    var use = element("button", "button default", "Use image");
+    use.type = "button";
+    use.addEventListener("click", function () { prepareEventAsset(asset); });
+    actions.appendChild(use);
     card.appendChild(actions);
     return card;
   }
@@ -121,6 +151,40 @@
       if (!response.ok) throw new Error(payload.error || "The media library could not be loaded.");
       status.textContent = payload.assets.length ? "Choose Use image to prepare it, or View details to edit metadata." : "No editorial images have been uploaded yet.";
       payload.assets.forEach(function (asset) { grid.appendChild(renderAsset(asset)); });
+    } catch (error) { status.textContent = error.message; }
+  }
+
+  async function loadEventLibrary(url, append) {
+    var status = dialog.querySelector("[data-event-library-status]");
+    var grid = dialog.querySelector("[data-event-media-grid]");
+    var loadMore = dialog.querySelector("[data-event-load-more]");
+    status.textContent = "Loading event library…";
+    loadMore.hidden = true;
+    if (!append) {
+      grid.replaceChildren();
+      eventLibraryNextUrl = null;
+    }
+    try {
+      if (!validEndpoint(endpoints.eventLibraryUrl)) throw new Error("The event library is not configured.");
+      var response = await fetch(url || endpoints.eventLibraryUrl, { credentials: "same-origin" });
+      var payload = await jsonResponse(response, "The event library returned an unexpected response.");
+      if (!response.ok) throw new Error(payload.error || "The event library could not be loaded.");
+      eventLibraryNextUrl = payload.next_url || null;
+      status.textContent = grid.children.length || payload.assets.length ? "Choose an event image to prepare it for this article." : "No public event gallery images are available in this environment.";
+      payload.assets.forEach(function (asset) { grid.appendChild(renderEventAsset(asset)); });
+      loadMore.hidden = !eventLibraryNextUrl;
+    } catch (error) { status.textContent = error.message; }
+  }
+
+  async function prepareEventAsset(eventAsset) {
+    var status = dialog.querySelector("[data-event-library-status]");
+    status.textContent = "Preparing image…";
+    try {
+      var response = await fetch(eventAsset.adopt_url, { method: "POST", credentials: "same-origin", headers: { "X-CSRFToken": csrfToken() } });
+      var payload = await jsonResponse(response, "The event image could not be prepared.");
+      if (!response.ok) throw new Error(payload.error || "The event image could not be prepared.");
+      status.textContent = "";
+      openCropper(payload, "events");
     } catch (error) { status.textContent = error.message; }
   }
 
@@ -161,9 +225,10 @@
     cropper = null;
   }
 
-  function openCropper(asset) {
+  function openCropper(asset, sourcePanel) {
     if (asset) activeAsset = asset;
     if (!activeAsset || !window.Cropper) return;
+    returnPanel = sourcePanel || "library";
     showPanel("crop");
     destroyCropper();
     cropMode = "fixed";
@@ -244,8 +309,11 @@
     var status = dialog.querySelector("[data-crop-status]");
     var button = dialog.querySelector("[data-crop-confirm]");
     var crop = cropper.getData(true);
+    var source = cropper.getImageData();
     var data = new FormData();
     ["x", "y", "width", "height"].forEach(function (key) { data.append(key, crop[key]); });
+    data.append("source_width", source.naturalWidth);
+    data.append("source_height", source.naturalHeight);
     data.append("usage", endpoints.usage);
     data.append("crop_mode", cropMode);
     status.textContent = "Preparing crop…";
@@ -275,7 +343,7 @@
       if (!response.ok) throw new Error(payload.error || "The image could not be uploaded.");
       form.reset();
       status.textContent = "";
-      openCropper(payload);
+      openCropper(payload, "upload");
     } catch (error) { status.textContent = error.message; }
     finally { submit.disabled = false; }
   }
@@ -283,7 +351,7 @@
   window.OEFMediaManager = {
     open: function (options) {
       ensureDialog();
-      endpoints = { libraryUrl: options.libraryUrl, uploadUrl: options.uploadUrl, usage: options.usage || "inline" };
+      endpoints = { libraryUrl: options.libraryUrl, eventLibraryUrl: options.eventLibraryUrl, uploadUrl: options.uploadUrl, usage: options.usage || "inline" };
       selectionCallback = options.onSelect;
       activeAsset = null;
       dialog.showModal();

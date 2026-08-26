@@ -5888,10 +5888,7 @@ hr {
 }
 
 /* line 735, C:/Users/HP/Desktop/jun-2020/277.Charity _Non-profit/assets/scss/_blog_page.scss */
-.blog_item_img .blog_item_date {
-  position: absolute;
-  bottom: -10px;
-  left: 10px;
+.blog_item_date {
   display: block;
   color: #fff;
   background-color: #09cc7f;
@@ -5899,17 +5896,26 @@ hr {
   border-radius: 5px;
 }
 
+.blog_item_img .blog_item_date {
+  position: absolute;
+  bottom: -40px;
+  left: 10px;
+}
+
 @media (min-width: 768px) {
   /* line 735, C:/Users/HP/Desktop/jun-2020/277.Charity _Non-profit/assets/scss/_blog_page.scss */
+  .blog_item_date {
+    padding: 13px 30px;
+  }
+
   .blog_item_img .blog_item_date {
     bottom: -20px;
     left: 40px;
-    padding: 13px 30px;
   }
 }
 
 /* line 751, C:/Users/HP/Desktop/jun-2020/277.Charity _Non-profit/assets/scss/_blog_page.scss */
-.blog_item_img .blog_item_date h3 {
+.blog_item_date h3 {
   font-size: 22px;
   font-weight: 600;
   color: #fff;
@@ -5919,13 +5925,14 @@ hr {
 
 @media (min-width: 768px) {
   /* line 751, C:/Users/HP/Desktop/jun-2020/277.Charity _Non-profit/assets/scss/_blog_page.scss */
-  .blog_item_img .blog_item_date h3 {
+  .blog_item_date h3 {
     font-size: 30px;
   }
 }
 
 /* line 763, C:/Users/HP/Desktop/jun-2020/277.Charity _Non-profit/assets/scss/_blog_page.scss */
-.blog_item_img .blog_item_date p {
+.blog_item_date p,
+.blog_details .blog_item_date p {
   font-size: 18px;
   margin-bottom: 0;
   color: #fff;

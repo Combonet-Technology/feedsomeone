@@ -1,12 +1,15 @@
+import re
 from pathlib import Path
 from urllib.parse import unquote, urlparse
 
 import cloudinary.uploader
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.db import transaction
+from django.db.models import Q
 from PIL import Image, UnidentifiedImageError
 
-from blog.models import MediaAsset
+from blog.models import Article, MediaAsset
 from utils.cloudinary_paths import (cloudinary_environment_tag,
                                     cloudinary_folder)
 
@@ -16,10 +19,34 @@ ALLOWED_IMAGE_FORMATS = {
     'WEBP': ('webp',),
 }
 MAX_IMAGE_PIXELS = 40_000_000
+_CLOUDINARY_VERSION = re.compile(r'^v\d+$')
+_CLOUDINARY_TRANSFORMATION = re.compile(r'^[A-Za-z]{1,8}_.+$')
+
+
+def _is_cloudinary_delivery_prefix(parts):
+    """Accept only Cloudinary transformation/version segments before a public ID."""
+    parts = list(parts)
+    if parts and _CLOUDINARY_VERSION.fullmatch(parts[-1]):
+        parts.pop()
+    return all(
+        segment and all(
+            _CLOUDINARY_TRANSFORMATION.fullmatch(component)
+            for component in segment.split(',')
+        )
+        for segment in parts
+    )
 
 
 def editorial_public_id_from_url(value):
     """Return an exact current-account/current-environment editorial public ID."""
+    public_id = managed_media_public_id_from_url(value)
+    if public_id and public_id.startswith(f'{cloudinary_folder("editorial")}/'):
+        return public_id
+    return None
+
+
+def managed_media_public_id_from_url(value):
+    """Return an exact current-environment editorial or event-media public ID."""
     parsed = urlparse(value or '')
     if (
         parsed.scheme != 'https'
@@ -35,18 +62,26 @@ def editorial_public_id_from_url(value):
     if len(parts) < 5 or parts[:3] != [cloud_name, 'image', 'upload']:
         return None
 
-    folder_parts = cloudinary_folder('editorial').split('/')
     upload_parts = parts[3:]
-    try:
-        folder_index = next(
-            index
-            for index in range(len(upload_parts) - len(folder_parts) + 1)
-            if upload_parts[index:index + len(folder_parts)] == folder_parts
-        )
-    except StopIteration:
+    allowed_folders = (
+        cloudinary_folder('editorial').split('/'),
+        cloudinary_folder('events').split('/'),
+    )
+    public_parts = None
+    for candidate in allowed_folders:
+        for index in range(len(upload_parts) - len(candidate) + 1):
+            if (
+                upload_parts[index:index + len(candidate)] == candidate
+                and _is_cloudinary_delivery_prefix(upload_parts[:index])
+            ):
+                public_parts = upload_parts[index:]
+                folder_parts = candidate
+                break
+        if public_parts is not None:
+            break
+    if public_parts is None:
         return None
 
-    public_parts = upload_parts[folder_index:]
     if len(public_parts) <= len(folder_parts):
         return None
     if public_parts[-1].lower().endswith(('.jpg', '.jpeg', '.png', '.webp', '.avif')):
@@ -63,6 +98,134 @@ def editorial_public_ids_from_urls(urls):
         for value in urls
         if (public_id := editorial_public_id_from_url(value))
     }
+
+
+def managed_media_public_ids_from_urls(urls):
+    """Extract exact managed editorial/event public IDs from Cloudinary URLs."""
+    return {
+        public_id
+        for value in urls
+        if (public_id := managed_media_public_id_from_url(value))
+    }
+
+
+@transaction.atomic
+def adopt_event_gallery_image(image, user):
+    """Index an event image for editorial reuse without copying its Cloudinary binary."""
+    from events.models import (EventGalleryImage, Events,
+                               is_event_image_effectively_public)
+
+    Events.objects.select_for_update().get(pk=image.event_id)
+    image = (
+        EventGalleryImage.objects.select_for_update().select_related('event')
+        .filter(pk=image.pk).first()
+    )
+    if not image:
+        raise ValidationError('This event image is no longer available.')
+    if not image.public_id.startswith(f'{cloudinary_folder("events")}/'):
+        raise ValidationError('This image is outside the managed event-media folder.')
+    if not is_event_image_effectively_public(image):
+        raise ValidationError('This event image is not available for public editorial use.')
+
+    existing = MediaAsset.objects.filter(public_id=image.public_id).first()
+    if existing:
+        if existing.source_event_image_id is None:
+            existing.source_event_image = image
+            existing.save(update_fields=('source_event_image',))
+        return existing, False
+
+    suffix = Path(urlparse(image.secure_url).path).suffix.lstrip('.').lower()
+    image_format = suffix or Path(image.original_filename).suffix.lstrip('.').lower() or 'jpg'
+    asset, created = MediaAsset.objects.get_or_create(
+        public_id=image.public_id,
+        defaults={
+            'asset_id': image.asset_id or f'event-gallery-{image.pk}',
+            'secure_url': image.secure_url,
+            'original_filename': image.original_filename or Path(image.public_id).name,
+            'format': image_format[:20],
+            'width': image.width or 1,
+            'height': image.height or 1,
+            'bytes': 0,
+            'alt_text': image.alt_text or f'Photograph from {image.event.title}',
+            'caption': '',
+            'uploaded_by': user,
+            'approved_for_publication': image.is_public,
+            'source_event_image': image,
+        },
+    )
+    return asset, created
+
+
+def event_image_has_editorial_usage(image):
+    """Return whether an adopted event binary is referenced by editorial content."""
+    return image.pk in event_image_ids_with_editorial_usage([image.pk])
+
+
+def event_image_ids_with_editorial_usage(image_ids):
+    """Return source IDs used by drafts or revisions in a bounded query sequence."""
+    image_ids = set(image_ids)
+    if not image_ids:
+        return set()
+    assets = list(MediaAsset.objects.filter(
+        source_event_image_id__in=image_ids,
+    ).values('source_event_image_id', 'public_id'))
+    if not assets:
+        return set()
+    used = set(MediaAsset.objects.filter(
+        source_event_image_id__in=image_ids,
+    ).filter(
+        Q(featured_articles__isnull=False)
+        | Q(article_revisions__isnull=False)
+    ).values_list('source_event_image_id', flat=True).distinct())
+    public_id_to_source = {
+        asset['public_id']: asset['source_event_image_id'] for asset in assets
+    }
+    content_query = Q()
+    for public_id in public_id_to_source:
+        content_query |= Q(article_content__contains=public_id)
+    if content_query:
+        for content in Article.objects.filter(content_query).values_list(
+            'article_content', flat=True,
+        ):
+            used.update(
+                source_id for public_id, source_id in public_id_to_source.items()
+                if public_id in content
+            )
+    return used
+
+
+def event_image_has_live_editorial_usage(image):
+    """Return whether a currently public article exposes the adopted binary."""
+    return image.pk in event_image_ids_with_live_editorial_usage([image.pk])
+
+
+def event_image_ids_with_live_editorial_usage(image_ids):
+    """Find all selected sources used by live revisions in one query."""
+    return set(MediaAsset.objects.filter(
+        source_event_image_id__in=set(image_ids),
+        article_revisions__published_articles__is_published=True,
+        article_revisions__published_articles__is_deleted=False,
+    ).values_list('source_event_image_id', flat=True).distinct())
+
+
+def validate_event_images_can_be_made_private(images):
+    image_ids = [image.pk for image in images]
+    protected_ids = event_image_ids_with_live_editorial_usage(image_ids)
+    if protected_ids:
+        raise ValidationError(
+            f'{len(protected_ids)} image(s) are used by published articles and cannot be made private. '
+            'Remove or replace them in the published articles, then try again.'
+        )
+
+
+def remove_unused_event_adoption(image):
+    """Remove an adoption record only when no article or revision depends on it."""
+    asset = MediaAsset.objects.filter(source_event_image=image).first()
+    if not asset:
+        return
+    if event_image_has_editorial_usage(image):
+        raise ValidationError('This image is used by editorial content.')
+    asset.delete()
 
 
 def validate_editorial_image(uploaded_file, max_bytes=None):

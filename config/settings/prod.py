@@ -94,15 +94,27 @@ STORAGES = {
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'oef_console': {
+            'format': '{asctime} {levelname} {name} {message}',
+            'style': '{',
+        },
+    },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
+            'formatter': 'oef_console',
         },
     },
     'loggers': {
         'django.request': {
             'handlers': ['console'],
             'level': 'ERROR',
+            'propagate': False,
+        },
+        'events.admin': {
+            'handlers': ['console'],
+            'level': 'INFO',
             'propagate': False,
         },
     },

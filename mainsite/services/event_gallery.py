@@ -67,11 +67,12 @@ def get_gallery_assets(event) -> List[GalleryAsset]:
         or not getattr(settings, 'CLOUDINARY_GALLERY_ENABLED', False)
     ):
         return []
-    from events.models import EventGalleryImage
+    from events.models import (EventGalleryImage,
+                               event_image_effectively_public_q)
 
     records = EventGalleryImage.objects.filter(
-        event_id=event.pk, is_public=True,
-    ).order_by('-created_at', '-pk')
+        event_id=event.pk,
+    ).filter(event_image_effectively_public_q()).order_by('-created_at', '-pk')
     return [
         _normalise_asset({
             'asset_id': record.asset_id,

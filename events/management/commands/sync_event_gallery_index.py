@@ -91,13 +91,6 @@ class Command(BaseCommand):
                             is_public=publication_tag in asset.tags,
                             **values,
                         )
-                for event in events:
-                    Events.objects.filter(pk=event.pk).update(
-                        gallery_is_public=EventGalleryImage.objects.filter(
-                            event=event, is_public=True,
-                        ).exists(),
-                    )
-
         action = 'Indexed' if options['execute'] else 'Would index'
         self.stdout.write(self.style.SUCCESS(
             '{} {} image(s): {} create, {} update; {} other-environment '

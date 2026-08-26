@@ -9,7 +9,7 @@
 </style>{% endblock %}
 {% block content %}
 <div class="oef-gallery-upload">
-  <div class="oef-gallery-upload__head"><p>Select several photographs. They are staged locally first, so nothing reaches Cloudinary until you review the batch and confirm the upload.</p><a class="oef-secondary" href="{{ list_url }}">Manage gallery images</a></div>
+  <div class="oef-gallery-upload__head"><p>Select several photographs. They are staged first, so nothing is saved until you review the batch and confirm the upload.</p><a class="oef-secondary" href="{{ list_url }}">Manage gallery images</a></div>
   <form id="oef-stage-form" action="{{ stage_url }}" method="post" enctype="multipart/form-data">
     {% csrf_token %}
     <div class="oef-dropzone" id="oef-dropzone" tabindex="0" role="button" aria-controls="oef-images"><strong>Drop photographs here</strong><p>or choose several JPEG, PNG or WebP images.</p><span class="oef-choose">Choose images</span><input class="oef-file-input" id="oef-images" name="images" type="file" accept="image/jpeg,image/png,image/webp" multiple></div>
@@ -24,7 +24,7 @@
       <div class="oef-review__fields"><div><label for="oef-event">Event</label><select id="oef-event" name="event" required><option value="">Select an event</option>{% for event in events %}<option value="{{ event.pk }}" {% if selected_event == event.pk|stringformat:'s' %}selected{% endif %}>{{ event.title }}{% if event.event_date %} — {{ event.event_date|date:"Y" }}{% endif %}</option>{% endfor %}</select></div><div><label for="oef-tags">Additional tags <small>(optional)</small></label><input id="oef-tags" name="tags" type="text" placeholder="volunteers, food-relief"><small>The event and local/production environment tags are added automatically.</small></div></div>
       <div class="oef-review__items" id="oef-review-items"></div>
     </div>
-    <div class="oef-review__foot"><button class="button" id="oef-cancel-batch" type="button">Cancel batch</button><button class="button oef-primary" type="submit">Upload to Cloudinary</button></div>
+    <div class="oef-review__foot"><button class="button" id="oef-cancel-batch" type="button">Cancel batch</button><button class="button oef-primary" type="submit">Upload images</button></div>
   </form>
 </div>
 <script>window.OEFGalleryUpload={removeUrl:"{{ remove_url|escapejs }}",cancelUrl:"{{ cancel_url|escapejs }}"};</script>

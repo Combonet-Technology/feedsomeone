@@ -485,6 +485,15 @@
   padding: .35rem .8rem .8rem;
 }
 
+.oef-media-card__actions--single { grid-template-columns: 1fr; }
+
+.oef-media-card__event {
+  margin: 0;
+  padding: 0 .8rem .45rem;
+  color: #657085;
+  font-size: .84rem;
+}
+
 .oef-media-card__actions .button {
   width: 100%;
   min-height: 38px;

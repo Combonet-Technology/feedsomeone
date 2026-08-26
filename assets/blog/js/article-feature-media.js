@@ -28,7 +28,7 @@
     }
 
     libraryButton.addEventListener("click", function () {
-      window.OEFMediaManager.open({ mode: "library", libraryUrl: control.dataset.libraryUrl, uploadUrl: control.dataset.uploadUrl, usage: "feature", onSelect: applyAsset });
+      window.OEFMediaManager.open({ mode: "library", libraryUrl: control.dataset.libraryUrl, eventLibraryUrl: control.dataset.eventLibraryUrl, uploadUrl: control.dataset.uploadUrl, usage: "feature", onSelect: applyAsset });
     });
     remove.addEventListener("click", function () {
       mediaInput.value = "";

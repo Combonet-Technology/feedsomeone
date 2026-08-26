@@ -48,7 +48,7 @@ async function uploadFile(file, options) {
 
 function openMediaManager(editor, options, asset = null, position = null) {
   if (!window.OEFMediaManager) { window.alert("The OEF media library is not available. Reload the page and try again."); return }
-  window.OEFMediaManager.open({ mode: asset ? "details" : "library", asset, usage: "inline", uploadUrl: options.uploadUrl, libraryUrl: options.libraryUrl, onSelect: (selected) => { const chain = editor.chain().focus(); if (position === null) chain.insertContent(figureNode(selected)).run(); else chain.insertContentAt(position, figureNode(selected)).run() } })
+  window.OEFMediaManager.open({ mode: asset ? "details" : "library", asset, usage: "inline", uploadUrl: options.uploadUrl, libraryUrl: options.libraryUrl, eventLibraryUrl: options.eventLibraryUrl, onSelect: (selected) => { const chain = editor.chain().focus(); if (position === null) chain.insertContent(figureNode(selected)).run(); else chain.insertContentAt(position, figureNode(selected)).run() } })
 }
 
 async function insertFiles(editor, files, options, position = null) {
@@ -61,7 +61,7 @@ async function insertFiles(editor, files, options, position = null) {
 
 export const InlineImageUpload = Extension.create({
   name: "InlineImageUpload",
-  addOptions() { return { uploadUrl: null, libraryUrl: null, maxFileSize: 8 * 1024 * 1024, allowedTypes: ["image/jpeg", "image/png", "image/webp"] } },
+  addOptions() { return { uploadUrl: null, libraryUrl: null, eventLibraryUrl: null, maxFileSize: 8 * 1024 * 1024, allowedTypes: ["image/jpeg", "image/png", "image/webp"] } },
   addMenuItems({ buttons, menu }) {
     const editor = this.editor
     menu.defineItem({ name: "addImage", groups: "nodes", priority: 115, command: () => openMediaManager(editor, this.options), button: buttons.material("add_photo_alternate", "Add image"), enabled: () => Boolean(this.options.libraryUrl) })
