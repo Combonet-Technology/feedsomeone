@@ -1,7 +1,6 @@
 from datetime import timedelta
 from uuid import NAMESPACE_URL, uuid5
 
-from django.contrib.auth.models import Group
 from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
@@ -9,7 +8,7 @@ from django.utils import timezone
 
 from opportunities.models import Vacancy, VacancyApplication, VolunteerOffer
 from opportunities.offers import render_offer_pdf
-from user.models import TeamMember, UserProfile
+from user.models import UserProfile
 
 DEMO_DOMAIN = 'recruitment-demo.test'
 DEMO_VACANCIES = (
@@ -24,22 +23,16 @@ SCENARIOS = (
     ('shortlisted', 'Applicant shortlisted'),
     ('offered', 'Offer sent'),
     ('offer_accepted', 'Offer accepted; agreement not yet signed'),
-    ('agreement_signed', 'Agreement signed; ready to grant staff access'),
-    ('onboarding', 'Access invitation sent'),
-    ('onboarding', 'Staff access onboarding'),
-    ('active', 'Active staff access'),
-    ('active', 'Staff access revoked'),
+    ('agreement_signed', 'Agreement signed; onboarding can begin'),
+    ('onboarding', 'Onboarding in progress'),
+    ('onboarding_failed', 'Onboarding not completed'),
+    ('offer_declined', 'Offer declined'),
+    ('agreement_declined', 'Agreement declined'),
     ('not_selected', 'Rejection email ready to send'),
     ('not_selected', 'Rejection email already sent'),
     ('not_selected', 'Rejection email failed; ready to retry'),
 )
 OFFER_SCENARIO_INDEXES = frozenset(range(3, 10))
-TEAM_MEMBER_STATUS_BY_SCENARIO = {
-    6: 'invited',
-    7: 'onboarding',
-    8: 'active',
-    9: 'inactive',
-}
 REJECTION_EMAIL_STATUS_BY_SCENARIO = {
     10: 'not_sent',
     11: 'sent',
@@ -78,9 +71,6 @@ class Command(BaseCommand):
                 applications__isnull=True,
             ).delete()
 
-        group = Group.objects.filter(name='Recruitment Manager').first()
-        if not group:
-            raise CommandError('Run the recruitment permission migration before seeding.')
         owner = UserProfile.objects.filter(is_superuser=True).order_by('date_joined').first()
         now = timezone.now()
 
@@ -134,6 +124,8 @@ class Command(BaseCommand):
                     'cv': f'vacancy_applications/demo/demo-{applicant_number}.pdf',
                     'cover_letter': f'DEMO DATA: {scenario}.',
                     'status': status,
+                    'agreement_verified_at': now if scenario_index in {5, 6, 7} else None,
+                    'agreement_verified_by': owner if scenario_index in {5, 6, 7} else None,
                     'newsletter_opt_in': False,
                     'rejection_email_status': rejection_email_status,
                     'rejection_email_batch_key': rejection_batch_key,
@@ -184,47 +176,6 @@ class Command(BaseCommand):
                         ContentFile(render_offer_pdf(offer)),
                         save=True,
                     )
-
-            if scenario_index in TEAM_MEMBER_STATUS_BY_SCENARIO:
-                user, _ = UserProfile.objects.get_or_create(
-                    email=email,
-                    defaults={
-                        'first_name': 'Demo',
-                        'last_name': f'Applicant {applicant_number}',
-                        'is_active': True,
-                    },
-                )
-                user.set_unusable_password()
-                access_is_current = scenario_index < 9
-                user.is_staff = access_is_current
-                user.save(update_fields=('password', 'is_staff', 'date_updated'))
-                if access_is_current:
-                    user.groups.add(group)
-                else:
-                    user.groups.remove(group)
-                if application.applicant_id != user.pk:
-                    application.applicant = user
-                    application.save(update_fields=('applicant', 'updated_at'))
-
-                member_status = TEAM_MEMBER_STATUS_BY_SCENARIO[scenario_index]
-                TeamMember.objects.update_or_create(
-                    user=user,
-                    defaults={
-                        'source_application': application,
-                        'role_title': vacancy.title,
-                        'engagement_type': 'volunteer',
-                        'status': member_status,
-                        'start_date': timezone.localdate(),
-                        'activated_at': now if scenario_index in {7, 8} else None,
-                        'access_granted_at': now - timedelta(days=5),
-                        'access_granted_by': owner,
-                        'access_revoked_at': now if scenario_index == 9 else None,
-                        'access_revoked_by': owner if scenario_index == 9 else None,
-                        'invitation_sent_at': now - timedelta(days=4),
-                        'invitation_message_id': f'demo-access-{applicant_number}',
-                        'invitation_error': '',
-                    },
-                )
 
         self.stdout.write(
             self.style.SUCCESS(

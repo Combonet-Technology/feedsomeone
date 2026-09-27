@@ -8,7 +8,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from django.utils import timezone
 
-from opportunities.models import Vacancy
+from opportunities.models import RecruitmentCohort, Vacancy
 
 DEFAULT_SOURCE = Path(settings.BASE_DIR, 'local-data', 'oef_vacancies.md')
 YAML_BLOCK = re.compile(r'```ya?ml\s+(.*?)```', re.DOTALL | re.IGNORECASE)
@@ -37,6 +37,7 @@ IMPORTABLE_FIELDS = {
         'updated_at',
         'published_at',
         'catalogue_version',
+        'cohort',
     }
 }
 
@@ -129,11 +130,22 @@ class Command(BaseCommand):
             action='store_true',
             help='Validate and simulate the import, then roll back all database writes.',
         )
+        parser.add_argument(
+            '--cohort',
+            help='Optional existing cohort code. New openings are unbatched when omitted.',
+        )
 
     @transaction.atomic
     def handle(self, *args, **options):
         source = Path(options['source']).expanduser().resolve()
         vacancies = load_catalogue(source)
+        cohort_code = options['cohort']
+        cohort = None
+        if cohort_code:
+            try:
+                cohort = RecruitmentCohort.objects.get(code=cohort_code)
+            except RecruitmentCohort.DoesNotExist as exc:
+                raise CommandError(f'Recruitment cohort not found: {cohort_code}') from exc
         self.stdout.write(f'Catalogue: {source}')
 
         counts = {'created': 0, 'updated': 0, 'unchanged': 0}
@@ -143,6 +155,8 @@ class Command(BaseCommand):
                 **vacancy_data,
                 'published_at': timezone.now(),
             }
+            if cohort is not None:
+                defaults['cohort'] = cohort
             defaults.pop('slug')
             vacancy, created = Vacancy.objects.get_or_create(
                 slug=slug,

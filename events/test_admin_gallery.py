@@ -171,11 +171,14 @@ class EventGalleryAdminTests(TestCase):
             is_published=True,
         )
         revision = ArticleRevision.objects.create(
-            article=article, number=1, title=article.article_title,
+            article=article, iteration=1, title=article.article_title,
             content='<p>Published copy.</p>', feature_image_url=image.secure_url,
             status=ArticleRevision.Status.APPROVED, created_by=self.admin,
+            snapshot_locked=False,
         )
         revision.media_assets.add(asset)
+        revision.snapshot_locked = True
+        revision.save(update_fields=('snapshot_locked',))
         article.published_revision = revision
         article.save(update_fields=('published_revision',))
         return image

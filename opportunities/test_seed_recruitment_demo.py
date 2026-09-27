@@ -45,12 +45,10 @@ class SeedRecruitmentDemoTests(TestCase):
         self.assertEqual(offers.count(), 14)
         self.assertEqual(offers.exclude(letter_pdf='').count(), 14)
         self.assertEqual(render_offer_pdf.call_count, 14)
-        self.assertEqual(TeamMember.objects.filter(source_application__in=applications).count(), 8)
-        members = TeamMember.objects.filter(source_application__in=applications)
-        for status in ('invited', 'onboarding', 'active', 'inactive'):
-            self.assertEqual(members.filter(status=status).count(), 2)
-        self.assertEqual(members.filter(user__is_staff=True).count(), 6)
-        self.assertEqual(members.filter(user__is_staff=False).count(), 2)
+        self.assertFalse(TeamMember.objects.filter(source_application__in=applications).exists())
+        self.assertFalse(UserProfile.objects.filter(email__endswith='@recruitment-demo.test').exists())
+        for status in ('onboarding_failed', 'offer_declined', 'agreement_declined'):
+            self.assertEqual(applications.filter(status=status).count(), 2)
         rejected = applications.filter(status='not_selected')
         self.assertEqual(rejected.count(), 6)
         for status in ('not_sent', 'sent', 'failed'):

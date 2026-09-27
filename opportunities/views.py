@@ -1,6 +1,7 @@
 import logging
 
 from django.contrib import messages
+from django.core.exceptions import ValidationError
 from django.db.models import Case, IntegerField, Value, When
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -9,6 +10,7 @@ from django.views.generic import DetailView, ListView
 from .forms import VacancyApplicationForm
 from .models import Vacancy, VacancyApplication
 from .notifications import notify_new_application
+from .recruitment import submit_application
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +21,7 @@ class VacancyListView(ListView):
     template_name = 'opportunities/vacancy_list.html'
 
     def get_queryset(self):
-        return Vacancy.objects.filter(is_active=True).exclude(status='draft').annotate(
+        return Vacancy.objects.filter(is_active=True).exclude(status='draft').select_related('cohort').annotate(
             status_order=Case(
                 When(status='open', then=Value(0)),
                 When(status='filled', then=Value(1)),
@@ -35,7 +37,7 @@ class VacancyDetailView(DetailView):
     template_name = 'opportunities/vacancy_detail.html'
 
     def get_queryset(self):
-        return Vacancy.objects.filter(is_active=True).exclude(status='draft')
+        return Vacancy.objects.filter(is_active=True).exclude(status='draft').select_related('cohort')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -50,6 +52,7 @@ class VacancyDetailView(DetailView):
             self.request.user.is_authenticated
             and VacancyApplication.objects.filter(
                 vacancy=self.object,
+                cohort_id=self.object.cohort_id,
                 applicant=self.request.user,
             ).exists()
         )
@@ -58,7 +61,7 @@ class VacancyDetailView(DetailView):
 
 def apply(request, slug):
     vacancy = get_object_or_404(
-        Vacancy.objects.exclude(status='draft'),
+        Vacancy.objects.exclude(status='draft').select_related('cohort'),
         slug=slug,
         is_active=True,
     )
@@ -68,24 +71,15 @@ def apply(request, slug):
 
     form = VacancyApplicationForm(request.POST or None, request.FILES or None)
     if request.method == 'POST' and form.is_valid():
-        duplicate = VacancyApplication.objects.filter(
-            vacancy=vacancy,
-            email__iexact=form.cleaned_data['email'],
-        )
-        if request.user.is_authenticated:
-            duplicate = duplicate | VacancyApplication.objects.filter(
-                vacancy=vacancy,
-                applicant=request.user,
-            )
-        if duplicate.exists():
-            messages.info(request, 'An application for this role has already been received from you.')
-            return redirect(vacancy.get_absolute_url())
-
         application = form.save(commit=False)
         application.vacancy = vacancy
         if request.user.is_authenticated:
             application.applicant = request.user
-        application.save()
+        try:
+            submit_application(application)
+        except ValidationError as error:
+            messages.info(request, ' '.join(error.messages))
+            return redirect(vacancy.get_absolute_url())
         try:
             notify_new_application(
                 application,

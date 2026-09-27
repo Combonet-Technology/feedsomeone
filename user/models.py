@@ -113,9 +113,13 @@ class TeamMember(models.Model):
 
     user = models.OneToOneField(
         UserProfile,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name='team_membership',
     )
+    full_name = models.CharField(max_length=255, blank=True)
+    primary_email = models.EmailField(blank=True)
     source_application = models.OneToOneField(
         'opportunities.VacancyApplication',
         on_delete=models.SET_NULL,
@@ -123,7 +127,8 @@ class TeamMember(models.Model):
         blank=True,
         related_name='team_member',
     )
-    role_title = models.CharField(max_length=255)
+    # Legacy cache only. New role/lifecycle state lives in Engagement.
+    role_title = models.CharField(max_length=255, blank=True, default='')
     engagement_type = models.CharField(
         max_length=20,
         choices=ENGAGEMENT_TYPE_CHOICES,
@@ -156,11 +161,129 @@ class TeamMember(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def __str__(self):
+        name = self.full_name or (
+            self.user.get_full_name() or self.user.email if self.user_id else ''
+        )
+        return name or self.primary_email or f'Team member {self.pk}'
+
     class Meta:
-        ordering = ('user__first_name', 'user__last_name', 'user__email')
+        ordering = ('full_name', 'primary_email')
+        permissions = (
+            ('manage_team_access', 'Can manage delegable team backend access'),
+            ('manage_team_engagement', 'Can appoint and manage team engagements'),
+        )
+
+
+class Engagement(models.Model):
+    class Status(models.TextChoices):
+        ONBOARDING = 'onboarding', 'Onboarding'
+        ACTIVE = 'active', 'Active'
+        ENDED = 'ended', 'Ended'
+
+    class OnboardingStatus(models.TextChoices):
+        NOT_STARTED = 'not_started', 'Not started'
+        IN_PROGRESS = 'in_progress', 'In progress'
+        COMPLETED = 'completed', 'Completed'
+
+    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    team_member = models.ForeignKey(
+        TeamMember, on_delete=models.PROTECT, related_name='engagements',
+    )
+    source_application = models.OneToOneField(
+        'opportunities.VacancyApplication', on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='engagement',
+    )
+    role_title = models.CharField(max_length=255)
+    engagement_type = models.CharField(
+        max_length=20, choices=TeamMember.ENGAGEMENT_TYPE_CHOICES,
+        default='volunteer',
+    )
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.ONBOARDING)
+    onboarding_status = models.CharField(
+        max_length=20, choices=OnboardingStatus.choices,
+        default=OnboardingStatus.NOT_STARTED,
+    )
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+    onboarding_started_at = models.DateTimeField(null=True, blank=True)
+    onboarding_started_by = models.ForeignKey(
+        UserProfile, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='engagement_onboarding_starts',
+    )
+    onboarding_completed_at = models.DateTimeField(null=True, blank=True)
+    onboarding_completed_by = models.ForeignKey(
+        UserProfile, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='engagement_onboarding_completions',
+    )
+    ended_at = models.DateTimeField(null=True, blank=True)
+    access_review_required = models.BooleanField(default=False)
+    ended_by = models.ForeignKey(
+        UserProfile, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='engagement_endings',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ('-created_at',)
 
     def __str__(self):
-        return f'{self.user.get_full_name() or self.user.email} - {self.role_title}'
+        return f'{self.team_member} — {self.role_title}'
+
+
+class BackendAccessChange(models.Model):
+    """Append-only history for account capability changes."""
+
+    user = models.ForeignKey(
+        UserProfile, on_delete=models.PROTECT, related_name='backend_access_changes',
+    )
+    team_member = models.ForeignKey(
+        TeamMember, on_delete=models.PROTECT, related_name='backend_access_changes',
+    )
+    action = models.CharField(max_length=40)
+    before_groups = models.JSONField(default=list)
+    after_groups = models.JSONField(default=list)
+    actor = models.ForeignKey(
+        UserProfile, on_delete=models.SET_NULL, null=True,
+        related_name='backend_access_actions',
+    )
+    reason = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ('-created_at',)
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            raise ValidationError('Access history cannot be changed.')
+        super().save(*args, **kwargs)
+
+
+class BackendAccessInvitation(models.Model):
+    class Status(models.TextChoices):
+        PENDING = 'pending', 'Pending'
+        SENDING = 'sending', 'Sending'
+        SENT = 'sent', 'Sent'
+        FAILED = 'failed', 'Failed'
+
+    key = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    team_member = models.ForeignKey(
+        TeamMember, on_delete=models.PROTECT, related_name='backend_invitations',
+    )
+    user = models.ForeignKey(
+        UserProfile, on_delete=models.PROTECT, related_name='backend_invitations',
+    )
+    status = models.CharField(max_length=12, choices=Status.choices, default=Status.PENDING)
+    attempts = models.PositiveIntegerField(default=0)
+    sending_started_at = models.DateTimeField(null=True, blank=True)
+    message_id = models.CharField(max_length=255, blank=True)
+    error = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    sent_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ('-created_at',)
 
 
 class Lead(models.Model):

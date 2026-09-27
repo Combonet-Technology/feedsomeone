@@ -1,5 +1,6 @@
 import logging
 
+from django import forms
 from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.admin import helpers
@@ -11,28 +12,47 @@ from django.utils import timezone
 from django.utils.html import format_html
 
 from opportunities.interviews import send_interview_invitation_batch
-from user.models import TeamMember
+from user.models import TeamMember, UserProfile
+from user.workforce import appoint_candidate
 
-from .forms import (StaffAccessGrantForm, StaffAccessRevocationForm,
-                    VolunteerOfferForm, VolunteerOnboardingEmailForm)
-from .models import (Vacancy, VacancyApplication, VolunteerOffer,
-                     VolunteerOnboarding)
+from .forms import VolunteerOfferForm, VolunteerOnboardingEmailForm
+from .models import (RecruitmentCohort, Vacancy, VacancyApplication,
+                     VolunteerOffer, VolunteerOnboarding)
 from .notifications import notify_new_application
 from .offers import OfferDeliveryInProgress, send_volunteer_offer
 from .onboarding import \
     ELIGIBLE_APPLICATION_STATUSES as ELIGIBLE_ONBOARDING_STATUSES
 from .onboarding import OnboardingEmailError, send_onboarding_email
+from .recruitment import has_duplicate_application
 from .rejections import send_rejection_email_batch
-from .staff_access import (ELIGIBLE_APPLICATION_STATUSES, StaffAccessError,
-                           grant_staff_access, revoke_staff_access)
 
 logger = logging.getLogger(__name__)
 
 
+@admin.register(RecruitmentCohort)
+class RecruitmentCohortAdmin(admin.ModelAdmin):
+    list_display = ('code', 'name', 'status', 'opened_at', 'intake_closed_at', 'completed_at')
+    list_filter = ('status',)
+    search_fields = ('code', 'name')
+    readonly_fields = ('opened_at', 'intake_closed_at', 'completed_at')
+
+    def get_readonly_fields(self, request, obj=None):
+        fields = list(super().get_readonly_fields(request, obj))
+        if obj:
+            fields.append('code')
+        return fields
+
+
 @admin.register(Vacancy)
 class VacancyAdmin(admin.ModelAdmin):
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'cohort':
+            kwargs['empty_label'] = 'Unbatched'
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
     list_display = (
         'title',
+        'cohort',
         'team',
         'engagement_type',
         'work_mode',
@@ -42,16 +62,29 @@ class VacancyAdmin(admin.ModelAdmin):
         'is_active',
         'published_at',
     )
-    list_filter = ('status', 'engagement_type', 'work_mode', 'team', 'is_active')
+    list_filter = ('cohort', 'status', 'engagement_type', 'work_mode', 'team', 'is_active')
     prepopulated_fields = {'slug': ('title',)}
     search_fields = ('title', 'team', 'summary', 'description')
     readonly_fields = ('catalogue_version', 'created_at', 'updated_at')
+
+    def get_readonly_fields(self, request, obj=None):
+        fields = list(super().get_readonly_fields(request, obj))
+        if obj and obj.applications.exists():
+            fields.extend(('slug', 'title', 'team', 'engagement_type'))
+        return fields
+
+    def get_prepopulated_fields(self, request, obj=None):
+        if obj and obj.applications.exists():
+            return {}
+        return super().get_prepopulated_fields(request, obj)
+
     fieldsets = (
         (
             'Role',
             {
                 'fields': (
                     'title',
+                    'cohort',
                     'slug',
                     'team',
                     'summary',
@@ -93,18 +126,100 @@ class VacancyAdmin(admin.ModelAdmin):
     )
 
 
+class ApplicationQueueFilter(admin.SimpleListFilter):
+    title = 'recruitment queue'
+    parameter_name = 'queue'
+
+    def lookups(self, request, model_admin):
+        return (
+            ('active', 'Active recruitment'),
+            ('appointed', 'Appointed'),
+            ('completed', 'Other completed'),
+            ('all', 'All applications'),
+        )
+
+    def queryset(self, request, queryset):
+        value = self.value()
+        if value == 'all' or (value is None and 'status__exact' in request.GET):
+            return queryset
+        if value == 'appointed':
+            return queryset.filter(status=VacancyApplication.Status.APPOINTED)
+        if value == 'completed':
+            return queryset.filter(status__in=(
+                'not_selected', 'withdrawn', 'closed',
+                'offer_declined', 'agreement_declined', 'onboarding_failed',
+            ))
+        return queryset.filter(status__in=(
+            'received', 'reviewing', 'shortlisted', 'offered',
+            'offer_accepted', 'agreement_pending', 'agreement_signed',
+            'onboarding', 'active',
+        ))
+
+
+class VacancyApplicationAdminForm(forms.ModelForm):
+    class Meta:
+        model = VacancyApplication
+        fields = '__all__'
+
+    def clean(self):
+        cleaned = super().clean()
+        # Managers edit cohort while identity fields are readonly and excluded
+        # from ModelForm constraint validation. Validate against that identity too.
+        if 'cohort' in cleaned:
+            vacancy = cleaned.get('vacancy', self.instance.vacancy if self.instance.vacancy_id else None)
+            applicant = cleaned.get('applicant', self.instance.applicant)
+            cohort = cleaned['cohort']
+            if vacancy and has_duplicate_application(
+                vacancy_id=vacancy.pk, cohort_id=cohort.pk if cohort else None,
+                email=cleaned.get('email', self.instance.email),
+                applicant_id=applicant.pk if applicant else None, exclude_pk=self.instance.pk,
+            ):
+                self.add_error('cohort', 'This person already has an application for this role in that cohort.')
+        if cleaned.get('status') != VacancyApplication.Status.APPOINTED:
+            return cleaned
+        email = (cleaned['email'] if 'email' in cleaned else self.instance.email or '').strip().lower()
+        applicant = cleaned['applicant'] if 'applicant' in cleaned else self.instance.applicant
+        member = None
+        if self.instance.pk:
+            member = TeamMember.objects.select_related('user').filter(
+                source_application_id=self.instance.pk,
+            ).first()
+        if member is None and applicant:
+            member = TeamMember.objects.select_related('user').filter(user=applicant).first()
+        if member is None and TeamMember.objects.filter(primary_email__iexact=email).exists():
+            raise forms.ValidationError('A team member with this email exists. Reconcile the identity first.')
+        if member and member.primary_email and member.primary_email.strip().lower() != email:
+            raise forms.ValidationError('The linked team member email conflicts with this application.')
+        account = member.user if member and member.user_id else applicant
+        if account and account.email.strip().lower() != email:
+            raise forms.ValidationError('The linked account email conflicts with this application.')
+        if member and member.user_id and applicant and member.user_id != applicant.pk:
+            raise forms.ValidationError('The linked team member has a different applicant account.')
+        if account is None and UserProfile.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError('An account with this email exists. Reconcile the identity first.')
+        if len(email) > UserProfile._meta.get_field('email').max_length:
+            raise forms.ValidationError('This email is too long for a team account.')
+        return cleaned
+
+
 @admin.register(VacancyApplication)
 class VacancyApplicationAdmin(admin.ModelAdmin):
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'cohort':
+            kwargs['empty_label'] = 'Unbatched'
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+    form = VacancyApplicationAdminForm
     change_form_template = 'admin/opportunities/vacancyapplication/change_form.html'
     list_display = (
         'vacancy',
+        'cohort',
         'full_name',
         'email',
         'status',
         'offer_delivery_status',
         'onboarding_delivery_status',
         'rejection_email_delivery_status',
-        'team_access_status',
         'newsletter_opt_in',
         'newsletter_subscribed_at',
         'acknowledgement_sent_at',
@@ -112,9 +227,11 @@ class VacancyApplicationAdmin(admin.ModelAdmin):
         'created_at',
     )
     list_filter = (
+        ApplicationQueueFilter,
         'status',
         'rejection_email_status',
         'vacancy',
+        'cohort',
         'newsletter_opt_in',
     )
     search_fields = ('vacancy__title', 'full_name', 'email')
@@ -132,10 +249,12 @@ class VacancyApplicationAdmin(admin.ModelAdmin):
         'onboarding_email_summary',
         'rejection_email_delivery_status',
         'rejection_email_summary',
-        'team_access_status',
-        'team_access_account',
-        'team_access_invited_at',
-        'team_access_error',
+        'agreement_verified_at',
+        'agreement_verified_by',
+        'onboarding_completed_at',
+        'onboarding_completed_by',
+        'appointed_at',
+        'appointed_by',
         'created_at',
         'updated_at',
     )
@@ -145,6 +264,7 @@ class VacancyApplicationAdmin(admin.ModelAdmin):
             {
                 'fields': (
                     'vacancy',
+                    'cohort',
                     'applicant',
                     'full_name',
                     'email',
@@ -198,18 +318,11 @@ class VacancyApplicationAdmin(admin.ModelAdmin):
                 ),
             },
         ),
-        (
-            'Team access',
-            {
-                'classes': ('collapse',),
-                'fields': (
-                    'team_access_status',
-                    'team_access_account',
-                    'team_access_invited_at',
-                    'team_access_error',
-                ),
-            },
-        ),
+        ('Transition audit', {'classes': ('collapse',), 'fields': (
+            'agreement_verified_at', 'agreement_verified_by',
+            'onboarding_completed_at', 'onboarding_completed_by',
+            'appointed_at', 'appointed_by',
+        )}),
         ('Record', {'classes': ('collapse',), 'fields': ('created_at', 'updated_at')}),
     )
     actions = ('send_acceptance_emails', 'shortlist_candidates', 'send_rejection_emails', 'retry_notifications')
@@ -236,8 +349,25 @@ class VacancyApplicationAdmin(admin.ModelAdmin):
             'vacancy',
             'volunteer_offer',
             'volunteer_onboarding',
-            'team_member__user',
         )
+
+    def save_model(self, request, obj, form, change):
+        if obj.status == VacancyApplication.Status.APPOINTED and (
+            not change or 'status' in form.changed_data
+        ):
+            obj.status = (
+                VacancyApplication.objects.values_list('status', flat=True).get(pk=obj.pk)
+                if change else VacancyApplication.Status.RECEIVED
+            )
+            super().save_model(request, obj, form, change)
+            appoint_candidate(obj, request.user)
+            obj.refresh_from_db()
+            return
+        if change and 'status' in form.changed_data:
+            if obj.status == VacancyApplication.Status.AGREEMENT_SIGNED:
+                obj.agreement_verified_at = timezone.now()
+                obj.agreement_verified_by = request.user
+        super().save_model(request, obj, form, change)
 
     def get_urls(self):
         custom_urls = [
@@ -250,11 +380,6 @@ class VacancyApplicationAdmin(admin.ModelAdmin):
                 '<path:object_id>/send-onboarding-email/',
                 self.admin_site.admin_view(self.send_onboarding_email_view),
                 name='opportunities_vacancyapplication_send_onboarding',
-            ),
-            path(
-                '<path:object_id>/staff-access/',
-                self.admin_site.admin_view(self.staff_access_view),
-                name='opportunities_vacancyapplication_staff_access',
             ),
         ]
         return custom_urls + super().get_urls()
@@ -269,21 +394,10 @@ class VacancyApplicationAdmin(admin.ModelAdmin):
         return request.user.has_perm('opportunities.send_rejection_email')
 
     @staticmethod
-    def has_manage_staff_access_permission(request):
-        return request.user.is_active and request.user.is_superuser
-
-    @staticmethod
     def _offer_for(obj):
         try:
             return obj.volunteer_offer
         except VolunteerOffer.DoesNotExist:
-            return None
-
-    @staticmethod
-    def _team_member_for(obj):
-        try:
-            return obj.team_member
-        except TeamMember.DoesNotExist:
             return None
 
     @staticmethod
@@ -355,41 +469,12 @@ class VacancyApplicationAdmin(admin.ModelAdmin):
             obj.rejection_email_error or '—',
         )
 
-    @admin.display(description='Staff access')
-    def team_access_status(self, obj):
-        team_member = self._team_member_for(obj)
-        return team_member.get_status_display() if team_member else 'Not granted'
-
-    @admin.display(description='Staff account')
-    def team_access_account(self, obj):
-        team_member = self._team_member_for(obj)
-        return team_member.user.email if team_member else ''
-
-    @admin.display(description='Invitation sent at')
-    def team_access_invited_at(self, obj):
-        team_member = self._team_member_for(obj)
-        return team_member.invitation_sent_at if team_member else None
-
-    @admin.display(description='Invitation error')
-    def team_access_error(self, obj):
-        team_member = self._team_member_for(obj)
-        return team_member.invitation_error if team_member else ''
-
     def render_change_form(self, request, context, *args, **kwargs):
         application = context.get('original')
         offer = self._offer_for(application) if application else None
-        team_member = self._team_member_for(application) if application else None
         onboarding = self._onboarding_for(application) if application else None
-        staff_access_is_current = bool(
-            team_member and team_member.status in {'invited', 'onboarding', 'active'}
-        )
         can_send_offer = bool(
             application and self.has_send_offer_permission(request, application)
-        )
-        can_manage_staff_access = bool(
-            application
-            and self.has_manage_staff_access_permission(request)
-            and (application.status in ELIGIBLE_APPLICATION_STATUSES or team_member)
         )
         has_onboarding_permission = bool(
             application
@@ -423,53 +508,15 @@ class VacancyApplicationAdmin(admin.ModelAdmin):
             )
         else:
             context['send_onboarding_disabled_reason'] = ''
-        context['can_manage_staff_access'] = can_manage_staff_access
-        context['staff_access_is_current'] = staff_access_is_current
-        if staff_access_is_current:
-            context['staff_access_label'] = 'Resend access email'
-        elif team_member:
-            context['staff_access_label'] = 'Restore staff access'
-        else:
-            context['staff_access_label'] = 'Grant staff access'
-        context['show_revoke_staff_access'] = staff_access_is_current
-        context['can_revoke_staff_access'] = bool(
-            staff_access_is_current
-            and self.has_manage_staff_access_permission(request)
-        )
-        if not self.has_manage_staff_access_permission(request):
-            context['staff_access_disabled_reason'] = (
-                'Only the OEF superuser can grant or revoke staff access.'
-            )
-        elif (
-            application
-            and not team_member
-            and application.status not in ELIGIBLE_APPLICATION_STATUSES
-        ):
-            context['staff_access_disabled_reason'] = (
-                'The volunteer agreement must be signed before staff access is granted.'
-            )
-        else:
-            context['staff_access_disabled_reason'] = ''
-        context['revoke_staff_access_disabled_reason'] = (
-            ''
-            if context['can_revoke_staff_access']
-            else 'Only the OEF superuser can revoke staff access.'
-        )
         if application:
             context['send_volunteer_offer_url'] = reverse(
                 'admin:opportunities_vacancyapplication_send_offer',
-                args=(application.pk,),
-            )
-            context['staff_access_url'] = reverse(
-                'admin:opportunities_vacancyapplication_staff_access',
                 args=(application.pk,),
             )
             context['send_onboarding_url'] = reverse(
                 'admin:opportunities_vacancyapplication_send_onboarding',
                 args=(application.pk,),
             )
-            context['resend_staff_access_url'] = f"{context['staff_access_url']}#resend-access"
-            context['revoke_staff_access_url'] = f"{context['staff_access_url']}#revoke-access"
         return super().render_change_form(request, context, *args, **kwargs)
 
     @staticmethod
@@ -660,123 +707,6 @@ class VacancyApplicationAdmin(admin.ModelAdmin):
         return TemplateResponse(
             request,
             'admin/opportunities/vacancyapplication/send_onboarding.html',
-            context,
-        )
-
-    def _staff_access_initial(self, application, team_member):
-        return {
-            'role_title': (
-                team_member.role_title if team_member else application.vacancy.title
-            ),
-            'engagement_type': (
-                team_member.engagement_type
-                if team_member
-                else application.vacancy.engagement_type
-            ),
-            'start_date': team_member.start_date if team_member else None,
-        }
-
-    def staff_access_view(self, request, object_id):
-        application = self.get_object(request, object_id)
-        if application is None:
-            return HttpResponseRedirect(
-                reverse('admin:opportunities_vacancyapplication_changelist')
-            )
-        if not self.has_manage_staff_access_permission(request):
-            raise PermissionDenied
-
-        team_member = self._team_member_for(application)
-        action = request.POST.get('action', 'grant')
-        grant_form = StaffAccessGrantForm(
-            request.POST if request.method == 'POST' and action == 'grant' else None,
-            initial=self._staff_access_initial(application, team_member),
-        )
-        revoke_form = StaffAccessRevocationForm(
-            request.POST if request.method == 'POST' and action == 'revoke' else None,
-        )
-
-        if request.method == 'POST' and action == 'grant' and grant_form.is_valid():
-            try:
-                result = grant_staff_access(
-                    application,
-                    grant_form.cleaned_data,
-                    request.user,
-                    request.build_absolute_uri('/'),
-                )
-            except StaffAccessError as error:
-                grant_form.add_error(None, str(error))
-            except Exception:
-                logger.exception(
-                    'Staff access invitation failed for application %s',
-                    application.pk,
-                )
-                grant_form.add_error(
-                    None,
-                    'The account was prepared, but the invitation could not be sent. '
-                    'Review the recorded error and retry when email delivery is available.',
-                )
-            else:
-                message = 'Staff access granted and invitation sent.'
-                if not result.password_setup_required:
-                    message = 'Staff access granted and login notification sent.'
-                self.message_user(request, message, level=messages.SUCCESS)
-                return HttpResponseRedirect(
-                    reverse(
-                        'admin:opportunities_vacancyapplication_change',
-                        args=(application.pk,),
-                    )
-                )
-
-        if request.method == 'POST' and action == 'revoke' and revoke_form.is_valid():
-            try:
-                revoke_staff_access(application, request.user)
-            except StaffAccessError as error:
-                revoke_form.add_error(None, str(error))
-            else:
-                self.message_user(
-                    request,
-                    'Recruitment Manager access revoked. The user and team record were retained.',
-                    level=messages.SUCCESS,
-                )
-                return HttpResponseRedirect(
-                    reverse(
-                        'admin:opportunities_vacancyapplication_change',
-                        args=(application.pk,),
-                    )
-                )
-
-        team_member = self._team_member_for(
-            self.get_queryset(request).get(pk=application.pk)
-        )
-        access_is_current = bool(
-            team_member and team_member.status in {'invited', 'onboarding', 'active'}
-        )
-        context = {
-            **self.admin_site.each_context(request),
-            'opts': self.model._meta,
-            'title': 'Manage staff access',
-            'application': application,
-            'team_member': team_member,
-            'access_is_current': access_is_current,
-            'grant_form': grant_form,
-            'revoke_form': revoke_form,
-            'staff_access_submit_label': (
-                'Resend access email'
-                if access_is_current
-                else (
-                    'Restore access and send email'
-                    if team_member
-                    else 'Grant access and send invitation'
-                )
-            ),
-            'change_url': reverse(
-                'admin:opportunities_vacancyapplication_change',
-                args=(application.pk,),
-            ),
-        }
-        return TemplateResponse(
-            request,
-            'admin/opportunities/vacancyapplication/staff_access.html',
             context,
         )
 

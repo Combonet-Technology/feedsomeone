@@ -2,8 +2,11 @@ from pathlib import Path
 from uuid import uuid4
 
 from django.conf import settings
-from django.db import models
+from django.core.exceptions import ValidationError
+from django.db import models, transaction
+from django.db.models.functions import Lower
 from django.urls import reverse
+from django.utils import timezone
 
 from utils.cloudinary_paths import cloudinary_folder
 
@@ -22,6 +25,55 @@ def volunteer_offer_upload_to(instance, filename):
 
 vacancy_cv_storage = VacancyCVStorage()
 vacancy_offer_storage = VacancyPrivateDocumentStorage()
+
+
+class RecruitmentCohort(models.Model):
+    class Status(models.TextChoices):
+        DRAFT = 'draft', 'Draft'
+        OPEN = 'open', 'Open'
+        INTAKE_CLOSED = 'intake_closed', 'Closed'
+        COMPLETED = 'completed', 'Completed'
+
+    code = models.SlugField(unique=True, max_length=60)
+    name = models.CharField(max_length=160)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.DRAFT)
+    opened_at = models.DateTimeField(null=True, blank=True, editable=False)
+    intake_closed_at = models.DateTimeField(null=True, blank=True, editable=False)
+    completed_at = models.DateTimeField(null=True, blank=True, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f'{self.name} ({self.code})'
+
+    def clean(self):
+        if self.pk and type(self).objects.filter(pk=self.pk).exclude(code=self.code).exists():
+            raise ValidationError({'code': 'The cohort code cannot change.'})
+        if self.pk and self.applications.exists():
+            original_name = type(self).objects.filter(pk=self.pk).values_list('name', flat=True).first()
+            if self.name != original_name:
+                raise ValidationError({'name': 'The cohort name cannot change after applications exist.'})
+
+    @transaction.atomic
+    def save(self, *args, **kwargs):
+        if self.pk:
+            type(self).objects.select_for_update().get(pk=self.pk)
+        saves_status = kwargs.get('update_fields') is None or 'status' in kwargs['update_fields']
+        now = timezone.now()
+        if saves_status and self.status == self.Status.OPEN and not self.opened_at:
+            self.opened_at = now
+        if saves_status and self.status == self.Status.INTAKE_CLOSED and not self.intake_closed_at:
+            self.intake_closed_at = now
+        if saves_status and self.status == self.Status.COMPLETED and not self.completed_at:
+            self.completed_at = now
+        if saves_status and kwargs.get('update_fields') is not None:
+            kwargs['update_fields'] = set(kwargs['update_fields']) | {
+                'opened_at', 'intake_closed_at', 'completed_at',
+            }
+        self.full_clean()
+        super().save(*args, **kwargs)
+        if saves_status and self.status != self.Status.OPEN:
+            self.vacancies.filter(status='open').update(status='closed', updated_at=now)
 
 
 class Vacancy(models.Model):
@@ -44,6 +96,10 @@ class Vacancy(models.Model):
     )
 
     title = models.CharField(max_length=255)
+    cohort = models.ForeignKey(
+        RecruitmentCohort, on_delete=models.PROTECT, null=True, blank=True,
+        related_name='vacancies', help_text='Current intake cohort. Leave blank for unbatched recruitment.',
+    )
     slug = models.SlugField(unique=True, max_length=255)
     team = models.CharField(max_length=120, blank=True)
     summary = models.CharField(max_length=500)
@@ -85,7 +141,34 @@ class Vacancy(models.Model):
 
     @property
     def is_open(self):
-        return self.is_active and self.status == 'open'
+        return (
+            self.is_active and self.status == 'open'
+            and (
+                self.cohort_id is None
+                or (self.cohort_id is not None and self.cohort.status == RecruitmentCohort.Status.OPEN)
+            )
+        )
+
+    def clean(self):
+        if (
+            self.status == 'open' and self.cohort_id
+            and self.cohort.status != RecruitmentCohort.Status.OPEN
+        ):
+            raise ValidationError({'cohort': 'Choose an open cohort or leave blank for unbatched recruitment.'})
+        if self.pk and self.applications.exists():
+            original = type(self).objects.get(pk=self.pk)
+            protected = ('slug', 'title', 'team', 'engagement_type')
+            if any(getattr(self, field) != getattr(original, field) for field in protected):
+                raise ValidationError('Role identity cannot change after applications exist.')
+
+    @transaction.atomic
+    def save(self, *args, **kwargs):
+        if self.cohort_id:
+            self.cohort = RecruitmentCohort.objects.select_for_update().get(pk=self.cohort_id)
+        if self.pk:
+            type(self).objects.select_for_update().get(pk=self.pk)
+        self.clean()
+        super().save(*args, **kwargs)
 
     @staticmethod
     def _list_items(value):
@@ -115,8 +198,13 @@ class VacancyApplication(models.Model):
         SHORTLISTED = "shortlisted", "Shortlisted"
         OFFERED = "offered", "Offered"
         OFFER_ACCEPTED = "offer_accepted", "Offer accepted"
+        OFFER_DECLINED = "offer_declined", "Offer declined"
+        AGREEMENT_PENDING = "agreement_pending", "Awaiting agreement signature"
         AGREEMENT_SIGNED = "agreement_signed", "Agreement signed"
+        AGREEMENT_DECLINED = "agreement_declined", "Agreement declined"
+        APPOINTED = "appointed", "Appointed"
         ONBOARDING = "onboarding", "Onboarding"
+        ONBOARDING_FAILED = "onboarding_failed", "Onboarding not completed"
         ACTIVE = "active", "Active"
         NOT_SELECTED = "not_selected", "Not selected"
         WITHDRAWN = "withdrawn", "Withdrawn"
@@ -130,6 +218,10 @@ class VacancyApplication(models.Model):
 
     INTERVIEW_EMAIL_STATUS_CHOICES = RejectionEmailStatuses.choices
     vacancy = models.ForeignKey(Vacancy, on_delete=models.CASCADE, related_name='applications')
+    cohort = models.ForeignKey(
+        RecruitmentCohort, on_delete=models.PROTECT, null=True, blank=True,
+        related_name='applications',
+    )
     applicant = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -146,6 +238,21 @@ class VacancyApplication(models.Model):
     )
     cover_letter = models.TextField()
     status = models.CharField(max_length=20, choices=Status.choices, default='received')
+    agreement_verified_at = models.DateTimeField(null=True, blank=True, editable=False)
+    agreement_verified_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        editable=False, related_name='agreements_verified_for_appointment',
+    )
+    appointed_at = models.DateTimeField(null=True, blank=True, editable=False)
+    appointed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        editable=False, related_name='candidates_appointed',
+    )
+    onboarding_completed_at = models.DateTimeField(null=True, blank=True, editable=False)
+    onboarding_completed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        editable=False, related_name='applications_onboarding_completed',
+    )
     acknowledgement_sent_at = models.DateTimeField(null=True, blank=True, editable=False)
     slack_notified_at = models.DateTimeField(null=True, blank=True, editable=False)
     newsletter_opt_in = models.BooleanField(default=False)
@@ -231,12 +338,31 @@ class VacancyApplication(models.Model):
             ('send_interview_invitation', 'Can send volunteer interview invitations'),
         )
         constraints = [
-            models.UniqueConstraint(fields=('vacancy', 'applicant'), name='unique_vacancy_applicant'),
-            models.UniqueConstraint(fields=('vacancy', 'email'), name='unique_vacancy_email'),
+            models.UniqueConstraint(fields=('vacancy', 'cohort', 'applicant'),
+                                    name='unique_cohort_vacancy_applicant'),
+            models.UniqueConstraint(fields=('vacancy', 'applicant'),
+                                    condition=models.Q(cohort__isnull=True),
+                                    name='unique_unbatched_vacancy_applicant'),
+            models.UniqueConstraint('vacancy', 'cohort', Lower('email'),
+                                    condition=models.Q(cohort__isnull=False),
+                                    name='unique_cohort_vacancy_email'),
+            models.UniqueConstraint('vacancy', Lower('email'),
+                                    condition=models.Q(cohort__isnull=True),
+                                    name='unique_unbatched_vacancy_email'),
         ]
 
     def __str__(self):
         return f'{self.full_name} - {self.vacancy}'
+
+    def save(self, *args, **kwargs):
+        if self.status == self.Status.APPOINTED:
+            from user.models import Engagement
+            if not (
+                self.appointed_at and self.appointed_by_id
+                and Engagement.objects.filter(source_application_id=self.pk).exists()
+            ):
+                raise ValidationError('Appointment requires a linked team engagement and recorded actor.')
+        super().save(*args, **kwargs)
 
 
 class PrivateDocumentDeletion(models.Model):

@@ -1,0 +1,54 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<div id="content-main" style="padding-left: 16px;">
+  <p><a href="{{ change_url }}">Back to team member</a></p>
+  <p>Person: <strong>{{ member.full_name }}</strong> · {{ member.primary_email }}</p>
+  <p>Current account: {% if member.user %}{{ member.user.email }}{% else %}none{% endif %}</p>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    {{ form.as_p }}
+    {% if preview %}
+      <h2>Effective access preview</h2>
+      <p>Current: {{ preview.current|join:", "|default:"None" }}</p>
+      <p>Requested: {{ preview.requested|join:", "|default:"None" }}</p>
+      <p>Added: {{ preview.add|join:", "|default:"None" }}</p>
+      <p>Removed: {{ preview.remove|join:", "|default:"None" }}</p>
+      {% if preview.requires_account %}<p>A login account will be created when you confirm.</p>{% endif %}
+      <button type="submit" name="confirm" value="1" class="default">Confirm access change</button>
+    {% else %}
+      <button type="submit">Preview access change</button>
+    {% endif %}
+  </form>
+  <h2>Backend access log</h2>
+  <h3>Access changes and revocations</h3>
+  {% for change in access_changes %}
+    <p>
+      {{ change.created_at }} —
+      {% if change.action == "suspend" %}Access revoked
+      {% elif change.before_groups %}Access changed
+      {% else %}Access granted{% endif %}:
+      {{ change.before_groups|join:", "|default:"None" }} →
+      {{ change.after_groups|join:", "|default:"None" }}.
+      By {{ change.actor|default:"System" }}. Reason: {{ change.reason }}
+    </p>
+  {% empty %}
+    <p>No access changes recorded.</p>
+  {% endfor %}
+  <h3>Access invitations</h3>
+  {% for invitation in access_invitations %}
+    <div class="access-log-entry">
+      {{ invitation.created_at }} — Access invitation: {{ invitation.get_status_display }}
+      ({{ invitation.attempts }} attempt{{ invitation.attempts|pluralize }}).
+      {% if invitation.status != "sent" and member.user.is_active and member.user.is_staff and invitation.user_id == member.user_id %}
+        <form method="post" style="display: inline;">
+          {% csrf_token %}
+          <button type="submit" name="retry_invitation" value="{{ invitation.pk }}">Send or retry</button>
+        </form>
+      {% endif %}
+    </div>
+  {% empty %}
+    <p>No access invitations recorded.</p>
+  {% endfor %}
+</div>
+{% endblock %}

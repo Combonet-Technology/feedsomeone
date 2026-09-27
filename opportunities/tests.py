@@ -13,7 +13,7 @@ from django.urls import reverse
 from user.models import UserProfile
 from utils.cloudinary_paths import cloudinary_folder
 
-from .models import Vacancy, VacancyApplication
+from .models import RecruitmentCohort, Vacancy, VacancyApplication
 from .notifications import notify_new_application
 from .storage import AuthenticatedRawCloudinaryStorage, VacancyCVStorage
 
@@ -268,6 +268,29 @@ class VacancyApplicationTests(TestCase):
 
         self.assertRedirects(response, self.filled_vacancy.get_absolute_url())
         self.assertEqual(VacancyApplication.objects.count(), 0)
+
+    def test_public_intake_preserves_cohort_and_allows_later_unbatched_application(self):
+        cohort = RecruitmentCohort.objects.create(code='batch', name='Batch', status='open')
+        self.vacancy.cohort = cohort
+        self.vacancy.save()
+        url = reverse('opportunities:apply', kwargs={'slug': self.vacancy.slug})
+        self.client.post(url, self.application_data())
+        first = VacancyApplication.objects.get()
+        self.assertEqual(first.cohort_id, cohort.pk)
+        cohort.status = 'intake_closed'
+        cohort.save()
+        response = self.client.post(url, self.application_data(email='late@example.com'))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(VacancyApplication.objects.count(), 1)
+        self.vacancy.refresh_from_db()
+        self.vacancy.cohort = None
+        self.vacancy.status = 'open'
+        self.vacancy.save()
+        self.client.post(url, self.application_data())
+        first.refresh_from_db()
+        self.assertEqual(first.cohort_id, cohort.pk)
+        self.assertEqual(VacancyApplication.objects.filter(cohort__isnull=True).count(), 1)
+        self.assertEqual(RecruitmentCohort.objects.count(), 1)
 
 
 class VacancyNotificationTests(TestCase):
@@ -590,6 +613,10 @@ class VacancyCVStorageTests(TestCase):
 class SeedVacanciesTests(TestCase):
     def setUp(self):
         Vacancy.objects.all().delete()
+        self.cohort = RecruitmentCohort.objects.create(
+            code='catalogue-test', name='Catalogue test cohort',
+            status=RecruitmentCohort.Status.OPEN,
+        )
         self.source_directory = tempfile.TemporaryDirectory()
         self.source = Path(self.source_directory.name, 'vacancies.md')
         self.source.write_text(catalogue_markdown(), encoding='utf-8')
@@ -597,10 +624,16 @@ class SeedVacanciesTests(TestCase):
     def tearDown(self):
         self.source_directory.cleanup()
 
+    def test_import_without_cohort_creates_unbatched_vacancies(self):
+        call_command('seed_vacancies', source=str(self.source), verbosity=0)
+        self.assertFalse(Vacancy.objects.exclude(cohort=None).exists())
+        self.assertEqual(Vacancy.objects.count(), 2)
+
     def import_catalogue(self, **options):
         call_command(
             'seed_vacancies',
             source=str(self.source),
+            cohort=self.cohort.code,
             verbosity=0,
             **options,
         )

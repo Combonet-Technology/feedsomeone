@@ -26,7 +26,6 @@ from social_django.views import NAMESPACE
 
 from ext_libs.email_service import send_email
 from ext_libs.python_social import social_auth_backends
-from opportunities.staff_access import mark_staff_invitation_accepted
 from utils.auth import check_validity_token, get_user, set_password_and_login
 from utils.decorators import ajax_required
 from utils.views import custom_paginator, get_actual_template
@@ -222,7 +221,6 @@ def staff_access_activate(request, uidb64, token):
         authenticated=False,
     )
     if done:
-        mark_staff_invitation_accepted(user)
         messages.success(request, 'Your OEF administration access is ready.')
         return redirect('admin:index')
     return render(
