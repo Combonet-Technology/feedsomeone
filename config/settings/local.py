@@ -37,7 +37,6 @@ DATABASES = {
     }
 }
 
-print(DATABASES)
 # for custom error handler
 TEMPLATE_DEBUG = DEBUG
 
