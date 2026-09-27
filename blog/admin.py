@@ -19,10 +19,14 @@ from import_export.admin import ImportExportActionModelAdmin
 
 from blog.forms import ArticleForm
 from blog.media import adopt_event_gallery_image, upload_editorial_image
-from blog.models import (Article, ArticleRevision, Categories, Comments,
-                         MediaAsset)
-from blog.workflow import (approve_revision, publish_article_directly,
-                           request_changes, submit_article)
+from blog.models import (Article, ArticlePublicationEvent, ArticleRevision,
+                         Categories, Comments, MediaAsset)
+from blog.workflow import (_draft_fingerprint, approve_revision,
+                           can_publish_without_review,
+                           publish_approved_revision, publish_article_directly,
+                           republish_article, request_changes,
+                           return_approved_revision_for_changes,
+                           submit_article, unpublish_article)
 from events.models import EventGalleryImage, event_image_effectively_public_q
 from utils.cloudinary_paths import cloudinary_folder
 
@@ -110,7 +114,7 @@ class ArticleAdmin(ImportExportActionModelAdmin):
     search_fields = ('article_title', 'article_content')
     date_hierarchy = 'publish_date'
     ordering = ('workflow_status', '-date_updated')
-    actions = ('submit_selected_for_review',)
+    actions = ('submit_selected_for_review', 'unpublish_selected', 'republish_selected')
     readonly_fields = (
         'feature_image_control',
         'review_feedback',
@@ -250,7 +254,7 @@ class ArticleAdmin(ImportExportActionModelAdmin):
     def review_feedback(self, obj):
         if not obj or not obj.pk:
             return 'Review feedback will appear here after the first submission.'
-        revisions = obj.revisions.exclude(review_notes='').select_related('reviewed_by').order_by('-number')
+        revisions = obj.revisions.exclude(review_notes='').select_related('reviewed_by').order_by('-iteration')
         if not revisions:
             return 'No review notes have been recorded for this article.'
 
@@ -276,7 +280,7 @@ class ArticleAdmin(ImportExportActionModelAdmin):
                 '<strong>Revision {}</strong><span>{}</span><span>{}</span><span>{}</span>'
                 '</div><p>{}</p></article>',
                 current_class,
-                revision.number,
+                revision.iteration,
                 revision.get_status_display(),
                 reviewer,
                 reviewed_at,
@@ -293,7 +297,12 @@ class ArticleAdmin(ImportExportActionModelAdmin):
             request.user.has_perm('blog.submit_article')
             and not has_pending_revision
         )
-        context['oef_can_publish_now'] = request.user.is_superuser and not has_pending_revision
+        context['oef_can_publish_now'] = can_publish_without_review(request.user) and (
+            not obj or obj.workflow_status in (
+                Article.WorkflowStatus.DRAFT, Article.WorkflowStatus.IN_REVIEW,
+                Article.WorkflowStatus.CHANGES_REQUESTED,
+            )
+        )
         return super().render_change_form(request, context, add, change, form_url, obj)
 
     def _submit_saved_article(self, request, obj):
@@ -312,16 +321,16 @@ class ArticleAdmin(ImportExportActionModelAdmin):
             else:
                 self.message_user(
                     request,
-                    f'Revision {revision.number} was submitted for review.',
+                    f'Revision {revision.iteration} was submitted for review.',
                     level=messages.SUCCESS,
                 )
         return HttpResponseRedirect(reverse('admin:blog_article_change', args=[obj.pk]))
 
     def _publish_saved_article(self, request, obj):
-        if not request.user.is_superuser:
+        if not can_publish_without_review(request.user):
             self.message_user(
                 request,
-                'Only a superuser can publish an article directly.',
+                'Publishing without review requires explicit permission.',
                 level=messages.ERROR,
             )
         elif obj.workflow_status == Article.WorkflowStatus.PUBLISHED:
@@ -362,7 +371,8 @@ class ArticleAdmin(ImportExportActionModelAdmin):
         queryset = super().get_queryset(request).select_related(
             'article_author', 'feature_media', 'pending_revision', 'published_revision'
         )
-        if request.user.is_superuser or request.user.has_perm('blog.review_article'):
+        if (request.user.is_superuser or request.user.has_perm('blog.review_article')
+                or request.user.has_perm('blog.publish_article')):
             return queryset
         return queryset.filter(article_author=request.user)
 
@@ -370,7 +380,8 @@ class ArticleAdmin(ImportExportActionModelAdmin):
         allowed = super().has_change_permission(request, obj)
         if not allowed or obj is None:
             return allowed
-        if obj.pending_revision_id and not request.user.has_perm('blog.review_article'):
+        if (obj.pending_revision_id and not request.user.has_perm('blog.review_article')
+                and not can_publish_without_review(request.user)):
             return False
         return (
             request.user.is_superuser
@@ -384,6 +395,42 @@ class ArticleAdmin(ImportExportActionModelAdmin):
         elif not request.user.has_perm('blog.review_article'):
             obj.article_author = request.user
         super().save_model(request, obj, form, change)
+
+    def save_related(self, request, form, formsets, change):
+        super().save_related(request, form, formsets, change)
+        article = form.instance
+        editorial_fields = {
+            'article_title', 'article_excerpt', 'article_content',
+            'feature_media', 'feature_crop', 'clear_feature_image',
+            'category', 'tags',
+        }
+        if (
+            request.user.pk != article.article_author_id
+            and editorial_fields.intersection(form.changed_data)
+        ):
+            article.draft_contributors.add(request.user)
+        if article.pending_revision_id:
+            revision = article.pending_revision
+            if revision.fingerprint and revision.fingerprint != _draft_fingerprint(article):
+                ArticleRevision.objects.filter(pk=revision.pk).update(
+                    status=ArticleRevision.Status.SUPERSEDED,
+                )
+                Article.objects.filter(pk=article.pk).update(
+                    pending_revision=None, workflow_status=Article.WorkflowStatus.DRAFT,
+                )
+                article.pending_revision = None
+                article.workflow_status = Article.WorkflowStatus.DRAFT
+        elif article.published_revision_id and article.workflow_status in (
+            Article.WorkflowStatus.PUBLISHED, Article.WorkflowStatus.UNPUBLISHED,
+        ):
+            # The public revision remains live, but taxonomy changes belong to
+            # a new draft and must not silently alter its public snapshot.
+            published = article.published_revision
+            if published.fingerprint and published.fingerprint != _draft_fingerprint(article):
+                Article.objects.filter(pk=article.pk).update(
+                    workflow_status=Article.WorkflowStatus.DRAFT,
+                )
+                article.workflow_status = Article.WorkflowStatus.DRAFT
 
     @admin.action(description='Submit selected drafts for review')
     def submit_selected_for_review(self, request, queryset):
@@ -410,23 +457,46 @@ class ArticleAdmin(ImportExportActionModelAdmin):
         actions = super().get_actions(request)
         if not request.user.has_perm('blog.submit_article'):
             actions.pop('submit_selected_for_review', None)
+        if not request.user.has_perm('blog.publish_article'):
+            actions.pop('unpublish_selected', None)
+            actions.pop('republish_selected', None)
         return actions
+
+    @admin.action(description='Unpublish selected articles')
+    def unpublish_selected(self, request, queryset):
+        for article in queryset:
+            try:
+                unpublish_article(article, request.user)
+            except (PermissionDenied, ValidationError) as exc:
+                self.message_user(request, f'{article}: {exc}', messages.ERROR)
+
+    @admin.action(description='Republish selected articles without draft changes')
+    def republish_selected(self, request, queryset):
+        for article in queryset:
+            try:
+                republish_article(article, request.user)
+            except (PermissionDenied, ValidationError) as exc:
+                self.message_user(request, f'{article}: {exc}', messages.ERROR)
 
 
 @admin.register(ArticleRevision)
 class ArticleRevisionAdmin(admin.ModelAdmin):
     change_form_template = 'admin/blog/article_revision_change_form.html'
-    list_display = ('article', 'number', 'status', 'created_by', 'submitted_at', 'reviewed_by')
+    list_display = ('article', 'iteration', 'status', 'created_by', 'submitted_at', 'reviewed_by')
     list_filter = ('status', 'submitted_at', 'reviewed_at')
     search_fields = ('article__article_title', 'title', 'created_by__email')
-    actions = ('approve_selected', 'request_changes_selected')
+    actions = ('approve_selected', 'publish_selected', 'request_changes_selected')
     fields = (
         'article',
-        'number',
+        'iteration',
         'title',
+        'slug',
         'excerpt',
         'content',
         'feature_image_url',
+        'categories',
+        'tags',
+        'contributors',
         'media_assets',
         'status',
         'created_by',
@@ -435,26 +505,43 @@ class ArticleRevisionAdmin(admin.ModelAdmin):
         'reviewed_by',
         'reviewed_at',
         'published_at',
+        'published_by',
+        'direct_bypass',
     )
 
     class Media:
         css = {'all': ('css/article-admin.css',)}
 
     def get_readonly_fields(self, request, obj=None):
-        return tuple(field for field in self.fields if field != 'review_notes')
+        editable_note = request.user.has_perm('blog.review_article') or request.user.has_perm('blog.publish_article')
+        return tuple(field for field in self.fields if field != 'review_notes' or not editable_note)
 
     def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
         awaiting_review = obj and obj.status == ArticleRevision.Status.IN_REVIEW
+        awaiting_publication = obj and obj.status == ArticleRevision.Status.APPROVED
         context['oef_can_request_changes'] = (
             awaiting_review and request.user.has_perm('blog.review_article')
         )
         context['oef_can_approve'] = (
-            awaiting_review and request.user.has_perm('blog.publish_article')
+            awaiting_review and request.user.has_perm('blog.review_article')
+        )
+        context['oef_can_publish'] = (
+            awaiting_publication and request.user.has_perm('blog.publish_article')
+        )
+        context['oef_can_return_for_changes'] = context['oef_can_publish']
+        context['oef_can_publish_without_review'] = (
+            awaiting_review
+            and obj.article.pending_revision_id == obj.pk
+            and can_publish_without_review(request.user)
         )
         return super().render_change_form(request, context, add, change, form_url, obj)
 
     def response_change(self, request, obj):
         try:
+            if '_publish_without_review' in request.POST:
+                publish_article_directly(obj.article, request.user, revision=obj)
+                self.message_user(request, 'The article was published without review.', messages.SUCCESS)
+                return HttpResponseRedirect(reverse('admin:blog_article_change', args=[obj.article_id]))
             if '_request_changes' in request.POST:
                 request_changes(obj, request.user, obj.review_notes)
                 self.message_user(
@@ -465,7 +552,15 @@ class ArticleRevisionAdmin(admin.ModelAdmin):
                 return HttpResponseRedirect(reverse('admin:blog_article_change', args=[obj.article_id]))
             if '_approve_revision' in request.POST:
                 approve_revision(obj, request.user)
-                self.message_user(request, 'The revision was approved and published.', messages.SUCCESS)
+                self.message_user(request, 'The revision was approved and is awaiting publication.', messages.SUCCESS)
+                return HttpResponseRedirect(reverse('admin:blog_article_change', args=[obj.article_id]))
+            if '_publish_revision' in request.POST:
+                publish_approved_revision(obj, request.user)
+                self.message_user(request, 'The approved revision was published.', messages.SUCCESS)
+                return HttpResponseRedirect(reverse('admin:blog_article_change', args=[obj.article_id]))
+            if '_return_for_changes' in request.POST:
+                return_approved_revision_for_changes(obj, request.user, obj.review_notes)
+                self.message_user(request, 'The approved revision was returned for changes.', messages.SUCCESS)
                 return HttpResponseRedirect(reverse('admin:blog_article_change', args=[obj.article_id]))
         except (PermissionDenied, ValidationError) as exc:
             detail = ' '.join(getattr(exc, 'messages', [])) or 'Permission denied.'
@@ -480,15 +575,20 @@ class ArticleRevisionAdmin(admin.ModelAdmin):
         return False
 
     def has_change_permission(self, request, obj=None):
-        return request.user.is_superuser or request.user.has_perm('blog.review_article')
+        return (request.user.is_superuser or request.user.has_perm('blog.review_article')
+                or request.user.has_perm('blog.publish_article')
+                or (can_publish_without_review(request.user)
+                    and request.user.has_perm('blog.change_article')
+                    and (obj is None or obj.article.article_author_id == request.user.pk)))
 
     def get_queryset(self, request):
         queryset = super().get_queryset(request).select_related('article', 'created_by', 'reviewed_by')
-        if request.user.is_superuser or request.user.has_perm('blog.review_article'):
+        if (request.user.is_superuser or request.user.has_perm('blog.review_article')
+                or request.user.has_perm('blog.publish_article')):
             return queryset
         return queryset.filter(article__article_author=request.user)
 
-    @admin.action(description='Approve and publish selected revisions')
+    @admin.action(description='Approve selected revisions for publication')
     def approve_selected(self, request, queryset):
         approved = 0
         for revision in queryset:
@@ -499,7 +599,19 @@ class ArticleRevisionAdmin(admin.ModelAdmin):
                 detail = ' '.join(getattr(exc, 'messages', [])) or 'Permission denied.'
                 self.message_user(request, f'{revision}: {detail}', level=messages.ERROR)
         if approved:
-            self.message_user(request, f'{approved} revision(s) published.', messages.SUCCESS)
+            self.message_user(request, f'{approved} revision(s) approved.', messages.SUCCESS)
+
+    @admin.action(description='Publish selected approved revisions')
+    def publish_selected(self, request, queryset):
+        published = 0
+        for revision in queryset:
+            try:
+                publish_approved_revision(revision, request.user)
+                published += 1
+            except (PermissionDenied, ValidationError) as exc:
+                self.message_user(request, f'{revision}: {exc}', level=messages.ERROR)
+        if published:
+            self.message_user(request, f'{published} revision(s) published.', messages.SUCCESS)
 
     @admin.action(description='Request changes on selected revisions')
     def request_changes_selected(self, request, queryset):
@@ -516,11 +628,28 @@ class ArticleRevisionAdmin(admin.ModelAdmin):
 
     def get_actions(self, request):
         actions = super().get_actions(request)
-        if not request.user.has_perm('blog.publish_article'):
+        if not request.user.has_perm('blog.review_article'):
             actions.pop('approve_selected', None)
+        if not request.user.has_perm('blog.publish_article'):
+            actions.pop('publish_selected', None)
         if not request.user.has_perm('blog.review_article'):
             actions.pop('request_changes_selected', None)
         return actions
+
+
+@admin.register(ArticlePublicationEvent)
+class ArticlePublicationEventAdmin(admin.ModelAdmin):
+    list_display = ('article', 'revision', 'action', 'actor', 'created_at')
+    readonly_fields = list_display
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(MediaAsset)

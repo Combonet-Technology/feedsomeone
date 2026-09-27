@@ -4,6 +4,8 @@ from urllib.parse import urlsplit
 from django.test import TestCase, override_settings
 from django.urls import Resolver404, resolve, reverse
 
+from opportunities.models import Vacancy
+
 
 class LinkCollector(HTMLParser):
     def __init__(self):
@@ -129,6 +131,36 @@ class PublicPageTests(TestCase):
                 canonical_base + path,
                 content,
             )
+
+    def test_sitemap_includes_only_public_vacancy_details_with_lastmod(self):
+        public = Vacancy.objects.create(
+            title='Public Writer', slug='public-writer', summary='Write for OEF',
+            description='Editorial work', expectations='Review facts',
+            responsibilities='Write articles', benefits='Experience',
+            who_we_are_looking_for='A writer', status='open',
+        )
+        Vacancy.objects.create(
+            title='Draft Writer', slug='draft-writer', summary='Draft role',
+            description='Draft work', expectations='Review facts',
+            responsibilities='Write articles', benefits='Experience',
+            who_we_are_looking_for='A writer', status='draft',
+        )
+        Vacancy.objects.create(
+            title='Hidden Writer', slug='hidden-writer', summary='Hidden role',
+            description='Hidden work', expectations='Review facts',
+            responsibilities='Write articles', benefits='Experience',
+            who_we_are_looking_for='A writer', status='open', is_active=False,
+        )
+
+        content = self.client.get('/sitemap.xml').content.decode()
+
+        self.assertIn(
+            'https://www.oluwafemiebenezerfoundation.org' + public.get_absolute_url(),
+            content,
+        )
+        self.assertIn(f'<lastmod>{public.updated_at.date()}</lastmod>', content)
+        self.assertNotIn('/opportunities/draft-writer/', content)
+        self.assertNotIn('/opportunities/hidden-writer/', content)
 
     def test_key_public_pages_have_unique_meta_descriptions(self):
         routes = (

@@ -7,13 +7,13 @@
         <p>{{article.public_content|safe|truncatewords_html:30}}</p>
         <ul class="blog-info-link">
             <li>
-                <a href="{% url 'article:article-by-user' article.article_author.username %}">Written
+                <a href="{% url 'article:article-by-user' article.public_author.username %}">Written
                     by
-                    <i class="fa fa-user"></i> {{article.article_author.get_full_name}}</a>
+                    <i class="fa fa-user"></i> {{article.public_author.get_full_name}}</a>
             </li>
             <li class="tags">
                 Tags:
-                {% for tag in article.tags.all %}
+                {% for tag in article.public_tags %}
                 <a href="{% url 'article:articles-by-slug' tag.slug %}">
                     {{ tag.name }}
                 </a>

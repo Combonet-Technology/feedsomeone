@@ -12,7 +12,7 @@ def build_article_meta(request, article):
     image_url = request.build_absolute_uri(
         article.public_feature_image_url or '/static/img/logo/oef-logo.svg'
     )
-    author_name = article.article_author.get_full_name() if article.article_author else 'OEF Editorial Team'
+    author_name = article.public_author.get_full_name() if article.public_author else 'OEF Editorial Team'
 
     structured_data = {
         '@context': 'https://schema.org',

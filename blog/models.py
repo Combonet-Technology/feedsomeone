@@ -32,7 +32,9 @@ class PublishedManager(BaseUserManager):
         return super().get_queryset().filter(
             is_published=True,
             is_deleted=False,
-        ).select_related('published_revision', 'article_author').order_by('-publish_date')
+        ).select_related(
+            'published_revision', 'published_revision__authored_by', 'article_author',
+        ).order_by('-publish_date')
 
 
 class Article(models.Model):
@@ -40,7 +42,9 @@ class Article(models.Model):
         DRAFT = 'draft', 'Draft'
         IN_REVIEW = 'in_review', 'In review'
         CHANGES_REQUESTED = 'changes_requested', 'Changes requested'
+        APPROVED = 'approved', 'Approved'
         PUBLISHED = 'published', 'Published'
+        UNPUBLISHED = 'unpublished', 'Unpublished'
 
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     article_title = models.CharField(max_length=100, null=False, blank=False)
@@ -73,6 +77,9 @@ class Article(models.Model):
                                        blank=True,
                                        related_name="user_article")
     category = models.ManyToManyField(Categories, blank=True, verbose_name="Category", related_name="article")
+    draft_contributors = models.ManyToManyField(
+        UserProfile, blank=True, related_name='articles_contributed_to',
+    )
     is_published = models.BooleanField(default=False)
     is_deleted = models.BooleanField(default=False)
     workflow_status = models.CharField(
@@ -97,6 +104,7 @@ class Article(models.Model):
         related_name='published_articles',
     )
     publish_date = models.DateTimeField(default=timezone.now)
+    publication_updated_at = models.DateTimeField(null=True, blank=True)
     date_created = models.DateTimeField(auto_now_add=True, verbose_name="Created_at")
     date_updated = models.DateTimeField(auto_now=True, verbose_name="Updated_at")
 
@@ -111,6 +119,7 @@ class Article(models.Model):
             ('submit_article', 'Can submit articles for editorial review'),
             ('review_article', 'Can review article revisions'),
             ('publish_article', 'Can publish approved article revisions'),
+            ('publish_without_review', 'Can publish articles without review'),
         )
 
     def __str__(self):
@@ -129,8 +138,14 @@ class Article(models.Model):
         return self.published_revision.content if self.published_revision_id else self.article_content
 
     @property
+    def public_slug(self):
+        if self.published_revision_id and self.published_revision.slug:
+            return self.published_revision.slug
+        return self.article_slug
+
+    @property
     def public_feature_image_url(self):
-        if self.published_revision_id and self.published_revision.feature_image_url:
+        if self.published_revision_id:
             return self.published_revision.feature_image_url
         if self.feature_media_id:
             return self.feature_media.cropped_url(self.feature_crop, 'feature')
@@ -144,8 +159,29 @@ class Article(models.Model):
     @property
     def public_modified_at(self):
         if self.published_revision_id:
-            return self.published_revision.published_at or self.published_revision.created_at
+            return (
+                self.publication_updated_at or self.published_revision.published_at
+                or self.published_revision.created_at
+            )
         return self.date_updated
+
+    @property
+    def public_categories(self):
+        if self.published_revision_id and not self.published_revision.legacy_metadata_unverified:
+            return self.published_revision.categories.all()
+        return self.category.all()
+
+    @property
+    def public_tags(self):
+        if self.published_revision_id and not self.published_revision.legacy_metadata_unverified:
+            return self.published_revision.tags.all()
+        return self.tags.all()
+
+    @property
+    def public_author(self):
+        if self.published_revision_id and self.published_revision.authored_by_id:
+            return self.published_revision.authored_by
+        return self.article_author
 
     def save(self, *args, **kwargs):
         if self.pk:
@@ -156,9 +192,15 @@ class Article(models.Model):
                 'feature_img',
                 'feature_media',
                 'feature_crop',
+                'article_slug',
                 'workflow_status',
             ).first()
-            if original and original.workflow_status == self.WorkflowStatus.PUBLISHED:
+            if original and original.workflow_status in (
+                self.WorkflowStatus.IN_REVIEW,
+                self.WorkflowStatus.APPROVED,
+                self.WorkflowStatus.PUBLISHED,
+                self.WorkflowStatus.UNPUBLISHED,
+            ):
                 draft_changed = any((
                     original.article_title != self.article_title,
                     original.article_excerpt != self.article_excerpt,
@@ -166,6 +208,7 @@ class Article(models.Model):
                     str(original.feature_img) != str(self.feature_img),
                     original.feature_media_id != self.feature_media_id,
                     original.feature_crop != self.feature_crop,
+                    original.article_slug != self.article_slug,
                 ))
                 if draft_changed:
                     self.workflow_status = self.WorkflowStatus.DRAFT
@@ -177,23 +220,23 @@ class Article(models.Model):
                        args=[self.publish_date.year,
                              self.publish_date.month,
                              self.publish_date.day,
-                             self.article_slug])
+                             self.public_slug])
 
     def to_dict(self):
         return {
             'uuid': str(self.uuid),
             # 'article_title': self.article_title,
-            'article_slug': self.article_slug,
+            'article_slug': self.public_slug,
             # 'article_content': self.article_content,
             'feature_img': self.public_feature_image_url or None,
-            'article_author': self.article_author.get_full_name() if self.article_author else None,
-            'category': [category.title for category in self.category.all()],
+            'article_author': self.public_author.get_full_name() if self.public_author else None,
+            'category': [category.title for category in self.public_categories],
             'is_published': self.is_published,
             'is_deleted': self.is_deleted,
             # 'publish_date': self.publish_date.isoformat(),
             # 'date_created': self.date_created.isoformat(),
             # 'date_updated': self.date_updated.isoformat(),
-            'tags': list(self.tags.names()),
+            'tags': [tag.name for tag in self.public_tags],
         }
 
 
@@ -349,6 +392,7 @@ class ArticleRevision(models.Model):
     class Status(models.TextChoices):
         IN_REVIEW = 'in_review', 'In review'
         APPROVED = 'approved', 'Approved'
+        PUBLISHED = 'published', 'Published'
         CHANGES_REQUESTED = 'changes_requested', 'Changes requested'
         SUPERSEDED = 'superseded', 'Superseded'
 
@@ -357,11 +401,16 @@ class ArticleRevision(models.Model):
         on_delete=models.CASCADE,
         related_name='revisions',
     )
-    number = models.PositiveIntegerField()
+    iteration = models.PositiveIntegerField()
     title = models.CharField(max_length=100)
+    slug = models.SlugField(max_length=150, blank=True)
     excerpt = models.CharField(max_length=255, blank=True)
     content = models.TextField()
     feature_image_url = models.URLField(max_length=1000, blank=True)
+    feature_crop = models.JSONField(default=dict, blank=True)
+    fingerprint = models.CharField(max_length=64, blank=True)
+    legacy_metadata_unverified = models.BooleanField(default=False)
+    snapshot_locked = models.BooleanField(default=True)
     status = models.CharField(
         max_length=24,
         choices=Status.choices,
@@ -373,6 +422,15 @@ class ArticleRevision(models.Model):
         null=True,
         related_name='article_revisions_created',
     )
+    authored_by = models.ForeignKey(
+        UserProfile, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='article_revisions_authored',
+    )
+    contributors = models.ManyToManyField(
+        UserProfile, blank=True, related_name='article_revisions_contributed',
+    )
+    categories = models.ManyToManyField(Categories, blank=True, related_name='article_revisions')
+    tags = models.ManyToManyField('taggit.Tag', blank=True, related_name='article_revisions')
     reviewed_by = models.ForeignKey(
         UserProfile,
         on_delete=models.SET_NULL,
@@ -385,27 +443,59 @@ class ArticleRevision(models.Model):
     submitted_at = models.DateTimeField(default=timezone.now)
     reviewed_at = models.DateTimeField(null=True, blank=True)
     published_at = models.DateTimeField(null=True, blank=True)
+    published_by = models.ForeignKey(
+        UserProfile, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='article_revisions_published',
+    )
+    direct_bypass = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ('-created_at',)
         constraints = [
             models.UniqueConstraint(
-                fields=('article', 'number'),
+                fields=('article', 'iteration'),
                 name='unique_article_revision_number',
             ),
         ]
 
     def __str__(self):
-        return f'{self.article.article_title} - revision {self.number}'
+        return f'{self.article.article_title} - revision {self.iteration}'
 
     def save(self, *args, **kwargs):
         if self.pk:
             original = type(self).objects.filter(pk=self.pk).first()
             immutable_fields = (
-                'article_id', 'number', 'title', 'excerpt', 'content',
+                'article_id', 'iteration', 'title', 'excerpt', 'content',
                 'feature_image_url', 'created_by_id',
+                'slug', 'feature_crop', 'fingerprint', 'authored_by_id',
+                'direct_bypass', 'legacy_metadata_unverified',
             )
             if original and any(getattr(original, field) != getattr(self, field) for field in immutable_fields):
                 raise ValidationError('Submitted article revision content is immutable.')
+            if original and original.snapshot_locked and not self.snapshot_locked:
+                raise ValidationError('A submitted article revision cannot be unlocked.')
+        super().save(*args, **kwargs)
+
+
+class ArticlePublicationEvent(models.Model):
+    article = models.ForeignKey(
+        Article, on_delete=models.CASCADE, related_name='publication_events',
+    )
+    revision = models.ForeignKey(
+        ArticleRevision, on_delete=models.PROTECT, related_name='publication_events',
+    )
+    action = models.CharField(max_length=30)
+    actor = models.ForeignKey(
+        UserProfile, on_delete=models.SET_NULL, null=True,
+        related_name='article_publication_actions',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ('-created_at',)
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            raise ValidationError('Publication history cannot be changed.')
         super().save(*args, **kwargs)

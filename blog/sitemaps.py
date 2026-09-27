@@ -11,4 +11,4 @@ class ArticleSitemap(CanonicalDomainSitemap):
         return Article.published.all()
 
     def lastmod(self, obj):
-        return obj.date_updated
+        return obj.public_modified_at

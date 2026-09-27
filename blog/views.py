@@ -9,7 +9,7 @@ from django.contrib.auth.mixins import (LoginRequiredMixin,
 from django.contrib.postgres.search import (SearchQuery, SearchRank,
                                             SearchVector)
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
-from django.db.models import Count
+from django.db.models import Case, Count, F, Q, When
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -40,11 +40,18 @@ class ArticleListView(ListView):
         queryset = Article.published.all()
         if self.kwargs.get('tag'):
             self.tag = get_object_or_404(Tag, slug=self.kwargs.get('tag'))
-            queryset = queryset.filter(tags__in=[self.tag])
+            queryset = queryset.filter(
+                Q(published_revision__tags=self.tag)
+                | Q(published_revision__legacy_metadata_unverified=True, tags=self.tag)
+            )
         if self.kwargs.get('category'):
             self.category = self.kwargs.get('category')
-            queryset = queryset.filter(category__title=self.category)
-        return queryset
+            queryset = queryset.filter(
+                Q(published_revision__categories__title=self.category)
+                | Q(published_revision__legacy_metadata_unverified=True,
+                    category__title=self.category)
+            )
+        return queryset.distinct()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -89,23 +96,37 @@ class UserArticleListView(LoginRequiredMixin, ListView):
             or self.request.user.has_perm('blog.review_article')
         )
         manager = Article.objects if can_view_private else Article.published
-        return manager.filter(
-            article_author=user,
-            is_deleted=False,
-        ).order_by('-date_created')
+        if can_view_private:
+            manager = manager.filter(article_author=user)
+        else:
+            manager = manager.filter(
+                Q(published_revision__authored_by=user)
+                | Q(published_revision__legacy_metadata_unverified=True,
+                    article_author=user)
+                | Q(published_revision__isnull=True, article_author=user)
+            )
+        return manager.filter(is_deleted=False).order_by('-date_created')
 
 
 def get_similar_articles(article, limit=3):
-    article_tags_ids = article.tags.values_list('id', flat=True)
-    similar_articles = Article.published.filter(tags__in=article_tags_ids).exclude(id=article.id)
-    return similar_articles.annotate(same_tags=Count('tags')).order_by('-same_tags', '-publish_date')[:limit]
+    article_tags_ids = article.public_tags.values_list('id', flat=True)
+    similar_articles = Article.published.filter(
+        Q(published_revision__tags__in=article_tags_ids)
+        | Q(published_revision__legacy_metadata_unverified=True,
+            tags__in=article_tags_ids),
+    ).exclude(id=article.id)
+    return similar_articles.annotate(
+        same_tags=Count('published_revision__tags'),
+    ).order_by('-same_tags', '-publish_date')[:limit]
 
 
 def article_detail(request, year, month, day, slug):
     template_name = 'blog/article_detail.html'
     article = get_object_or_404(
         Article.published,
-        article_slug=slug,
+        Q(published_revision__slug=slug)
+        | Q(published_revision__legacy_metadata_unverified=True, article_slug=slug)
+        | Q(published_revision__isnull=True, article_slug=slug),
         publish_date__year=year,
         publish_date__month=month,
         publish_date__day=day,
@@ -154,13 +175,21 @@ def search_article(request):
         form = SearchForm(request.GET)
         if form.is_valid():
             query = form.cleaned_data['query']
+
+            def public_author_field(field):
+                return Case(
+                    When(published_revision__legacy_metadata_unverified=True,
+                         then=F(f'article_author__{field}')),
+                    default=F(f'published_revision__authored_by__{field}'),
+                )
+
             search_vector = \
                 SearchVector('published_revision__title', weight='A') + \
                 SearchVector('published_revision__excerpt', weight='C') + \
                 SearchVector('published_revision__content', weight='C') + \
-                SearchVector('article_author__username', weight='D') + \
-                SearchVector('article_author__first_name', weight='B') + SearchVector('article_author__last_name',
-                                                                                      weight='B')
+                SearchVector(public_author_field('username'), weight='D') + \
+                SearchVector(public_author_field('first_name'), weight='B') + \
+                SearchVector(public_author_field('last_name'), weight='B')
             search_query = SearchQuery(query)
             results = Article.published.annotate(
                 search=search_vector, rank=SearchRank(search_vector, search_query)
@@ -281,7 +310,12 @@ def about(request):
 # remove if field later for uuid from calling function
 # add option to share pot on FB, Twitter and IG
 def post_share(request, slug, medium=None):
-    post = get_object_or_404(Article.published, article_slug=slug)
+    post = get_object_or_404(
+        Article.published,
+        Q(published_revision__slug=slug)
+        | Q(published_revision__legacy_metadata_unverified=True, article_slug=slug)
+        | Q(published_revision__isnull=True, article_slug=slug),
+    )
     sent = False
     if request.method == 'POST':
         form = EmailShareForm(request.POST)

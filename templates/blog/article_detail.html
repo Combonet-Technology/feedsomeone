@@ -53,8 +53,8 @@
                             <h1 class="article-title">{{article.public_title}}</h1>
                             <ul class="blog-info-link mt-3 mb-4">
                                 <li>Post by <a
-                                        href="{% url 'article:article-by-user' article.article_author.username %}"><i
-                                        class="fa fa-user"></i>{{article.article_author.get_full_name}}</a>
+                                        href="{% url 'article:article-by-user' article.public_author.username %}"><i
+                                        class="fa fa-user"></i>{{article.public_author.get_full_name}}</a>
                                 </li>
                                 <!--                           <li><a href="#"><i class="fa fa-comments"></i> 03 Comments</a></li>-->
                             </ul>
@@ -73,7 +73,7 @@
                             <ul class="social-icons">
                                 <li><a href="#"><i class="fab fa-facebook-f"></i></a></li>
                                 <li><a href="#"><i class="fab fa-twitter"></i></a></li>
-                                <li><a href="{% url 'article:post_share' article.article_slug %}"><i
+                                <li><a href="{% url 'article:post_share' article.public_slug %}"><i
                                         class="fa fa-envelope"></i></a></li>
                             </ul>
                         </div>
@@ -122,13 +122,13 @@
                     </div>
                     <div class="blog-author">
                         <div class="media align-items-center">
-                            <img src="{{article.article_author.image.url}}"
-                                 alt="Image of {{article.article_author.get_full_name}}">
+                            <img src="{{article.public_author.image.url}}"
+                                 alt="Image of {{article.public_author.get_full_name}}">
                             <div class="media-body">
-                                <a href="{% url 'article:article-by-user' article.article_author.username %}">
-                                    <h4>View more post from {{article.article_author.get_full_name}}</h4>
+                                <a href="{% url 'article:article-by-user' article.public_author.username %}">
+                                    <h4>View more post from {{article.public_author.get_full_name}}</h4>
                                 </a>
-                                <p>{{article.article_author.short_bio}}</p>
+                                <p>{{article.public_author.short_bio}}</p>
                             </div>
                         </div>
                     </div>

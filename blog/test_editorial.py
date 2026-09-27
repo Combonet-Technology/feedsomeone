@@ -5,9 +5,11 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db import transaction
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from PIL import Image
+from taggit.models import Tag
 
 from blog.forms import ArticleForm
 from blog.media import (adopt_event_gallery_image,
@@ -15,8 +17,11 @@ from blog.media import (adopt_event_gallery_image,
                         editorial_public_ids_from_urls,
                         managed_media_public_id_from_url)
 from blog.models import Article, ArticleRevision, MediaAsset
-from blog.workflow import (approve_revision, publish_article_directly,
-                           request_changes, submit_article)
+from blog.workflow import (approve_revision, publish_approved_revision,
+                           publish_article_directly, republish_article,
+                           request_changes,
+                           return_approved_revision_for_changes,
+                           submit_article, unpublish_article)
 from events.models import EventGalleryImage, Events
 from utils.cloudinary_paths import cloudinary_environment, cloudinary_folder
 
@@ -150,12 +155,26 @@ class EditorialWorkflowTests(TestCase):
 
         self.article.refresh_from_db()
         self.assertEqual(revision.status, ArticleRevision.Status.IN_REVIEW)
-        self.assertEqual(revision.number, 1)
+        self.assertEqual(revision.iteration, 1)
         self.assertEqual(self.article.pending_revision, revision)
         self.assertEqual(self.article.workflow_status, Article.WorkflowStatus.IN_REVIEW)
         revision.title = 'Changed after submission'
         with self.assertRaisesMessage(ValidationError, 'immutable'):
             revision.save()
+
+    def test_submitted_revision_relations_cannot_change(self):
+        revision = submit_article(self.article, self.writer)
+        asset = make_media_asset(self.writer, 'locked-snapshot')
+
+        with transaction.atomic(), self.assertRaisesMessage(ValidationError, 'immutable'):
+            revision.media_assets.add(asset)
+        with transaction.atomic(), self.assertRaisesMessage(ValidationError, 'immutable'):
+            revision.contributors.add(self.reviewer)
+        with transaction.atomic(), self.assertRaisesMessage(ValidationError, 'immutable'):
+            revision.tags.add(Tag.objects.create(name='unreviewed'))
+        revision.snapshot_locked = False
+        with self.assertRaisesMessage(ValidationError, 'unlocked'):
+            revision.save(update_fields=('snapshot_locked',))
 
     def test_writer_cannot_edit_working_copy_while_revision_is_pending(self):
         submit_article(self.article, self.writer)
@@ -243,6 +262,7 @@ class EditorialWorkflowTests(TestCase):
         self.assertEqual(revision.feature_image_url, asset.feature_url)
         self.assertIn(asset, revision.media_assets.all())
         approve_revision(revision, self.reviewer)
+        publish_approved_revision(revision, self.reviewer)
         asset.refresh_from_db()
         self.article.refresh_from_db()
         self.assertTrue(asset.approved_for_publication)
@@ -480,7 +500,7 @@ class EditorialWorkflowTests(TestCase):
         self.assertEqual(writer_response.status_code, 403)
         self.assertEqual(superuser_response.status_code, 200)
 
-    def test_reviewer_publishes_specific_revision_and_writer_cannot_self_approve(self):
+    def test_approval_and_publication_are_separate_and_writer_cannot_self_approve(self):
         revision = submit_article(self.article, self.writer)
         with self.assertRaises(PermissionDenied):
             approve_revision(revision, self.writer)
@@ -488,13 +508,156 @@ class EditorialWorkflowTests(TestCase):
         approve_revision(revision, self.reviewer)
         self.article.refresh_from_db()
         revision.refresh_from_db()
+        self.assertFalse(self.article.is_published)
+        self.assertEqual(self.article.workflow_status, Article.WorkflowStatus.APPROVED)
+        publish_approved_revision(revision, self.reviewer)
+        self.article.refresh_from_db()
+        revision.refresh_from_db()
         self.assertTrue(self.article.is_published)
         self.assertEqual(self.article.published_revision, revision)
-        self.assertEqual(revision.status, ArticleRevision.Status.APPROVED)
+        self.assertEqual(revision.status, ArticleRevision.Status.PUBLISHED)
+
+    def test_reviewer_and_publisher_presets_are_independent(self):
+        publisher = make_user('publisher-role@example.com', 'publisher-role')
+        grant(publisher, 'view_article', 'view_articlerevision', 'publish_article')
+        revision = submit_article(self.article, self.writer)
+        with self.assertRaises(PermissionDenied):
+            publish_approved_revision(revision, self.writer)
+        with self.assertRaises(PermissionDenied):
+            approve_revision(revision, publisher)
+        approve_revision(revision, self.reviewer)
+        self.assertFalse(Article.objects.get(pk=self.article.pk).is_published)
+        published = publish_approved_revision(revision, publisher)
+        self.assertTrue(published.is_published)
+        self.assertEqual(published.publication_events.last().actor, publisher)
+
+    def test_reviewer_who_is_author_cannot_approve_even_when_another_user_submits(self):
+        grant(self.writer, 'review_article')
+        self.article.article_author = self.reviewer
+        self.article.save()
+        revision = submit_article(self.article, self.writer)
+        with self.assertRaisesMessage(ValidationError, 'contributor cannot review'):
+            approve_revision(revision, self.reviewer)
+
+    def test_editor_who_changes_draft_is_recorded_as_contributor(self):
+        self.client.force_login(self.reviewer)
+        response = self.client.post(
+            reverse('admin:blog_article_change', args=[self.article.pk]),
+            {
+                'article_title': self.article.article_title,
+                'article_excerpt': self.article.article_excerpt,
+                'article_content': '<p>Editor changed this body.</p>',
+                'tags': 'editorial',
+                '_save': 'Save',
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(self.article.draft_contributors.filter(pk=self.reviewer.pk).exists())
+        revision = submit_article(self.article, self.writer)
+        with self.assertRaisesMessage(ValidationError, 'contributor cannot review'):
+            approve_revision(revision, self.reviewer)
+
+    def test_approved_metadata_change_blocks_publication_and_can_be_resubmitted(self):
+        revision = submit_article(self.article, self.writer)
+        approve_revision(revision, self.reviewer)
+        self.article.category.create(title='New category')
+        with self.assertRaisesMessage(ValidationError, 'working draft changed'):
+            publish_approved_revision(revision, self.reviewer)
+        replacement = submit_article(self.article, self.writer)
+        self.article.refresh_from_db()
+        self.assertEqual(replacement.iteration, 2)
+        self.assertEqual(self.article.pending_revision_id, replacement.pk)
+
+    def test_draft_taxonomy_changes_do_not_change_published_discovery(self):
+        from blog.models import Categories
+
+        original_category = Categories.objects.create(title='Briefings')
+        next_category = Categories.objects.create(title='Articles')
+        self.article.category.add(original_category)
+        self.article.tags.add('community')
+        revision = submit_article(self.article, self.writer)
+        approve_revision(revision, self.reviewer)
+        publish_approved_revision(revision, self.reviewer)
+        self.article.category.set([next_category])
+        self.article.tags.set(['internal-draft'])
+        self.article.refresh_from_db()
+        self.assertEqual(list(self.article.public_categories), [original_category])
+        self.assertEqual([tag.name for tag in self.article.public_tags], ['community'])
+        self.assertIn(
+            self.article.public_title,
+            self.client.get(reverse('article:articles-by-category', args=['Briefings'])).content.decode(),
+        )
+        self.assertNotIn(
+            self.article.public_title,
+            self.client.get(reverse('article:articles-by-category', args=['Articles'])).content.decode(),
+        )
+
+    def test_publisher_can_return_approved_revision_for_changes(self):
+        publisher = make_user('returner@example.com', 'returner')
+        grant(publisher, 'publish_article')
+        revision = submit_article(self.article, self.writer)
+        approve_revision(revision, self.reviewer)
+        with self.assertRaisesMessage(ValidationError, 'Review notes are required'):
+            return_approved_revision_for_changes(revision, publisher, '')
+        returned = return_approved_revision_for_changes(
+            revision, publisher, 'The source needs verification.',
+        )
+        self.assertEqual(returned.workflow_status, Article.WorkflowStatus.CHANGES_REQUESTED)
+        self.assertIsNone(returned.pending_revision)
+        self.assertFalse(returned.is_published)
+
+    def test_unpublish_hides_direct_url_and_sitemap_then_republish_restores_snapshot(self):
+        revision = submit_article(self.article, self.writer)
+        approve_revision(revision, self.reviewer)
+        publish_approved_revision(revision, self.reviewer)
+        self.article.refresh_from_db()
+        url = self.article.get_absolute_url()
+        self.assertEqual(self.client.get(url).status_code, 200)
+        unpublish_article(self.article, self.reviewer)
+        self.assertEqual(self.client.get(url).status_code, 404)
+        self.assertNotIn(url, self.client.get('/sitemap.xml').content.decode())
+        republish_article(self.article, self.reviewer)
+        self.assertEqual(self.client.get(url).status_code, 200)
+        self.assertEqual(
+            list(self.article.publication_events.values_list('action', flat=True)),
+            ['republish', 'unpublish', 'publish'],
+        )
+
+    def test_legacy_unverified_publication_cannot_be_republished(self):
+        revision = submit_article(self.article, self.writer)
+        approve_revision(revision, self.reviewer)
+        publish_approved_revision(revision, self.reviewer)
+        ArticleRevision.objects.filter(pk=revision.pk).update(legacy_metadata_unverified=True)
+        unpublish_article(self.article, self.reviewer)
+
+        with self.assertRaisesMessage(ValidationError, 'legacy publication'):
+            republish_article(self.article, self.reviewer)
+
+    def test_legacy_published_revision_uses_existing_detail_and_author_routes(self):
+        revision = submit_article(self.article, self.writer)
+        approve_revision(revision, self.reviewer)
+        publish_approved_revision(revision, self.reviewer)
+        ArticleRevision.objects.filter(pk=revision.pk).update(
+            slug='', authored_by=None, legacy_metadata_unverified=True,
+        )
+        self.article.refresh_from_db()
+        outsider = make_user('reader@example.com', 'reader')
+        self.client.force_login(outsider)
+
+        self.assertEqual(self.client.get(self.article.get_absolute_url()).status_code, 200)
+        self.assertEqual(
+            self.client.get(reverse('article:post_share', args=[self.article.article_slug])).status_code,
+            200,
+        )
+        self.assertContains(
+            self.client.get(reverse('article:article-by-user', args=[self.writer.username])),
+            self.article.public_title,
+        )
 
     def test_editing_after_publication_does_not_replace_live_copy(self):
         first_revision = submit_article(self.article, self.writer)
         approve_revision(first_revision, self.reviewer)
+        publish_approved_revision(first_revision, self.reviewer)
 
         self.article.refresh_from_db()
         self.article.article_title = 'Unreviewed replacement title'
@@ -515,6 +678,7 @@ class EditorialWorkflowTests(TestCase):
         self.article.tags.add('community')
         revision = submit_article(self.article, self.writer)
         approve_revision(revision, self.reviewer)
+        publish_approved_revision(revision, self.reviewer)
         self.article.refresh_from_db()
         original_revision_count = self.article.revisions.count()
         self.client.force_login(self.reviewer)
@@ -579,7 +743,7 @@ class EditorialWorkflowTests(TestCase):
         article = Article.objects.get(article_title='A new admin draft')
         self.assertEqual(article.workflow_status, Article.WorkflowStatus.IN_REVIEW)
         self.assertEqual(article.revisions.count(), 1)
-        self.assertEqual(article.pending_revision.number, 1)
+        self.assertEqual(article.pending_revision.iteration, 1)
         self.assertFalse(article.is_published)
 
     def test_superuser_can_publish_directly_with_an_approved_audit_revision(self):
@@ -597,13 +761,163 @@ class EditorialWorkflowTests(TestCase):
         self.assertTrue(published.is_published)
         self.assertEqual(published.workflow_status, Article.WorkflowStatus.PUBLISHED)
         self.assertIsNone(published.pending_revision)
-        self.assertEqual(revision.status, ArticleRevision.Status.APPROVED)
+        self.assertEqual(revision.status, ArticleRevision.Status.PUBLISHED)
         self.assertEqual(revision.created_by, superuser)
-        self.assertEqual(revision.reviewed_by, superuser)
+        self.assertIsNone(revision.reviewed_by)
+        self.assertTrue(revision.direct_bypass)
+        self.assertEqual(published.publication_events.first().action, 'direct_publish')
 
     def test_non_superuser_cannot_publish_directly(self):
         with self.assertRaises(PermissionDenied):
             publish_article_directly(self.article, self.reviewer)
+
+    def test_explicit_override_needs_neither_submit_nor_normal_publish_permission(self):
+        trusted = make_user('trusted@example.com', 'trusted')
+        grant(trusted, 'publish_without_review')
+        published = publish_article_directly(self.article, trusted)
+        revision = published.published_revision
+        self.assertTrue(published.is_published)
+        self.assertTrue(revision.direct_bypass)
+        self.assertIsNone(revision.reviewed_by)
+        self.assertIsNone(revision.reviewed_at)
+        self.assertEqual(revision.published_by, trusted)
+        self.assertEqual(published.publication_events.get().actor, trusted)
+        self.assertEqual(published.publication_events.get().action, 'direct_publish')
+
+    def test_pending_override_reuses_iteration_and_does_not_allow_self_approval(self):
+        grant(self.writer, 'publish_without_review', 'review_article')
+        revision = submit_article(self.article, self.writer)
+        with self.assertRaisesMessage(ValidationError, 'contributor'):
+            approve_revision(revision, self.writer)
+        published = publish_article_directly(self.article, self.writer, revision=revision)
+        self.assertEqual(published.published_revision_id, revision.pk)
+        self.assertEqual(published.revisions.count(), 1)
+        self.assertIsNone(published.published_revision.reviewed_at)
+        with self.assertRaises(ValidationError):
+            publish_article_directly(published, self.writer)
+        self.assertEqual(published.publication_events.count(), 1)
+
+    def test_override_denies_inactive_and_nonstaff_accounts(self):
+        for field in ('is_active', 'is_staff'):
+            with self.subTest(field=field):
+                trusted = make_user(f'{field}@example.com', field)
+                grant(trusted, 'publish_without_review')
+                setattr(trusted, field, False)
+                trusted.save(update_fields=(field,))
+                with self.assertRaises(PermissionDenied):
+                    publish_article_directly(self.article, trusted)
+        self.assertFalse(self.article.revisions.exists())
+
+    def test_override_rejects_stale_revision_without_publishing_draft_changes(self):
+        grant(self.writer, 'publish_without_review')
+        revision = submit_article(self.article, self.writer)
+        self.article.refresh_from_db()
+        self.article.article_content = '<p>Changed after review submission.</p>'
+        self.article.save()
+        with self.assertRaises(ValidationError):
+            publish_article_directly(self.article, self.writer, revision=revision)
+        revision.refresh_from_db()
+        self.assertFalse(revision.direct_bypass)
+        self.assertFalse(self.article.publication_events.exists())
+
+    def test_override_still_validates_content_and_media(self):
+        grant(self.writer, 'publish_without_review')
+        self.article.article_content = '<p><img src="https://unmanaged.example/image.jpg"></p>'
+        self.article.save()
+        with self.assertRaises(ValidationError):
+            publish_article_directly(self.article, self.writer)
+        self.assertFalse(self.article.revisions.exists())
+
+    def test_override_is_not_in_delegable_presets(self):
+        from django.contrib.auth.models import Group
+
+        from user.access import DELEGABLE_GROUPS
+
+        for name in ('OEF Writers', 'OEF Reviewers', 'OEF Publishers'):
+            Group.objects.get_or_create(name=name)
+        self.assertFalse(Group.objects.filter(
+            name__in=DELEGABLE_GROUPS,
+            permissions__codename='publish_without_review',
+            permissions__content_type__app_label='blog',
+        ).exists())
+
+    def test_author_with_override_can_publish_pending_revision_through_admin(self):
+        grant(self.writer, 'publish_without_review', 'view_articlerevision')
+        revision = submit_article(self.article, self.writer)
+        self.client.force_login(self.writer)
+        article_url = reverse('admin:blog_article_change', args=[self.article.pk])
+        revision_url = reverse('admin:blog_articlerevision_change', args=[revision.pk])
+        self.assertContains(self.client.get(article_url), 'Publish without review')
+        self.assertContains(self.client.get(revision_url), 'Publish without review')
+        response = self.client.post(revision_url, {'_publish_without_review': '1'})
+        self.assertEqual(response.status_code, 302)
+        self.article.refresh_from_db()
+        self.assertTrue(self.article.is_published)
+        self.assertEqual(self.article.published_revision_id, revision.pk)
+
+    def test_reviewer_cannot_forge_pending_publication_override(self):
+        revision = submit_article(self.article, self.writer)
+        self.client.force_login(self.reviewer)
+        response = self.client.post(
+            reverse('admin:blog_articlerevision_change', args=[revision.pk]),
+            {'_publish_without_review': '1'},
+        )
+        self.assertEqual(response.status_code, 302)
+        self.article.refresh_from_db()
+        self.assertFalse(self.article.is_published)
+        self.assertFalse(self.article.publication_events.exists())
+
+    def test_superuser_can_bypass_own_pending_review_from_article_form(self):
+        owner = get_user_model().objects.create_superuser(
+            email='owner-pending@example.com', username='owner-pending', password='test-pass',
+        )
+        self.article.article_author = owner
+        self.article.save()
+        self.article.tags.add('community')
+        revision = submit_article(self.article, owner)
+        with self.assertRaisesMessage(ValidationError, 'contributor'):
+            approve_revision(revision, owner)
+        self.client.force_login(owner)
+        url = reverse('admin:blog_article_change', args=[self.article.pk])
+        self.assertContains(self.client.get(url), 'Publish without review')
+        response = self.client.post(url, {
+            'article_title': self.article.article_title,
+            'article_excerpt': self.article.article_excerpt,
+            'article_content': self.article.article_content,
+            'article_author': owner.pk, 'tags': 'community', '_publish_now': '1',
+        })
+        self.assertEqual(
+            response.status_code, 302,
+            response.context['adminform'].form.errors if response.status_code == 200 else '',
+        )
+        self.article.refresh_from_db()
+        self.assertTrue(self.article.is_published)
+        self.assertEqual(self.article.published_revision_id, revision.pk)
+        self.assertIsNone(self.article.published_revision.reviewed_at)
+
+    def test_override_is_rechecked_after_revocation(self):
+        grant(self.writer, 'publish_without_review')
+        revision = submit_article(self.article, self.writer)
+        self.writer.user_permissions.remove(Permission.objects.get(
+            codename='publish_without_review', content_type__app_label='blog',
+        ))
+        actor = get_user_model().objects.get(pk=self.writer.pk)
+        with self.assertRaises(PermissionDenied):
+            publish_article_directly(self.article, actor, revision=revision)
+        self.assertFalse(self.article.publication_events.exists())
+
+    def test_override_preserves_an_already_approved_revision(self):
+        grant(self.writer, 'publish_without_review')
+        revision = submit_article(self.article, self.writer)
+        approve_revision(revision, self.reviewer)
+        with self.assertRaises(ValidationError):
+            publish_article_directly(self.article, self.writer, revision=revision)
+        revision.refresh_from_db()
+        self.assertEqual(revision.status, ArticleRevision.Status.APPROVED)
+        self.assertEqual(revision.reviewed_by, self.reviewer)
+        self.assertFalse(revision.direct_bypass)
+        self.assertEqual(self.article.revisions.count(), 1)
+        self.assertFalse(self.article.publication_events.exists())
 
     def test_superuser_article_form_exposes_publish_now(self):
         superuser = get_user_model().objects.create_superuser(
@@ -615,7 +929,7 @@ class EditorialWorkflowTests(TestCase):
 
         response = self.client.get(reverse('admin:blog_article_add'))
 
-        self.assertContains(response, 'Publish now')
+        self.assertContains(response, 'Publish without review')
         self.assertContains(response, 'Save and submit for review')
         self.assertContains(response, 'Add Image')
         self.assertNotContains(response, 'Legacy image — replace or remove before review')
@@ -668,13 +982,22 @@ class EditorialWorkflowTests(TestCase):
         self.article.refresh_from_db()
         replacement.refresh_from_db()
         self.assertEqual(replacement.status, ArticleRevision.Status.APPROVED)
-        self.assertEqual(self.article.workflow_status, Article.WorkflowStatus.PUBLISHED)
+        self.assertEqual(self.article.workflow_status, Article.WorkflowStatus.APPROVED)
+        self.assertFalse(self.article.is_published)
+        publish_response = self.client.post(
+            reverse('admin:blog_articlerevision_change', args=[replacement.pk]),
+            {'_publish_revision': '1'},
+        )
+        self.assertEqual(publish_response.status_code, 302)
+        self.article.refresh_from_db()
         self.assertTrue(self.article.is_published)
 
     def test_published_article_full_revision_cycle_keeps_old_copy_live_until_approval(self):
         first = submit_article(self.article, self.writer)
         approve_revision(first, self.reviewer)
+        publish_approved_revision(first, self.reviewer)
         self.article.refresh_from_db()
+        original_url = self.article.get_absolute_url()
 
         self.article.article_title = 'Reviewed replacement title'
         self.article.article_content = '<p>Reviewed replacement body.</p>'
@@ -689,6 +1012,7 @@ class EditorialWorkflowTests(TestCase):
         request_changes(second, self.reviewer, 'Add the source for the main claim.')
         third = submit_article(self.article, self.writer)
         approve_revision(third, self.reviewer)
+        publish_approved_revision(third, self.reviewer)
 
         self.article.refresh_from_db()
         first.refresh_from_db()
@@ -698,6 +1022,7 @@ class EditorialWorkflowTests(TestCase):
         self.assertEqual(self.article.published_revision, third)
         self.assertEqual(self.article.public_title, 'Reviewed replacement title')
         self.assertEqual(self.article.public_content, '<p>Reviewed replacement body.</p>')
+        self.assertEqual(self.article.get_absolute_url(), original_url)
 
     def test_requesting_changes_requires_notes_and_returns_article_to_writer(self):
         revision = submit_article(self.article, self.writer)
