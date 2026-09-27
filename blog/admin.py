@@ -572,6 +572,9 @@ class ArticleRevisionAdmin(admin.ModelAdmin):
         return False
 
     def has_delete_permission(self, request, obj=None):
+        if request.user.is_superuser:
+            return True
+        # Otherwise, keep it restricted for regular staff members
         return False
 
     def has_change_permission(self, request, obj=None):
@@ -697,6 +700,9 @@ class MediaAssetAdmin(admin.ModelAdmin):
         )
 
     def has_delete_permission(self, request, obj=None):
+        if request.user.is_superuser:
+            return True
+        # Otherwise, keep it restricted for regular staff members
         return False
 
     def get_urls(self):

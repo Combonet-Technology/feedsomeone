@@ -274,7 +274,7 @@ class TeamMemberAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         # Legacy access rows without an engagement are not confirmed membership.
-        return super().get_queryset(request).filter(engagements__isnull=False).distinct()
+        return super().get_queryset(request).filter(engagements__isnull=False).order_by('id').distinct()
 
     @admin.display(description='Engagements')
     def engagement_summary(self, obj):
@@ -437,6 +437,9 @@ class TeamMemberAdmin(admin.ModelAdmin):
         return self._can_manage_engagement(request)
 
     def has_delete_permission(self, request, obj=None):
+        if request.user.is_superuser:
+            return True
+        # Otherwise, keep it restricted for regular staff members
         return False
 
     def save_model(self, request, obj, form, change):
