@@ -227,6 +227,24 @@ class Engagement(models.Model):
 
     class Meta:
         ordering = ('-created_at',)
+        constraints = [
+            models.UniqueConstraint(
+                fields=('team_member',), condition=models.Q(status__in=('onboarding', 'active')),
+                name='one_current_engagement_per_member',
+            ),
+            models.CheckConstraint(
+                condition=models.Q(start_date__isnull=True) | models.Q(end_date__isnull=True)
+                | models.Q(end_date__gte=models.F('start_date')),
+                name='engagement_dates_in_order',
+            ),
+        ]
+
+    def clean(self):
+        super().clean()
+        if self.start_date and self.end_date and self.end_date < self.start_date:
+            raise ValidationError({'end_date': 'End date cannot be before start date.'})
+        if self.status != self.Status.ENDED and self.end_date:
+            raise ValidationError({'end_date': 'Only an ended engagement may have an end date.'})
 
     def __str__(self):
         return f'{self.team_member} — {self.role_title}'

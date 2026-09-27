@@ -13,7 +13,7 @@ from django.utils.html import format_html
 
 from opportunities.interviews import send_interview_invitation_batch
 from user.models import TeamMember, UserProfile
-from user.workforce import appoint_candidate
+from user.workforce import APPOINTMENT_STATUSES, appoint_candidate
 
 from .forms import VolunteerOfferForm, VolunteerOnboardingEmailForm
 from .models import (RecruitmentCohort, Vacancy, VacancyApplication,
@@ -177,6 +177,15 @@ class VacancyApplicationAdminForm(forms.ModelForm):
                 self.add_error('cohort', 'This person already has an application for this role in that cohort.')
         if cleaned.get('status') != VacancyApplication.Status.APPOINTED:
             return cleaned
+        if not self.instance.pk:
+            raise forms.ValidationError('Save an eligible application before appointing it.')
+        previous = VacancyApplication.objects.select_for_update().get(pk=self.instance.pk)
+        if hasattr(previous, 'engagement'):
+            if previous.appointed_at and previous.appointed_by_id:
+                return cleaned
+            raise forms.ValidationError('The existing engagement needs appointment reconciliation.')
+        if previous.status not in APPOINTMENT_STATUSES:
+            raise forms.ValidationError('This application is not eligible for appointment.')
         email = (cleaned['email'] if 'email' in cleaned else self.instance.email or '').strip().lower()
         applicant = cleaned['applicant'] if 'applicant' in cleaned else self.instance.applicant
         member = None

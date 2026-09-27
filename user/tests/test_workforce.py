@@ -79,7 +79,7 @@ class WorkforceLifecycleTests(TestCase):
         self.assertIsNone(self.application.agreement_verified_at)
         self.assertEqual(engagement.status, Engagement.Status.ACTIVE)
 
-    def test_direct_engagement_and_multiple_roles(self):
+    def test_direct_engagement_replacement_preserves_role_history(self):
         member = TeamMember.objects.create(
             full_name='Direct Member', primary_email='direct@example.org',
             role_title='Programme Coordinator',
@@ -90,13 +90,17 @@ class WorkforceLifecycleTests(TestCase):
         )
         second = start_direct_engagement(
             member, self.manager, role_title='Content Writer',
-            engagement_type='volunteer',
+            engagement_type='volunteer', replace_current=True,
         )
         self.assertNotEqual(first.pk, second.pk)
         member.refresh_from_db()
         self.assertEqual(member.engagements.count(), 2)
         self.assertFalse(member.user.is_staff)
         self.assertFalse(member.user.has_usable_password())
+        first.refresh_from_db()
+        self.assertEqual(first.status, Engagement.Status.ENDED)
+        self.assertEqual(first.ended_by, self.manager)
+        self.assertEqual(member.engagements.exclude(status='ended').count(), 1)
         self.assertEqual(end_engagement(first, self.manager).status, Engagement.Status.ENDED)
 
     def test_non_manager_cannot_appoint(self):
@@ -278,7 +282,7 @@ class WorkforceLifecycleTests(TestCase):
         self.assertTrue(account.groups.filter(pk=writer_group.pk).exists())
 
     def test_admin_saves_other_changes_when_directly_appointing(self):
-        self.application.status = VacancyApplication.Status.RECEIVED
+        self.application.status = VacancyApplication.Status.OFFER_ACCEPTED
         self.application.agreement_verified_at = None
         self.application.agreement_verified_by = None
         self.application.save()

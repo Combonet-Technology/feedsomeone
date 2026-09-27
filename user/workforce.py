@@ -8,6 +8,20 @@ from opportunities.models import VacancyApplication
 
 from .models import Engagement, TeamMember, UserProfile
 
+APPOINTMENT_STATUSES = (
+    VacancyApplication.Status.OFFER_ACCEPTED,
+    VacancyApplication.Status.AGREEMENT_SIGNED,
+    VacancyApplication.Status.ONBOARDING,
+    VacancyApplication.Status.ACTIVE,
+)
+
+
+def available_appointment_applications():
+    return VacancyApplication.objects.filter(
+        status__in=APPOINTMENT_STATUSES, team_member__isnull=True,
+        engagement__isnull=True, applicant__team_membership__isnull=True,
+    ).select_related('vacancy')
+
 
 def _require_engagement_manager(actor):
     if not (
@@ -40,8 +54,9 @@ def _new_member_account(email, full_name):
 
 
 @transaction.atomic
-def appoint_candidate(application, actor, *, team_member=None, start_date=None):
-    """Promote an application once, regardless of its descriptive status."""
+def appoint_candidate(application, actor, *, team_member=None, start_date=None,
+                      full_name=None, email=None, role_title=None, engagement_type=None):
+    """Appoint an eligible candidate once, retaining the original application."""
     _require_appointment_authority(actor)
     application = VacancyApplication.objects.select_for_update().select_related(
         'vacancy',
@@ -62,10 +77,19 @@ def appoint_candidate(application, actor, *, team_member=None, start_date=None):
             application.save(update_fields=('status', 'updated_at'))
         return existing
 
-    email = application.email.strip().lower()
-    full_name = application.full_name.strip()
+    if application.status not in APPOINTMENT_STATUSES:
+        raise ValidationError('This application is not eligible for appointment.')
+    email = (application.email if email is None else email).strip().lower()
+    full_name = (application.full_name if full_name is None else full_name).strip()
+    role_title = (application.vacancy.title if role_title is None else role_title).strip()
+    engagement_type = application.vacancy.engagement_type if engagement_type is None else engagement_type
     if not full_name:
         raise ValidationError('The application needs a full name before appointment.')
+    if not role_title or len(role_title) > 255:
+        raise ValidationError('A valid role title is required.')
+    if engagement_type not in dict(TeamMember.ENGAGEMENT_TYPE_CHOICES):
+        raise ValidationError('Choose a valid engagement type.')
+    UserProfile._meta.get_field('email').clean(email, None)
 
     member = None
     if team_member is not None:
@@ -102,7 +126,7 @@ def appoint_candidate(application, actor, *, team_member=None, start_date=None):
 
     if member is None:
         member = TeamMember.objects.create(
-            user=account, full_name=full_name, primary_email=email,
+            user=account, full_name=full_name, primary_email=email, source_application=application,
         )
     else:
         updates = []
@@ -115,6 +139,9 @@ def appoint_candidate(application, actor, *, team_member=None, start_date=None):
         if not member.primary_email:
             member.primary_email = email
             updates.append('primary_email')
+        if not member.source_application_id:
+            member.source_application = application
+            updates.append('source_application')
         if updates:
             member.save(update_fields=(*updates, 'updated_at'))
 
@@ -122,11 +149,12 @@ def appoint_candidate(application, actor, *, team_member=None, start_date=None):
         start_date = application.volunteer_offer.start_date if hasattr(application, 'volunteer_offer') else None
 
     now = timezone.now()
+    _replace_current_engagements(member, actor, replace_current=False)
     engagement = Engagement.objects.create(
         team_member=member,
         source_application=application,
-        role_title=application.vacancy.title,
-        engagement_type=application.vacancy.engagement_type,
+        role_title=role_title,
+        engagement_type=engagement_type,
         status=Engagement.Status.ACTIVE,
         start_date=start_date,
     )
@@ -141,7 +169,8 @@ def appoint_candidate(application, actor, *, team_member=None, start_date=None):
 
 
 @transaction.atomic
-def start_direct_engagement(member, actor, *, role_title, engagement_type, start_date=None):
+def start_direct_engagement(member, actor, *, role_title, engagement_type, start_date=None,
+                            replace_current=False, status=Engagement.Status.ACTIVE):
     _require_engagement_manager(actor)
     member = TeamMember.objects.select_for_update().get(pk=member.pk)
     if not role_title.strip():
@@ -150,6 +179,9 @@ def start_direct_engagement(member, actor, *, role_title, engagement_type, start
         raise ValidationError('Choose a valid engagement type.')
     if not member.full_name.strip():
         raise ValidationError('A full name is required.')
+    if status not in (Engagement.Status.ONBOARDING, Engagement.Status.ACTIVE):
+        raise ValidationError('A new engagement must be onboarding or active.')
+    _replace_current_engagements(member, actor, replace_current=replace_current)
     if not member.user_id:
         member.user = _new_member_account(member.primary_email, member.full_name)
         member.save(update_fields=('user', 'updated_at'))
@@ -157,7 +189,7 @@ def start_direct_engagement(member, actor, *, role_title, engagement_type, start
         team_member=member,
         role_title=role_title.strip(),
         engagement_type=engagement_type,
-        status=Engagement.Status.ACTIVE,
+        status=status,
         start_date=start_date,
     )
 
@@ -165,6 +197,7 @@ def start_direct_engagement(member, actor, *, role_title, engagement_type, start
 @transaction.atomic
 def complete_onboarding(engagement, actor):
     _require_engagement_manager(actor)
+    TeamMember.objects.select_for_update().get(pk=engagement.team_member_id)
     engagement = Engagement.objects.select_for_update().get(pk=engagement.pk)
     if engagement.onboarding_status == Engagement.OnboardingStatus.COMPLETED:
         return engagement
@@ -186,26 +219,60 @@ def complete_onboarding(engagement, actor):
     return engagement
 
 
+def _replace_current_engagements(member, actor, *, replace_current):
+    current = list(member.engagements.select_for_update().exclude(status=Engagement.Status.ENDED))
+    if len(current) > 1:
+        raise ValidationError('Multiple current engagements exist. Reconcile them before adding another.')
+    if current and not replace_current:
+        raise ValidationError('End the current engagement first or confirm its replacement.')
+    for engagement in current:
+        end_engagement(engagement, actor)
+        # The replacement is created in this same transaction, with no access gap.
+        Engagement.objects.filter(pk=engagement.pk).update(access_review_required=False)
+
+
+@transaction.atomic
+def update_engagement(engagement, actor, *, role_title, engagement_type, start_date, end_date, status):
+    _require_engagement_manager(actor)
+    TeamMember.objects.select_for_update().get(pk=engagement.team_member_id)
+    engagement = Engagement.objects.select_for_update().get(pk=engagement.pk)
+    previous_status = engagement.status
+    if previous_status == Engagement.Status.ENDED and status != previous_status:
+        raise ValidationError('An ended engagement cannot be restarted. Add a new engagement.')
+    engagement.role_title = role_title.strip()
+    engagement.engagement_type = engagement_type
+    engagement.start_date = start_date
+    engagement.end_date = end_date
+    engagement.status = status
+    if status == Engagement.Status.ENDED:
+        engagement.end_date = end_date or engagement.end_date or timezone.localdate()
+    engagement.full_clean()
+    if status == Engagement.Status.ENDED and previous_status != status:
+        return _record_engagement_end(engagement, actor, engagement.end_date)
+    engagement.save()
+    return engagement
+
+
+def _record_engagement_end(engagement, actor, end_date):
+    engagement.status = Engagement.Status.ENDED
+    engagement.end_date = end_date or timezone.localdate()
+    engagement.clean()
+    engagement.ended_at = timezone.now()
+    engagement.ended_by = actor
+    other_current = Engagement.objects.filter(
+        team_member_id=engagement.team_member_id,
+    ).exclude(pk=engagement.pk).exclude(status=Engagement.Status.ENDED).exists()
+    account = engagement.team_member.user
+    engagement.access_review_required = bool(account and account.is_staff and not other_current)
+    engagement.save()
+    return engagement
+
+
 @transaction.atomic
 def end_engagement(engagement, actor, *, end_date=None):
     _require_engagement_manager(actor)
-    engagement = Engagement.objects.select_for_update().select_related('team_member').get(
-        pk=engagement.pk,
-    )
+    TeamMember.objects.select_for_update().get(pk=engagement.team_member_id)
+    engagement = Engagement.objects.select_for_update().get(pk=engagement.pk)
     if engagement.status == Engagement.Status.ENDED:
         return engagement
-    engagement.status = Engagement.Status.ENDED
-    engagement.end_date = end_date or timezone.localdate()
-    engagement.ended_at = timezone.now()
-    engagement.ended_by = actor
-    other_active = Engagement.objects.filter(
-        team_member=engagement.team_member, status=Engagement.Status.ACTIVE,
-    ).exclude(pk=engagement.pk).exists()
-    account = engagement.team_member.user
-    engagement.access_review_required = bool(
-        account and account.is_staff and not other_active
-    )
-    engagement.save(update_fields=(
-        'status', 'end_date', 'ended_at', 'ended_by', 'access_review_required', 'updated_at',
-    ))
-    return engagement
+    return _record_engagement_end(engagement, actor, end_date)

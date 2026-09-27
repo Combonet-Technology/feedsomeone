@@ -184,7 +184,9 @@ Reviewer and Publisher. Preserve the release and manual-acceptance gates above.
 - Keep durable person identity, engagement, authentication account and backend
   access separate. Evolve TeamMember into a durable person record with an
   optional UserProfile link using SET_NULL. One person may have multiple
-  Engagement records, including concurrent roles and later re-engagements.
+  Engagement records over time, but only one current (onboarding or active)
+  engagement. End the current record first or explicitly confirm replacement;
+  preserve ended history and audit. Ended records cannot be reactivated.
 - Engagement holds the paid/voluntary role title, engagement type, lifecycle,
   dates, onboarding evidence and optional source application. Content Writer,
   Grant and Research Writer and Programme Coordinator are role titles; Writer,
@@ -192,9 +194,10 @@ Reviewer and Publisher. Preserve the release and manual-acceptance gates above.
   engagement types or automatic consequences of a title.
 - Support direct appointments from People without inventing an application.
   Event-only participants do not automatically become workforce members.
-- Recruitment statuses are manager-entered descriptions, not an enforced state
-  machine. A manager may correct or skip intermediate statuses. Selecting
-  Appointed on an existing application atomically creates/links the person, a
+- Recruitment statuses are manager-entered descriptions. Managers may correct
+  or skip intermediate statuses, except that a new appointment requires Offer
+  accepted, Agreement signed, Onboarding or Active. The same service-level guard
+  applies to both entry points. Selecting Appointed atomically creates/links the person, a
   non-staff account and one active source-linked engagement, recording the
   appointment actor/time; repeating it must not create another engagement.
   Changing the application status later must not silently delete membership,
@@ -204,11 +207,20 @@ Reviewer and Publisher. Preserve the release and manual-acceptance gates above.
   Email delivery is not onboarding completion.
   Preserve recruitment history: remove appointed applications from the default
   active queue, not from the database. Provide authorised archive/filter access.
+- Add Team Member may optionally select an eligible, unused application and
+  prefill editable identity/role fields. Save uses the same appointment service,
+  records historical source_application and marks the application Appointed.
+  Preserve original application fields and linked-account identity safeguards.
+  No selector on member edit; show only a historical application link or
+  "No vacancy application exists for this team member." No new application-side
+  navigation, profile/import work or automatic backend access is implied.
 - People shows current/past engagements and a separate backend-access badge.
   Ending an engagement, suspending backend access and disabling account login
   are distinct operations. Ending the last eligible engagement must trigger an
   explicit access review/revocation decision; never silently retain access or
-  disable an unrelated public account. Consider other active engagements.
+  disable an unrelated public account. Atomic replacement retains backend
+  access without a false access-review flag. Dates are effective dates, not
+  record creation timestamps; unknown start dates remain blank.
 
 ### Authority and permissions
 
