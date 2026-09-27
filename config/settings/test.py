@@ -1,4 +1,4 @@
-"""Fast, isolated settings for automated tests."""
+"""Isolated PostgreSQL tests using the project's configured database server."""
 
 import os
 
@@ -10,8 +10,13 @@ ALLOWED_HOSTS = ['testserver', 'localhost', '127.0.0.1', 'example.com', 'google.
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.environ.get('TEST_DATABASE_NAME', ':memory:'),
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ['POSTGRES_DB_NAME'],
+        'USER': os.environ['POSTGRES_DB_USER'],
+        'PASSWORD': os.environ['POSTGRES_DB_PASS'],
+        'HOST': os.environ['POSTGRES_HOST'],
+        'PORT': os.environ.get('POSTGRES_PORT', '5432'),
+        # Django creates test_<NAME>; never point TEST.NAME at application data.
     }
 }
 
@@ -20,14 +25,10 @@ PASSWORD_HASHERS = ['django.contrib.auth.hashers.MD5PasswordHasher']
 TEST_RUNNER = 'django.test.runner.DiscoverRunner'
 OEF_CLOUDINARY_ENVIRONMENT = 'test'
 
-# Legacy project migrations contain PostgreSQL-specific operations. Tests build
-# the local app tables directly from the current models while retaining Django
-# and third-party migrations.
-MIGRATION_MODULES = {
-    'blog': None,
-    'contact': None,
-    'errors': None,
-    'events': None,
-    'mainsite': None,
-    'user': None,
-}
+# Custom API clients do not use Django's in-memory email backend.
+BREVO_API_KEY = ''
+SLACK_WEBHOOK_URL = ''
+SLACK_VACANCIES_WEBHOOK_URL = ''
+OEF_SLACK_INVITE_URL = ''
+
+# Run real migrations, including PostgreSQL-specific schema operations.

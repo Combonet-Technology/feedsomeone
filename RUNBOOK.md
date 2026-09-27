@@ -9,7 +9,7 @@ This repository is a Django 3.2 application. The full local app is Docker-first;
 - Full local app: `docker-compose.yml`, with `web` plus `postgres`.
 - Fast local/test runner: `uv run --no-project --python 3.10 ...`.
 - Default Django settings: `config.settings.local`, unless `SETTINGS` is set.
-- Isolated test settings: `config.settings.test`, SQLite in memory, app migrations disabled.
+- Isolated test settings: `config.settings.test`, PostgreSQL on the configured server, with real migrations enabled.
 
 ## Docker Full App
 
@@ -106,8 +106,29 @@ uv run --no-project --python 3.10 python manage.py test contact --settings=confi
 uv run --no-project --python 3.10 python manage.py test blog contact --settings=config.settings.test
 ```
 
-`config.settings.test` uses SQLite in memory and avoids the legacy app migrations
-for speed. Use it for most form/view/service tests.
+`config.settings.test` uses the existing `POSTGRES_DB_NAME`, `POSTGRES_DB_USER`,
+`POSTGRES_DB_PASS`, `POSTGRES_HOST` and `POSTGRES_PORT` runtime configuration.
+Django creates a separate `test_<POSTGRES_DB_NAME>` database and applies real
+migrations; it does not run tests in the application database. The database user
+needs permission to create test databases. Missing connection settings fail
+instead of falling back to SQLite. Never set `TEST.NAME` to the application DB.
+
+Prefer the existing Compose runtime:
+
+```powershell
+docker compose exec -T web python manage.py test --settings=config.settings.test --keepdb --verbosity 1
+```
+
+`--keepdb` retains only the separate test database for subsequent runs. Omit it
+to let Django remove the test database afterwards. The row-lock probe deletes
+only its own unique fixture and preserves migration-seeded groups between runs.
+If an interrupted run left an unusable test database, confirm it is disposable
+before allowing Django to recreate it. Tests use in-memory Django
+email and clear live Brevo/Slack credentials; provider tests supply mocks.
+`config.test_database` verifies the PostgreSQL backend and actual row-lock
+contention using two connections. Do not run simultaneous suites against the
+same test database. Host-side commands need the same PostgreSQL configuration
+(localhost port 5444 for this Compose project).
 
 Do not default to Python 3.12 for this project. The app image and `.python-version`
 are Python 3.10, and some pinned dependencies can require native compilation on
