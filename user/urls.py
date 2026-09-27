@@ -3,6 +3,7 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    path('access/<uuid:invitation_key>/<uidb64>/<token>/', views.member_access_activate, name='member_access_activate'),
     path('register/', views.register, name="register"),
     path('create_username/', views.create_username, name="create_username"),
     path('check_username_availability/', views.check_username_availability, name='check_username_availability'),

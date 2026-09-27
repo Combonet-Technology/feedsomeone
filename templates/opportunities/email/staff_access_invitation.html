@@ -9,8 +9,8 @@
             <tr>
               <td style="padding:32px;">
                 <p style="margin:0 0 18px;">Hello {{ recipient_name }},</p>
-                <p style="margin:0 0 18px;line-height:1.6;">Your OEF administration access has been prepared for your role as <strong>{{ role_title }}</strong>.</p>
-                <p style="margin:0 0 24px;line-height:1.6;">{% if password_setup_required %}Set your password using the secure link below, then you will be taken to the administration workspace.{% else %}Use the link below to open the administration workspace.{% endif %}</p>
+                <p style="margin:0 0 18px;line-height:1.6;">Your OEF administration access is ready.</p>
+                <p style="margin:0 0 24px;line-height:1.6;">{% if password_setup_required %}Set your password using the secure link below to access your workspace.{% else %}Use the link below to open your workspace.{% endif %}</p>
                 <p style="margin:0 0 24px;"><a href="{{ access_url }}" style="display:inline-block;padding:12px 18px;background:#16794a;color:#ffffff;text-decoration:none;font-weight:700;">{{ action_label }}</a></p>
                 <p style="margin:0;color:#5f686f;font-size:13px;line-height:1.5;">This link is intended only for you. Please do not forward it.</p>
               </td>

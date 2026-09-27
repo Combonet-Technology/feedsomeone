@@ -120,6 +120,8 @@ class TeamMember(models.Model):
     )
     full_name = models.CharField(max_length=255, blank=True)
     primary_email = models.EmailField(blank=True)
+    desired_backend_groups = models.JSONField(default=list, blank=True, editable=False)
+    access_version = models.PositiveIntegerField(default=0, editable=False)
     source_application = models.OneToOneField(
         'opportunities.VacancyApplication',
         on_delete=models.SET_NULL,
@@ -262,6 +264,8 @@ class BackendAccessChange(models.Model):
     action = models.CharField(max_length=40)
     before_groups = models.JSONField(default=list)
     after_groups = models.JSONField(default=list)
+    before_enabled = models.BooleanField(null=True)
+    after_enabled = models.BooleanField(null=True)
     actor = models.ForeignKey(
         UserProfile, on_delete=models.SET_NULL, null=True,
         related_name='backend_access_actions',
@@ -286,6 +290,10 @@ class BackendAccessInvitation(models.Model):
         FAILED = 'failed', 'Failed'
 
     key = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    recipient_email = models.EmailField(blank=True, editable=False)
+    access_version = models.PositiveIntegerField(default=0, editable=False)
+    reset_password = models.BooleanField(default=False, editable=False)
+    used_at = models.DateTimeField(null=True, blank=True, editable=False)
     team_member = models.ForeignKey(
         TeamMember, on_delete=models.PROTECT, related_name='backend_invitations',
     )

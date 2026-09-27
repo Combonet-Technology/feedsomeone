@@ -32,7 +32,7 @@ from utils.views import custom_paginator, get_actual_template
 
 from .forms import (CustomPasswordResetForm, UsernameForm,
                     UserRegistrationForm, VolunteerUpdateForm)
-from .models import UserProfile, Volunteer
+from .models import BackendAccessInvitation, TeamMember, UserProfile, Volunteer
 from .token import account_activation_token
 
 logger = logging.getLogger(__name__)
@@ -204,8 +204,25 @@ def set_password_view(request, uidb64=None, token=None):
 
 
 def staff_access_activate(request, uidb64, token):
+    # Legacy links have no invitation identity/version and cannot safely be resumed.
+    return HttpResponse('Please request a new OEF access email.', status=400)
+
+
+@never_cache
+@transaction.atomic
+def member_access_activate(request, invitation_key, uidb64, token):
+    from .access import invitation_is_current
+
+    invitation = BackendAccessInvitation.objects.filter(key=invitation_key).first()
+    if invitation is None:
+        return HttpResponse('This invitation is invalid or expired.', status=400)
+    member = TeamMember.objects.select_for_update().get(pk=invitation.team_member_id)
+    account = UserProfile.objects.select_for_update().get(pk=invitation.user_id)
+    invitation = BackendAccessInvitation.objects.select_for_update().get(pk=invitation.pk)
+    invitation.team_member = member
+    invitation.user = account
     user = get_user(uidb64=uidb64)
-    if user is None:
+    if user is None or user.pk != account.pk or not invitation_is_current(invitation):
         return HttpResponse('This staff invitation is invalid or expired.', status=400)
 
     validity = check_validity_token(request, user, token)
@@ -214,14 +231,16 @@ def staff_access_activate(request, uidb64, token):
     if not validity:
         return HttpResponse('This staff invitation is invalid or expired.', status=400)
 
-    form, done = set_password_and_login(
-        user,
-        request,
-        SetPasswordForm,
-        authenticated=False,
-    )
-    if done:
-        messages.success(request, 'Your OEF administration access is ready.')
+    form = SetPasswordForm(account, request.POST if request.method == 'POST' else None)
+    if request.method == 'POST' and form.is_valid():
+        from django.contrib.auth import login
+        from django.utils import timezone
+
+        form.save()
+        invitation.used_at = timezone.now()
+        invitation.save(update_fields=('used_at',))
+        login(request, account, backend='django.contrib.auth.backends.ModelBackend')
+        messages.success(request, 'Your password has been saved.')
         return redirect('admin:index')
     return render(
         request,

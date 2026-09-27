@@ -240,6 +240,18 @@ Reviewer and Publisher. Preserve the release and manual-acceptance gates above.
   engagements; any pre-activation exception requires an explicitly approved
   capability policy. Define the exact delegable group matrix before enabling
   delegation; do not infer finance, safeguarding or unrestricted recruitment access.
+- Configure saved capability presets separately from enabling backend access;
+  configuration never sends email. Explicit grant permits zero presets and sends
+  an invitation only after commit. Staff invitations require the confirmed OEF
+  workspace login email. The owner updates email separately before granting access;
+  do not add an email editor or email-change action to Manage access. Invitations
+  must still reject a recipient/account email mismatch.
+- Suspend removes effective groups and is_staff, preserving desired presets and
+  normal account login. Resume restores access without sending/resetting passwords.
+  Explicit new invitation/reset supersedes previous links. Team Member must expose
+  distinct Manage engagements, Manage permissions and Manage access links.
+  Permissions edits never enable/disable login or send invitations; access actions
+  belong exclusively on the separate Manage access page.
 - People/onboarding surfaces expose only necessary contact and engagement
   information, not CVs, cover letters or confidential recruitment notes. Existing
   model-wide recruitment permissions must not be described as object-scoped.
@@ -333,17 +345,15 @@ Reviewer and Publisher. Preserve the release and manual-acceptance gates above.
 
 1. Reconcile current workforce and historical cohorts using founder-approved
    mappings; never infer identity or appointment from email/Slack membership alone.
-2. Google Form/Sheet onboarding import: first verify the exact schema, consent,
-   sensitivity and ownership. Use typed allowlisted fields, dry-run preview,
-   stable engagement identifiers, verified source response identifiers for
-   idempotency, per-row outcomes and import audit. Email is only a secondary
-   identity check. Quarantine unmatched records; never create appointments from
-   responses or overwrite locked submissions. Do not assume sheet row numbers
-   are stable response IDs. No Google data operation is included in this phase.
-3. Member self-service: one final initial submission per engagement, atomically
-   locked. Corrections use authorised append-only versions with reason, actor
-   and timestamp; preserve the original. Approve the fields, correction owners
-   and restricted visibility before implementation. A full checklist engine waits.
+2. Spreadsheet/Form is a schema reference only. The owner handles any later
+   ingestion independently. Do not implement an importer, matching script,
+   automatic appointment or data load from those sources.
+3. The owner explicitly removed the new private member profile/onboarding feature
+   and will handle it independently. Do not add profile dashboards, details/document
+   tables, private-profile permissions or profile invitations. Preserve the existing
+   public/event Volunteer profile and recruitment/engagement lifecycle. Migration
+   history remains immutable; removal must stop if substantive profile data needs
+   explicit export/retention, rather than silently discarding it.
 4. Staff subdomain: defer DNS/hosting/deployment. Keep staff routes and links
    hostname-independent. A hidden URL is not security. Before deployment verify
    host routing, TLS, allowed hosts, CSRF, absolute links, host-only cookies,

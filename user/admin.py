@@ -13,10 +13,9 @@ from django.utils.http import urlencode
 
 from opportunities.models import VacancyApplication
 from user.access import (DELEGABLE_GROUPS, preview_backend_access,
-                         send_backend_invitation, set_backend_access)
+                         set_backend_access)
 from user.forms import UserProfileAdminChangeForm, UserProfileAdminCreationForm
-from user.models import (BackendAccessChange, BackendAccessInvitation,
-                         Engagement, TeamMember, UserProfile, Volunteer)
+from user.models import Engagement, TeamMember, UserProfile, Volunteer
 from user.workforce import (appoint_candidate,
                             available_appointment_applications,
                             complete_onboarding, end_engagement,
@@ -196,7 +195,8 @@ class TeamMemberAdmin(admin.ModelAdmin):
     list_display = ('full_name', 'primary_email', 'engagement_summary', 'access_badge')
     search_fields = ('full_name', 'primary_email', 'user__email')
     readonly_fields = (
-        'user', 'engagement_summary', 'engagement_link', 'access_badge', 'access_link', 'application_link',
+        'user', 'engagement_summary', 'engagement_link', 'access_badge', 'access_link',
+        'application_link', 'permissions_link',
     )
 
     def get_form(self, request, obj=None, **kwargs):
@@ -231,7 +231,7 @@ class TeamMemberAdmin(admin.ModelAdmin):
         if self._can_manage_engagement(request):
             fields += ('engagement_link',)
         if self._can_manage_access(request):
-            fields += ('access_link',)
+            fields += ('permissions_link', 'access_link',)
         return fields
 
     @admin.display(description='Vacancy application')
@@ -299,19 +299,29 @@ class TeamMemberAdmin(admin.ModelAdmin):
         return ', '.join(sorted(obj.user.groups.values_list('name', flat=True))) or 'Staff flag only'
 
     @admin.display(description='Manage permissions')
-    def access_link(self, obj):
+    def permissions_link(self, obj):
         if not obj.pk:
             return ''
         return format_html(
             '<a href="{}">Manage permissions</a>',
-            reverse('admin:user_teammember_access', args=(obj.pk,)),
+            reverse('admin:user_teammember_permissions', args=(obj.pk,)),
         )
+
+    @admin.display(description='Manage access')
+    def access_link(self, obj):
+        return format_html('<a href="{}">Manage access</a>',
+                           reverse('admin:user_teammember_access', args=(obj.pk,)))
 
     def get_urls(self):
         return [
             path(
                 'application-preview/', self.admin_site.admin_view(self.application_preview),
                 name='user_teammember_application_preview',
+            ),
+            path(
+                '<path:object_id>/permissions/',
+                self.admin_site.admin_view(self.manage_permissions_view),
+                name='user_teammember_permissions',
             ),
             path(
                 '<path:object_id>/access/',
@@ -326,27 +336,55 @@ class TeamMemberAdmin(admin.ModelAdmin):
         member = self.get_object(request, object_id)
         if member is None:
             raise PermissionDenied
-        if request.method == 'POST' and 'retry_invitation' in request.POST:
-            if not request.POST['retry_invitation'].isdecimal():
-                raise PermissionDenied
-            invitation = BackendAccessInvitation.objects.filter(
-                pk=request.POST['retry_invitation'], team_member=member,
-                user_id=member.user_id,
-            ).first()
-            if (
-                invitation is None or not member.user_id
-                or not member.user.is_active or not member.user.is_staff
-            ):
-                raise PermissionDenied
-            send_backend_invitation(invitation.pk, request.build_absolute_uri('/'))
-            return HttpResponseRedirect(request.path)
-        current = list(member.user.groups.values_list('name', flat=True)) if member.user_id else []
+        access_actions = dict(AccessActionForm.base_fields['action'].choices)
+        if request.method == 'POST' and request.POST.get('action') not in access_actions:
+            raise PermissionDenied
+        action_form = AccessActionForm(request.POST if request.POST.get('action') in access_actions else None)
+        if request.method == 'POST':
+            if action_form.is_valid():
+                try:
+                    result = set_backend_access(
+                        member, request.user, reason=action_form.cleaned_data['reason'],
+                        site_url=request.build_absolute_uri('/'), action=action_form.cleaned_data['action'],
+                    )
+                except ValidationError as error:
+                    action_form.add_error(None, error)
+                else:
+                    if result.invitation:
+                        result.invitation.refresh_from_db()
+                        if result.invitation.status == 'failed':
+                            self.message_user(
+                                request, 'Access saved, but the email could not be sent. Use Resend login link.',
+                                messages.WARNING,
+                            )
+                        else:
+                            self.message_user(request, 'Login link requested.')
+                    else:
+                        self.message_user(request, 'Access action completed.')
+                    return HttpResponseRedirect(request.path)
+        return TemplateResponse(request, 'admin/user/team_access.html', {
+            **self.admin_site.each_context(request),
+            'title': f'Manage access: {member}',
+            'opts': self.model._meta, 'member': member,
+            'action_form': action_form,
+            'change_url': reverse('admin:user_teammember_change', args=(member.pk,)),
+        })
+
+    def manage_permissions_view(self, request, object_id):
+        if not self._can_manage_access(request):
+            raise PermissionDenied
+        member = self.get_object(request, object_id)
+        if member is None:
+            raise PermissionDenied
+        if request.method == 'POST' and request.POST.get('action') != 'configure':
+            raise PermissionDenied
+        current = member.desired_backend_groups
         form = TeamAccessForm(
-            request.POST or None,
+            request.POST if request.method == 'POST' and request.POST.get('action') == 'configure' else None,
             initial={'groups': current},
         )
         preview = None
-        if request.method == 'POST' and form.is_valid():
+        if form.is_bound and form.is_valid():
             selected = form.cleaned_data['groups']
             try:
                 preview = preview_backend_access(member, request.user, selected)
@@ -358,24 +396,17 @@ class TeamMemberAdmin(admin.ModelAdmin):
                     )
                     self.message_user(
                         request,
-                        'Backend access updated. Invitation delivery is recorded separately.'
+                        'Capability presets updated. No invitation was sent.'
                         if result.changed else 'Backend access already matched the selection.',
                         messages.SUCCESS,
                     )
                     return HttpResponseRedirect(reverse('admin:user_teammember_change', args=(member.pk,)))
             except (PermissionDenied, ValidationError) as error:
                 form.add_error(None, error)
-        return TemplateResponse(request, 'admin/user/team_access.html', {
+        return TemplateResponse(request, 'admin/user/team_permissions.html', {
             **self.admin_site.each_context(request),
-            'title': f'Manage backend access: {member}',
-            'opts': self.model._meta,
-            'member': member,
-            'form': form,
-            'preview': preview,
-            'access_changes': BackendAccessChange.objects.filter(
-                team_member=member,
-            ).select_related('actor'),
-            'access_invitations': BackendAccessInvitation.objects.filter(team_member=member),
+            'title': f'Manage permissions: {member}',
+            'opts': self.model._meta, 'member': member, 'form': form, 'preview': preview,
             'change_url': reverse('admin:user_teammember_change', args=(member.pk,)),
         })
 
@@ -437,6 +468,16 @@ class TeamAccessForm(forms.Form):
         label='Capability presets',
     )
     reason = forms.CharField(widget=forms.Textarea(attrs={'rows': 3}), label='Reason')
+
+
+class AccessActionForm(forms.Form):
+    action = forms.ChoiceField(choices=(
+        ('grant', 'Grant access'), ('suspend', 'Suspend access'),
+        ('resume', 'Restore access'), ('resend', 'Resend login link'),
+        ('reset', 'Reset password'),
+    ))
+    reason = forms.CharField(max_length=500)
+    confirm_action = forms.BooleanField(label='Confirm this action')
 
 
 @admin.register(Engagement)

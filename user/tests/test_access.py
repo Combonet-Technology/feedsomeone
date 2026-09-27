@@ -23,7 +23,8 @@ class DelegatedAccessTests(TestCase):
         self.reviewer = Group.objects.get(name='OEF Reviewers')
         self.publisher = Group.objects.get(name='OEF Publishers')
         self.member = TeamMember.objects.create(
-            full_name='Test Member', primary_email='member@example.org',
+            full_name='Test Member', primary_email='member@oluwafemiebenezerfoundation.org',
+            user=UserProfile.objects.create_user(email='member@oluwafemiebenezerfoundation.org'),
             role_title='Content Writer',
         )
         self.engagement = Engagement.objects.create(
@@ -39,14 +40,14 @@ class DelegatedAccessTests(TestCase):
         with self.assertRaises(ValidationError):
             set_backend_access(
                 self.member, self.owner, {'OEF Writers'},
-                reason='Writing work', site_url='https://example.org/',
+                reason='Writing work', site_url='https://example.org/', action='grant',
             )
         self.engagement.status = Engagement.Status.ACTIVE
         self.engagement.save(update_fields=('status',))
         with self.captureOnCommitCallbacks(execute=False):
             result = set_backend_access(
                 self.member, self.owner, {'OEF Writers', 'OEF Reviewers'},
-                reason='Editorial assignment', site_url='https://example.org/',
+                reason='Editorial assignment', site_url='https://example.org/', action='grant',
             )
         self.assertTrue(result.changed)
         self.assertEqual(self.engagement.onboarding_status, Engagement.OnboardingStatus.NOT_STARTED)
@@ -60,7 +61,7 @@ class DelegatedAccessTests(TestCase):
         self.assertEqual(result.invitation.status, 'pending')
         self.assertFalse(set_backend_access(
             self.member, self.owner, {'OEF Writers', 'OEF Reviewers'},
-            reason='No actual change', site_url='https://example.org/',
+            reason='No actual change', site_url='https://example.org/', action='grant',
         ).changed)
 
     def test_manager_cannot_modify_self_or_select_protected_group(self):
@@ -89,11 +90,11 @@ class DelegatedAccessTests(TestCase):
         with self.captureOnCommitCallbacks(execute=False):
             set_backend_access(
                 self.member, self.owner, {'OEF Publishers'},
-                reason='Publication duty', site_url='https://example.org/',
+                reason='Publication duty', site_url='https://example.org/', action='grant',
             )
         suspended = set_backend_access(
             self.member, self.owner, set(), reason='Duty ended',
-            site_url='https://example.org/',
+            site_url='https://example.org/', action='suspend',
         )
         self.assertFalse(suspended.user.is_staff)
         self.assertFalse(suspended.user.groups.exists())
@@ -106,21 +107,25 @@ class DelegatedAccessTests(TestCase):
         self.client.force_login(self.owner)
         url = reverse('admin:user_teammember_access', args=(self.member.pk,))
         with self.captureOnCommitCallbacks(execute=False):
-            granted = self.client.post(url, {
-                'groups': ['OEF Writers'], 'reason': 'Writing assignment', 'confirm': '1',
+            granted = self.client.post(reverse('admin:user_teammember_permissions', args=(self.member.pk,)), {
+                'groups': ['OEF Writers'], 'reason': 'Writing assignment', 'confirm': '1', 'action': 'configure',
             })
         self.assertEqual(granted.status_code, 302)
+        with self.captureOnCommitCallbacks(execute=False):
+            self.assertEqual(self.client.post(url, {
+                'action': 'grant', 'reason': 'Enable access', 'confirm_action': 'on',
+            }).status_code, 302)
         self.member.refresh_from_db()
         self.assertTrue(self.member.user.is_staff)
         removed = self.client.post(url, {
-            'reason': 'Writing assignment ended', 'confirm': '1',
+            'reason': 'Writing assignment ended', 'action': 'suspend', 'confirm_action': 'on',
         })
         self.assertEqual(removed.status_code, 302)
         self.member.user.refresh_from_db()
         self.assertFalse(self.member.user.is_staff)
         self.assertFalse(self.member.user.groups.exists())
-        self.assertEqual(BackendAccessChange.objects.count(), 2)
-        self.assertContains(self.client.get(url), 'Access revoked')
+        self.assertEqual(BackendAccessChange.objects.count(), 3)
+        self.assertContains(self.client.get(url), 'Not enabled')
 
     def test_effective_permission_preview_and_failed_invitation_retry(self):
         self.activate_engagement()
@@ -132,7 +137,7 @@ class DelegatedAccessTests(TestCase):
         with self.captureOnCommitCallbacks(execute=False):
             result = set_backend_access(
                 self.member, self.owner, {'OEF Writers'},
-                reason='Content writing', site_url='https://example.org/',
+                reason='Content writing', site_url='https://example.org/', action='grant',
             )
         with patch('user.access.send_email', side_effect=RuntimeError('Delivery unavailable')):
             failed = send_backend_invitation(result.invitation.pk, 'https://example.org/')
@@ -154,7 +159,7 @@ class DelegatedAccessTests(TestCase):
         with self.captureOnCommitCallbacks(execute=False):
             result = set_backend_access(
                 self.member, self.owner, {'OEF Writers'},
-                reason='Writing duty', site_url='https://example.org/',
+                reason='Writing duty', site_url='https://example.org/', action='grant',
             )
 
         def check_second_attempt(*args, **kwargs):
@@ -177,7 +182,7 @@ class DelegatedAccessTests(TestCase):
         with self.captureOnCommitCallbacks(execute=False):
             result = set_backend_access(
                 self.member, self.owner, {'OEF Writers'},
-                reason='Writing duty', site_url='https://example.org/',
+                reason='Writing duty', site_url='https://example.org/', action='grant',
             )
         BackendAccessInvitation.objects.filter(pk=result.invitation.pk).update(
             status=BackendAccessInvitation.Status.SENDING,
@@ -210,7 +215,7 @@ class DelegatedAccessTests(TestCase):
         with self.assertRaises(ValidationError):
             set_backend_access(
                 self.member, manager, {'OEF Writers'}, reason='Premature',
-                site_url='https://example.org/',
+                site_url='https://example.org/', action='grant',
             )
 
     def test_manager_has_curated_people_admin_but_not_raw_user_admin(self):
@@ -247,10 +252,10 @@ class DelegatedAccessTests(TestCase):
         )
         member_page = self.client.get(reverse('admin:user_teammember_change', args=(self.member.pk,)))
         self.assertContains(member_page, 'View engagements')
-        self.assertContains(member_page, 'Add engagement')
+        self.assertNotContains(member_page, 'Add engagement')
         self.assertContains(member_page, f'team_member__id__exact={self.member.pk}')
         other = TeamMember.objects.create(
-            full_name='Other Member', primary_email='othermember@example.org',
+            full_name='Other Member', primary_email='othermember@oluwafemiebenezerfoundation.org',
         )
         Engagement.objects.create(team_member=other, role_title='Reviewer')
         engagements = self.client.get(
@@ -265,27 +270,29 @@ class DelegatedAccessTests(TestCase):
         with self.captureOnCommitCallbacks(execute=False):
             set_backend_access(
                 self.member, self.owner, {'OEF Writers'},
-                reason='Writing assignment', site_url='https://example.org/',
+                reason='Writing assignment', site_url='https://example.org/', action='grant',
             )
         access_page = self.client.get(reverse('admin:user_teammember_access', args=(self.member.pk,)))
-        self.assertContains(access_page, 'Backend access log')
-        self.assertContains(access_page, 'Access granted')
-        self.assertContains(access_page, 'Access invitation')
+        self.assertNotContains(access_page, 'Backend access log')
+        self.assertNotContains(access_page, 'Access invitations')
+        self.assertNotContains(access_page, 'Writing assignment')
+        self.assertEqual(BackendAccessChange.objects.filter(team_member=self.member).count(), 1)
+        self.assertEqual(BackendAccessInvitation.objects.filter(team_member=self.member).count(), 1)
         self.assertNotContains(access_page, 'effective permissions')
 
-    def test_access_page_retries_only_its_members_invitation(self):
+    def test_access_page_rejects_internal_invitation_retry_ids(self):
         self.activate_engagement()
         self.client.force_login(self.owner)
         with self.captureOnCommitCallbacks(execute=False):
             result = set_backend_access(
                 self.member, self.owner, {'OEF Writers'},
-                reason='Writing assignment', site_url='https://example.org/',
+                reason='Writing assignment', site_url='https://example.org/', action='grant',
             )
         url = reverse('admin:user_teammember_access', args=(self.member.pk,))
-        with patch('user.admin.send_backend_invitation') as retry:
+        with patch('user.access.send_backend_invitation') as retry:
             response = self.client.post(url, {'retry_invitation': str(result.invitation.pk)})
-        self.assertEqual(response.status_code, 302)
-        retry.assert_called_once()
+        self.assertEqual(response.status_code, 403)
+        retry.assert_not_called()
         other = TeamMember.objects.create(full_name='Other', primary_email='other@example.org')
         Engagement.objects.create(team_member=other, role_title='Reviewer')
         self.assertEqual(
@@ -297,9 +304,9 @@ class DelegatedAccessTests(TestCase):
         )
         set_backend_access(
             self.member, self.owner, set(), reason='Writing assignment ended',
-            site_url='https://example.org/',
+            site_url='https://example.org/', action='suspend',
         )
-        with patch('user.admin.send_backend_invitation') as retry:
+        with patch('user.access.send_backend_invitation') as retry:
             self.assertEqual(
                 self.client.post(url, {'retry_invitation': str(result.invitation.pk)}).status_code,
                 403,
@@ -312,7 +319,7 @@ class DelegatedAccessTests(TestCase):
         with self.captureOnCommitCallbacks(execute=False):
             result = set_backend_access(
                 self.member, self.owner, {'OEF Writers'},
-                reason='Writing assignment', site_url='https://example.org/',
+                reason='Writing assignment', site_url='https://example.org/', action='grant',
             )
         replacement = UserProfile.objects.create_user(
             email='replacement@example.org', password='test-password', is_staff=True,
@@ -323,7 +330,7 @@ class DelegatedAccessTests(TestCase):
         url = reverse('admin:user_teammember_access', args=(self.member.pk,))
         page = self.client.get(url)
         self.assertNotContains(page, 'Send or retry')
-        with patch('user.admin.send_backend_invitation') as retry:
+        with patch('user.access.send_backend_invitation') as retry:
             response = self.client.post(url, {
                 'retry_invitation': str(result.invitation.pk),
             })
@@ -340,14 +347,14 @@ class DelegatedAccessTests(TestCase):
         with self.captureOnCommitCallbacks(execute=False):
             result = set_backend_access(
                 self.member, self.owner, {'OEF Writers'},
-                reason='Writing assignment', site_url='https://example.org/',
+                reason='Writing assignment', site_url='https://example.org/', action='grant',
             )
         account = result.user
         account.is_active = False
         account.save(update_fields=('is_active',))
         url = reverse('admin:user_teammember_access', args=(self.member.pk,))
         self.assertNotContains(self.client.get(url), 'Send or retry')
-        with patch('user.admin.send_backend_invitation') as retry:
+        with patch('user.access.send_backend_invitation') as retry:
             self.assertEqual(
                 self.client.post(url, {
                     'retry_invitation': str(result.invitation.pk),

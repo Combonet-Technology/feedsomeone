@@ -1,0 +1,43 @@
+{% extends "admin/user/team_management_base.html" %}
+{% block content %}
+<div id="content-main" class="access-page">
+  <a class="access-back" href="{{ change_url }}">← Back to team member</a>
+  <section class="access-card" aria-labelledby="permission-settings-title">
+  <div class="access-summary">
+    <p class="access-name">{{ member.full_name }}</p>
+  </div>
+  <h2 id="permission-settings-title" class="access-heading">Permission settings</h2>
+  <p class="access-help">Saving permissions does not grant backend access or send email. Suspended access retains these settings.</p>
+  <form method="post">
+    {% csrf_token %}<input type="hidden" name="action" value="configure">
+    {{ form.non_field_errors }}
+    <fieldset class="preset-options">
+      <legend>{{ form.groups.label }}</legend>
+      {{ form.groups }}
+      {{ form.groups.errors }}
+    </fieldset>
+    <div class="access-field">
+      {{ form.reason.label_tag }}
+      {{ form.reason }}
+      {{ form.reason.errors }}
+    </div>
+    {% if preview %}
+      <div class="permission-preview">
+      <h2 class="access-heading">Permission changes</h2>
+      <p>Current: {{ preview.current|join:", "|default:"None" }}</p>
+      <p>Requested: {{ preview.requested|join:", "|default:"None" }}</p>
+      <p>Added: {{ preview.add|join:", "|default:"None" }}</p>
+      <p>Removed: {{ preview.remove|join:", "|default:"None" }}</p>
+      </div>
+      <div class="access-footer">
+        <button type="submit" name="confirm" value="1" class="access-submit">Confirm permission change</button>
+      </div>
+    {% else %}
+      <div class="access-footer">
+        <button type="submit" class="access-submit">Preview permission change</button>
+      </div>
+    {% endif %}
+  </form>
+  </section>
+</div>
+{% endblock %}

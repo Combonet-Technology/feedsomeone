@@ -26,6 +26,14 @@ DELEGABLE_GROUPS = frozenset({
     'Recruitment Manager',
 })
 INVITATION_CLAIM_TIMEOUT = timedelta(minutes=15)
+STAFF_EMAIL_DOMAIN = 'oluwafemiebenezerfoundation.org'
+
+
+def validate_staff_email(email):
+    email = (email or '').strip().lower()
+    if email.rpartition('@')[2] != STAFF_EMAIL_DOMAIN:
+        raise ValidationError(f'Use the member\'s @{STAFF_EMAIL_DOMAIN} workspace email before granting access.')
+    return email
 
 
 @dataclass(frozen=True)
@@ -45,6 +53,15 @@ def _require_access_manager(actor):
 
 def _group_names(user):
     return set(user.groups.values_list('name', flat=True))
+
+
+def _desired_groups(member):
+    desired = member.desired_backend_groups
+    if not isinstance(desired, list) or any(not isinstance(name, str) for name in desired):
+        raise ValidationError('Reconcile the configured capability presets.')
+    if set(desired) - DELEGABLE_GROUPS:
+        raise ValidationError('Configured capability presets contain a protected group.')
+    return set(desired)
 
 
 def _effective_permissions(group_names):
@@ -80,7 +97,7 @@ def preview_backend_access(member, actor, desired_groups):
         raise ValidationError('One or more selected capability groups are protected.')
     member = TeamMember.objects.select_related('user').get(pk=member.pk)
     _validate_target(member, actor)
-    current = _group_names(member.user) if member.user_id else set()
+    current = _desired_groups(member)
     return {
         'current': sorted(current),
         'requested': sorted(desired),
@@ -93,9 +110,12 @@ def preview_backend_access(member, actor, desired_groups):
 
 
 @transaction.atomic
-def set_backend_access(member, actor, desired_groups, *, reason, site_url):
+def set_backend_access(member, actor, desired_groups=None, *, reason, site_url, action='configure'):
     _require_access_manager(actor)
-    desired = set(desired_groups)
+    if action not in ('configure', 'grant', 'resume', 'suspend', 'resend', 'reset'):
+        raise ValidationError('Choose a valid access action.')
+    member = TeamMember.objects.select_for_update().get(pk=member.pk)
+    desired = _desired_groups(member) if desired_groups is None else set(desired_groups)
     if desired - DELEGABLE_GROUPS:
         raise ValidationError('One or more selected capability groups are protected.')
     if not (reason or '').strip():
@@ -103,16 +123,16 @@ def set_backend_access(member, actor, desired_groups, *, reason, site_url):
 
     # Lock the person row only. Joining nullable user here makes PostgreSQL
     # reject FOR UPDATE on the nullable side of the outer join.
-    member = TeamMember.objects.select_for_update().get(pk=member.pk)
+    if member.user_id:
+        member.user = UserProfile.objects.select_for_update().get(pk=member.user_id)
     _validate_target(member, actor)
-    if desired and not Engagement.objects.filter(
+    if action in ('grant', 'resume') and not Engagement.objects.filter(
         team_member=member, status=Engagement.Status.ACTIVE,
     ).exists():
         raise ValidationError('An active engagement is required before granting access.')
 
-    account_created = False
     account = member.user
-    if account is None and desired:
+    if account is None and action == 'grant':
         email = member.primary_email.strip().lower()
         if not email or len(email) > UserProfile._meta.get_field('email').max_length:
             raise ValidationError('A valid account-length email is needed for access.')
@@ -124,50 +144,78 @@ def set_backend_access(member, actor, desired_groups, *, reason, site_url):
         )
         member.user = account
         member.save(update_fields=('user', 'updated_at'))
-        account_created = True
-
     if account is None:
-        return AccessResult(None, False, None)
-    account = UserProfile.objects.select_for_update().get(pk=account.pk)
-    before = _group_names(account)
+        raise ValidationError('Create the linked account before managing access.')
+    before = _desired_groups(member)
+    before_enabled = account.is_staff
     if not account.is_active:
         raise ValidationError('This account is disabled. A superuser must resolve its login state.')
+    if action in ('grant', 'resume', 'resend', 'reset'):
+        validate_staff_email(account.email)
     selected = list(Group.objects.filter(name__in=desired))
     if {group.name for group in selected} != desired:
         raise ValidationError('A selected capability preset is not configured.')
 
-    if before == desired and account.is_staff == bool(desired):
+    enabled = before_enabled
+    if action in ('grant', 'resume'):
+        enabled = True
+    elif action == 'suspend':
+        enabled = False
+    elif action in ('resend', 'reset') and not enabled:
+        raise ValidationError('Resume backend access before sending a staff invitation.')
+    if action not in ('configure', 'grant') and desired_groups is not None:
+        # Capability changes and enabling access are separate operations.
+        desired = before
+        selected = list(Group.objects.filter(name__in=desired))
+    if action in ('configure', 'grant', 'resume', 'suspend') and before == desired and before_enabled == enabled:
         return AccessResult(account, False, None)
-
-    account.groups.set(selected)
-    account.is_staff = bool(desired)
+    account.groups.set(selected if enabled else [])
+    account.is_staff = enabled
     account.save(update_fields=('is_staff', 'date_updated'))
+    member.desired_backend_groups = sorted(desired)
+    if action == 'suspend':
+        member.access_version += 1
+    member.save(update_fields=('desired_backend_groups', 'access_version', 'updated_at'))
     BackendAccessChange.objects.create(
         user=account, team_member=member,
-        action='grant_or_update' if desired else 'suspend',
+        action=action, before_enabled=before_enabled, after_enabled=enabled,
         before_groups=sorted(before), after_groups=sorted(desired),
         actor=actor, reason=reason.strip(),
     )
 
     invitation = None
-    if desired and (account_created or desired - before):
+    if action in ('grant', 'resend', 'reset'):
+        member.access_version += 1
+        member.save(update_fields=('access_version', 'updated_at'))
         invitation = BackendAccessInvitation.objects.create(
             team_member=member, user=account,
+            recipient_email=account.email, access_version=member.access_version,
+            reset_password=action == 'reset',
         )
         invitation_pk = invitation.pk
         transaction.on_commit(lambda: send_backend_invitation(invitation_pk, site_url))
     return AccessResult(account, True, invitation)
 
 
+def invitation_is_current(invitation):
+    account = invitation.user
+    member = invitation.team_member
+    return bool(
+        account.is_active and account.is_staff
+        and member.user_id == account.pk and invitation.recipient_email == account.email
+        and invitation.access_version == member.access_version and not invitation.used_at
+    )
+
+
 def send_backend_invitation(invitation_id, site_url):
     with transaction.atomic():
-        invitation = BackendAccessInvitation.objects.select_for_update().select_related(
-            'user', 'team_member',
-        ).get(pk=invitation_id)
-        if (
-            not invitation.user.is_active or not invitation.user.is_staff
-            or invitation.team_member.user_id != invitation.user_id
-        ):
+        reference = BackendAccessInvitation.objects.get(pk=invitation_id)
+        member = TeamMember.objects.select_for_update().get(pk=reference.team_member_id)
+        account = UserProfile.objects.select_for_update().get(pk=reference.user_id)
+        invitation = BackendAccessInvitation.objects.select_for_update().get(pk=invitation_id)
+        invitation.team_member = member
+        invitation.user = account
+        if not invitation_is_current(invitation):
             return invitation
         stale_sending = (
             invitation.status == BackendAccessInvitation.Status.SENDING
@@ -188,26 +236,23 @@ def send_backend_invitation(invitation_id, site_url):
         claimed_attempt = invitation.attempts
     try:
         account = invitation.user
-        password_setup_required = not account.has_usable_password()
+        password_setup_required = invitation.reset_password or not account.has_usable_password()
         if password_setup_required:
             uid = urlsafe_base64_encode(force_bytes(account.pk))
             token = default_token_generator.make_token(account)
-            path = reverse('staff_access_activate', args=(uid, token))
+            path = reverse('member_access_activate', args=(invitation.key, uid, token))
             action_label = 'Set your password'
         else:
             path = reverse('admin:index')
-            action_label = 'Open the OEF administration workspace'
+            action_label = 'Open your OEF workspace'
         context = {
             'recipient_name': invitation.team_member.full_name or account.get_full_name(),
-            'role_title': invitation.team_member.engagements.filter(
-                status=Engagement.Status.ACTIVE,
-            ).values_list('role_title', flat=True).first(),
             'access_url': urljoin(f'{site_url.rstrip("/")}/', path.lstrip('/')),
             'action_label': action_label,
             'password_setup_required': password_setup_required,
         }
         message_id = send_email(
-            destination=account.email,
+            destination=invitation.recipient_email,
             subject='Your OEF administration access',
             content=render_to_string('opportunities/email/staff_access_invitation.html', context),
             text_content=render_to_string('opportunities/email/staff_access_invitation.txt', context),

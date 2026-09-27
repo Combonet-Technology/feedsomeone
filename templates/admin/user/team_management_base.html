@@ -1,0 +1,55 @@
+{% extends "admin/base_site.html" %}
+{% block extrastyle %}{{ block.super }}
+<style>
+  #content-main.access-page { width: 100%; max-width: 960px; float: none; margin: 0 auto; padding: 16px; color: #263238; color-scheme: light; }
+  .access-page, .access-page *, .access-page *::before, .access-page *::after { box-sizing: border-box; }
+  .access-page .access-back { display: inline-block; margin-bottom: 20px; font-size: 14px; }
+  .access-page .access-card { background: #fff; border: 1px solid #dce2e5; border-radius: 12px;
+    padding: 24px; box-shadow: 0 2px 8px rgb(25 40 50 / 4%); }
+  .access-page .access-summary { display: flex; flex-wrap: wrap; align-items: flex-start;
+    justify-content: space-between; gap: 16px; padding-bottom: 20px; border-bottom: 1px solid #e8ecef; }
+  .access-page .access-person { min-width: 0; }
+  .access-page .access-name { margin: 0 0 6px; color: #263238; font-size: 20px; font-weight: 600; }
+  .access-page .access-email { margin: 0; color: #596770; font-size: 14px; overflow-wrap: anywhere; }
+  .access-page .access-status { border-radius: 20px; background: #f0f2f4; color: #46535c;
+    padding: 6px 12px; font-size: 13px; font-weight: 600; }
+  .access-page .access-status.enabled { background: #e7f4eb; color: #23633b; }
+  .access-page .access-heading { margin: 24px 0 8px; padding: 0; background: none;
+    color: #263238; font-size: 18px; font-weight: 600; }
+  .access-page .access-help { margin: 0 0 24px; color: #596770; line-height: 1.6; font-size: 14px; }
+  .access-page .access-fields { display: grid; grid-template-columns: 1fr 1.4fr; gap: 20px; }
+  .access-page .access-field { min-width: 0; }
+  .access-page .access-field label { display: block; margin-bottom: 8px; font-size: 14px;
+    font-weight: 600; color: #34424b; }
+  .access-page .access-field select, .access-page .access-field input, .access-page .access-field textarea { width: 100%; max-width: 100%;
+    min-height: 44px; margin: 0; padding: 10px 12px; border: 1px solid #b8c3ca; border-radius: 6px;
+    background: #fff; color: #263238; font: inherit; font-size: 15px; }
+  .access-page textarea:focus-visible, .access-page input:focus-visible, .access-page select:focus-visible, .access-page button:focus-visible {
+    outline: 3px solid #bd5361; outline-offset: 3px; }
+  .access-page .access-confirm { display: flex; gap: 10px; align-items: center; margin-top: 24px; }
+  .access-page .access-confirm input { width: 18px; height: 18px; flex: 0 0 18px;
+    margin: 0; accent-color: #8d1724; }
+  .access-page .access-confirm label { margin: 0; font-size: 14px; cursor: pointer; color: #34424b; }
+  .access-page .access-footer { margin-top: 24px; padding-top: 20px; border-top: 1px solid #e8ecef; }
+  .access-page button.access-submit { min-height: 44px; padding: 11px 22px; border: 1px solid #8d1724;
+    border-radius: 6px; background: #8d1724; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; }
+  .access-page button.access-submit:hover { background: #70121d; border-color: #70121d; }
+  .access-page .errorlist { margin: 8px 0; padding: 0; list-style: none; color: #a51f2c; font-size: 14px; }
+  .access-page .access-field textarea { min-height: 100px; resize: vertical; }
+  .access-page .preset-options { border: 0; padding: 0; margin: 0 0 24px; }
+  .access-page .preset-options legend { font-size: 14px; font-weight: 600; margin-bottom: 12px; }
+  .access-page .preset-options #id_groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .access-page .preset-options label { display: flex; align-items: center; gap: 10px; padding: 14px;
+    border: 1px solid #dce2e5; border-radius: 6px; cursor: pointer; color: #34424b; }
+  .access-page .preset-options input { width: 18px; height: 18px; margin: 0; accent-color: #8d1724; }
+  .access-page .permission-preview { margin-top: 24px; padding: 16px; background: #f6f8f9; border-radius: 6px; overflow-wrap: anywhere; }
+  .access-page .permission-preview h2 { margin-top: 0; }
+  @media (max-width: 640px) {
+    #content-main.access-page { padding: 12px; }
+    .access-page .access-card { padding: 18px; }
+    .access-page .preset-options #id_groups { grid-template-columns: 1fr; }
+    .access-page .access-fields { grid-template-columns: 1fr; gap: 18px; }
+    .access-page button.access-submit { width: 100%; }
+  }
+</style>
+{% endblock %}
