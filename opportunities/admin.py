@@ -126,36 +126,6 @@ class VacancyAdmin(admin.ModelAdmin):
     )
 
 
-class ApplicationQueueFilter(admin.SimpleListFilter):
-    title = 'recruitment queue'
-    parameter_name = 'queue'
-
-    def lookups(self, request, model_admin):
-        return (
-            ('active', 'Active recruitment'),
-            ('appointed', 'Appointed'),
-            ('completed', 'Other completed'),
-            ('all', 'All applications'),
-        )
-
-    def queryset(self, request, queryset):
-        value = self.value()
-        if value == 'all' or (value is None and 'status__exact' in request.GET):
-            return queryset
-        if value == 'appointed':
-            return queryset.filter(status=VacancyApplication.Status.APPOINTED)
-        if value == 'completed':
-            return queryset.filter(status__in=(
-                'not_selected', 'withdrawn', 'closed',
-                'offer_declined', 'agreement_declined', 'onboarding_failed',
-            ))
-        return queryset.filter(status__in=(
-            'received', 'reviewing', 'shortlisted', 'offered',
-            'offer_accepted', 'agreement_pending', 'agreement_signed',
-            'onboarding', 'active',
-        ))
-
-
 class VacancyApplicationAdminForm(forms.ModelForm):
     class Meta:
         model = VacancyApplication
@@ -236,7 +206,6 @@ class VacancyApplicationAdmin(admin.ModelAdmin):
         'created_at',
     )
     list_filter = (
-        ApplicationQueueFilter,
         'status',
         'rejection_email_status',
         'vacancy',
