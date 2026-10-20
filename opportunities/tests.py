@@ -226,6 +226,35 @@ class VacancyApplicationTests(TestCase):
             'Send me OEF news and programme updates.',
         )
 
+    def test_vacancy_detail_renders_google_for_jobs_structured_data(self):
+        import json
+        response = self.client.get(self.vacancy.get_absolute_url())
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('vacancy_meta', response.context)
+        meta = response.context['vacancy_meta']
+        self.assertIsNotNone(meta.get('structured_data'))
+
+        payload = json.loads(meta['structured_data'])
+        self.assertEqual(payload['@context'], 'https://schema.org')
+        self.assertEqual(payload['@type'], 'JobPosting')
+        self.assertEqual(payload['title'], self.vacancy.title)
+        self.assertEqual(payload['employmentType'], 'VOLUNTEER')
+        self.assertTrue(payload['directApply'])
+        self.assertEqual(payload['hiringOrganization']['name'], 'Oluwafemi Ebenezer Foundation')
+        self.assertEqual(payload['jobLocationType'], 'TELECOMMUTE')
+        self.assertEqual(payload['applicantLocationRequirements']['name'], 'Nigeria')
+        self.assertIn('Core Responsibilities', payload['description'])
+        self.assertContains(response, 'application/ld+json')
+
+    def test_filled_vacancy_does_not_render_google_job_posting_structured_data(self):
+        response = self.client.get(self.filled_vacancy.get_absolute_url())
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('vacancy_meta', response.context)
+        self.assertIsNone(response.context['vacancy_meta'].get('structured_data'))
+        self.assertNotContains(response, 'JobPosting')
+
     def test_guest_can_apply_without_an_account(self):
         response = self.client.post(
             reverse('opportunities:apply', kwargs={'slug': self.vacancy.slug}),

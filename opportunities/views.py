@@ -11,6 +11,7 @@ from .forms import VacancyApplicationForm
 from .models import Vacancy, VacancyApplication
 from .notifications import notify_new_application
 from .recruitment import submit_application
+from .seo import build_vacancy_meta
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +63,7 @@ class VacancyDetailView(DetailView):
                 applicant=self.request.user,
             ).exists()
         )
+        context['vacancy_meta'] = build_vacancy_meta(self.request, self.object)
         return context
 
 

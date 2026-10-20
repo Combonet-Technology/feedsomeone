@@ -6,6 +6,13 @@
 {% block social_title %}{{ vacancy.title }} | OEF{% endblock %}
 {% block social_description %}{{ vacancy.summary }}{% endblock %}
 {% block extra_styles %}<link rel="stylesheet" href="{% static 'css/opportunities.css' %}">{% endblock %}
+{% block canonical_url %}{{ vacancy_meta.canonical_url }}{% endblock %}
+{% block social_url %}{{ vacancy_meta.canonical_url }}{% endblock %}
+{% block structured_data_extra %}
+    {% if vacancy_meta.structured_data %}
+    <script type="application/ld+json">{{ vacancy_meta.structured_data|safe }}</script>
+    {% endif %}
+{% endblock %}
 
 {% block content %}
 <main class="opportunities-page">
