@@ -157,6 +157,39 @@ class VacancyApplicationTests(TestCase):
         self.assertNotContains(response, 'View and apply')
         self.assertNotContains(response, 'View role')
 
+    def test_list_excludes_closed_and_draft_vacancies(self):
+        closed = Vacancy.objects.create(
+            title='Closed Coordinator',
+            slug='closed-coordinator',
+            summary='Closed summary.',
+            description='Closed description.',
+            expectations='Expectations.',
+            responsibilities='Responsibilities.',
+            benefits='Benefits.',
+            who_we_are_looking_for='A coordinator.',
+            status='closed',
+        )
+        draft = Vacancy.objects.create(
+            title='Draft Assistant',
+            slug='draft-assistant',
+            summary='Draft summary.',
+            description='Draft description.',
+            expectations='Expectations.',
+            responsibilities='Responsibilities.',
+            benefits='Benefits.',
+            who_we_are_looking_for='An assistant.',
+            status='draft',
+        )
+
+        response = self.client.get(reverse('opportunities:list'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, closed.title)
+        self.assertNotContains(response, draft.title)
+        vacancies = response.context['vacancies']
+        self.assertNotIn(closed, vacancies)
+        self.assertNotIn(draft, vacancies)
+
     def test_writer_is_the_first_open_role_in_catalogue_order(self):
         Vacancy.objects.create(
             title='Another open role',

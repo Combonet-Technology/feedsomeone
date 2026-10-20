@@ -21,14 +21,20 @@ class VacancyListView(ListView):
     template_name = 'opportunities/vacancy_list.html'
 
     def get_queryset(self):
-        return Vacancy.objects.filter(is_active=True).exclude(status='draft').select_related('cohort').annotate(
-            status_order=Case(
-                When(status='open', then=Value(0)),
-                When(status='filled', then=Value(1)),
-                default=Value(2),
-                output_field=IntegerField(),
+        return (
+            Vacancy.objects.filter(is_active=True)
+            .exclude(status__in=['closed', 'draft'])
+            .select_related('cohort')
+            .annotate(
+                status_order=Case(
+                    When(status='open', then=Value(0)),
+                    When(status='filled', then=Value(1)),
+                    default=Value(2),
+                    output_field=IntegerField(),
+                )
             )
-        ).order_by('status_order', 'display_order', '-published_at', '-created_at')
+            .order_by('status_order', 'display_order', '-published_at', '-created_at')
+        )
 
 
 class VacancyDetailView(DetailView):
@@ -37,7 +43,7 @@ class VacancyDetailView(DetailView):
     template_name = 'opportunities/vacancy_detail.html'
 
     def get_queryset(self):
-        return Vacancy.objects.filter(is_active=True).exclude(status='draft').select_related('cohort')
+        return Vacancy.objects.filter(is_active=True).exclude(status__in=['closed', 'draft']).select_related('cohort')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
